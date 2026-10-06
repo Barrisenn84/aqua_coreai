@@ -161,7 +161,7 @@ Formato obrigatório estrito: "🚨 NOME DO TANQUE: [dado]. Ação: [ato imediat
     if (client) {
       try {
         const result = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             systemInstruction: this.getSystemInstruction(),
@@ -194,7 +194,7 @@ Responda seguindo o padrão CONSULTATIVE: mencione Grade Padrão (R$ 8,90/kg), G
     if (client) {
       try {
         const result = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             systemInstruction: this.getSystemInstruction(),
@@ -225,7 +225,7 @@ Siga o formato INFORMATIVE estipulado.`;
     if (client) {
       try {
         const result = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-2.0-flash',
           contents: prompt,
           config: {
             systemInstruction: this.getSystemInstruction(),
@@ -295,7 +295,7 @@ ${customQuery ? `Pergunta adicional do produtor: "${customQuery}"` : ''}
 Ação: Forneça o parecer técnico estruturado no formato JSON estrito.`;
 
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     contents: prompt,
     config: {
       temperature: 0.2,
@@ -370,7 +370,7 @@ Extraia com precisão absoluta de engenheiro aquícola:
 - Breve resumo zootécnico da ração.`;
 
   const response = await client.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     contents: [
       { text: prompt },
       { inlineData: { mimeType, data: imageBase64 } },
@@ -457,7 +457,7 @@ Classifique e responda rigorosamente em um dos três níveis:
 `;
 
       const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -611,7 +611,7 @@ Retorne estritamente um parecer técnico com: NCM apropriado, CFOP, orientaçõe
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -684,7 +684,7 @@ Avalie o risco de falha mecânica/elétrica nas próximas 48h e prescreva as aç
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -777,7 +777,7 @@ Entregue o parecer financeiro executivo com estratégias acionáveis para corte 
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         contents: prompt,
         config: {
           temperature: 0.2,
