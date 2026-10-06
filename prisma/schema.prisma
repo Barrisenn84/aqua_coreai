@@ -1,0 +1,186 @@
+// Prisma Schema para AQUA-CORE AI & Constr.AI Multi-Tenant Architecture
+// Compatível com PostgreSQL / Supabase e SQLite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Organizações / Fazendas / Canteiros de Obras
+model Tenant {
+  id              String         @id @default(uuid())
+  name            String
+  code            String         @unique
+  type            String         @default("aquaculture_farm") // aquaculture_farm | construction_site
+  location        String
+  latitude        Float          @default(-7.2997)
+  longitude       Float          @default(-35.2319)
+  kwhCost         Float          @default(0.72)
+  feedCost        Float          @default(4.20)
+  salePrice       Float          @default(10.25)
+  producerPhone   String         @default("+5584988585211")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  users           User[]
+  tanks           Tank[]
+  batches         Batch[]
+  biometries      Biometry[]
+  equipments      Equipment[]
+  invoices        Invoice[]
+  feedingLogs     FeedingLog[]
+}
+
+// Usuários do Sistema (Multi-Tenant com RBAC)
+model User {
+  id           String      @id @default(uuid())
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email        String      @unique
+  name         String
+  passwordHash String
+  role         String      @default("engineer") // owner | engineer | operator | auditor
+  phone        String?
+  avatar       String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+// Tanques Aquícolas ou Setores de Obras
+model Tank {
+  id              String          @id @default(uuid())
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  volumeM3        Float           @default(5000)
+  status          String          @default("optimal") // optimal | warning | critical
+  aeratorActive   Boolean         @default(true)
+  aeratorCount    Int             @default(4)
+  aeratorPowerKw  Float           @default(2.2)
+  currentDo       Float           @default(5.6)
+  currentTemp     Float           @default(28.5)
+  currentPh       Float           @default(7.6)
+  currentTan      Float           @default(0.4)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  batches         Batch[]
+  readings        SensorReading[]
+  biometries      Biometry[]
+  feedingLogs     FeedingLog[]
+}
+
+// Lotes de Cultivo ou Etapas de Obra
+model Batch {
+  id                 String       @id @default(uuid())
+  tenantId           String
+  tenant             Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tankId             String
+  tank               Tank         @relation(fields: [tankId], references: [id], onDelete: Cascade)
+  batchCode          String
+  species            String       @default("Litopenaeus vannamei")
+  initialCount       Int          @default(15000)
+  currentCount       Int          @default(14200)
+  initialWeightG     Float        @default(0.02)
+  currentWeightG     Float        @default(18.5)
+  targetFinalWeightG Float        @default(22.0)
+  accumulatedFeedKg  Float        @default(3200)
+  cycleDay           Int          @default(68)
+  startDate          DateTime     @default(now())
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  biometries         Biometry[]
+  feedingLogs        FeedingLog[]
+}
+
+// Registros de Biometria Zootécnica
+model Biometry {
+  id             String    @id @default(uuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tankId         String
+  tank           Tank      @relation(fields: [tankId], references: [id], onDelete: Cascade)
+  batchId        String
+  batch          Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  avgWeightG     Float
+  sampleSize     Int       @default(60)
+  mortalityCount Int       @default(0)
+  uniformityPct  Float     @default(88.0)
+  fcrCurrent     Float     @default(1.35)
+  fcrBenchmark   Float     @default(1.42)
+  aiActionNote   String?
+  createdAt      DateTime  @default(now())
+}
+
+// Telemetria IoT das Sondas e Caixas Pretas
+model SensorReading {
+  id              String    @id @default(uuid())
+  tankId          String
+  tank            Tank      @relation(fields: [tankId], references: [id], onDelete: Cascade)
+  dissolvedOxygen Float
+  temperature     Float
+  ph              Float
+  ammoniaTotal    Float
+  ammoniaToxic    Float
+  nitrite         Float?    @default(0.1)
+  batteryVolts    Float?    @default(12.6)
+  signal4gRssi    Int?      @default(-72)
+  createdAt       DateTime  @default(now())
+}
+
+// Equipamentos do Parque Operacional
+model Equipment {
+  id              String    @id @default(uuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name            String
+  location        String
+  type            String
+  status          String    @default("operational") // operational | warning | critical
+  powerKw         Float     @default(2.2)
+  lastMaintenance DateTime  @default(now())
+  overdueDays     Int       @default(0)
+  healthScore     Float     @default(95.0)
+  aiDiagnostics   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Notas Fiscais e Vendas Diretas (Market-Bridge)
+model Invoice {
+  id              String    @id @default(uuid())
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoiceNumber   String    @unique
+  batchCode       String
+  quantityKg      Float
+  pricePerKg      Float
+  totalValue      Float
+  buyerName       String
+  buyerCnpj       String?
+  taxRatePct      Float     @default(0.0)
+  status          String    @default("issued") // issued | paid | cancelled
+  aiTaxReport     String?
+  createdAt       DateTime  @default(now())
+}
+
+// Histórico de Arraçoamento / Insumos
+model FeedingLog {
+  id         String    @id @default(uuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tankId     String
+  tank       Tank      @relation(fields: [tankId], references: [id], onDelete: Cascade)
+  batchId    String
+  batch      Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  amountKg   Float
+  feedType   String
+  proteinPct Float     @default(35.0)
+  costPerKg  Float     @default(4.20)
+  createdAt  DateTime  @default(now())
+}

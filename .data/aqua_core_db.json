@@ -1,0 +1,155 @@
+{
+  "tenants": [
+    {
+      "id": "tenant-river-life",
+      "name": "Fazenda River Life (Camarão PB)",
+      "code": "RIVER_LIFE",
+      "type": "aquaculture_farm",
+      "location": "Polo de Mogeiro – PB",
+      "latitude": -7.2997,
+      "longitude": -35.2319,
+      "kwhCost": 0.72,
+      "feedCost": 4.2,
+      "salePrice": 10.25,
+      "producerPhone": "+5584988585211",
+      "speciesTarget": "Litopenaeus vannamei (Camarão)"
+    },
+    {
+      "id": "tenant-santa-helena",
+      "name": "Fazenda Santa Helena (Tilápia BA)",
+      "code": "SANTA_HELENA",
+      "type": "aquaculture_farm",
+      "location": "Polo Paulo Afonso – BA",
+      "latitude": -9.4069,
+      "longitude": -38.2144,
+      "kwhCost": 0.68,
+      "feedCost": 3.9,
+      "salePrice": 9.8,
+      "producerPhone": "+5575991234567",
+      "speciesTarget": "Oreochromis niloticus (Tilápia do Nilo)"
+    },
+    {
+      "id": "tenant-constr-ai-01",
+      "name": "Constr.AI • Obra Residencial Mirante",
+      "code": "CONSTR_MIRANTE",
+      "type": "construction_site",
+      "location": "João Pessoa – PB (Bessa)",
+      "latitude": -7.0722,
+      "longitude": -34.8419,
+      "kwhCost": 0.85,
+      "feedCost": 0,
+      "salePrice": 0,
+      "producerPhone": "+5583998765432",
+      "speciesTarget": "Edifício Residencial 18 Pavimentos"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr-01",
+      "tenantId": "tenant-river-life",
+      "email": "collermhann@aquacore.ai",
+      "name": "Engenheiro Collermhann",
+      "role": "owner",
+      "phone": "+5584988585211"
+    },
+    {
+      "id": "usr-02",
+      "tenantId": "tenant-santa-helena",
+      "email": "helena@aquacore.ai",
+      "name": "Dra. Helena Martins",
+      "role": "engineer",
+      "phone": "+5575991234567"
+    },
+    {
+      "id": "usr-03",
+      "tenantId": "tenant-constr-ai-01",
+      "email": "mestre.silva@constr.ai",
+      "name": "Mestre de Obras Silva",
+      "role": "engineer",
+      "phone": "+5583998765432"
+    }
+  ],
+  "biometries": [
+    {
+      "id": "bio-seed-01",
+      "tenantId": "tenant-river-life",
+      "tankId": "tank-04",
+      "batchId": "batch-04",
+      "avgWeightG": 18.2,
+      "sampleSize": 80,
+      "mortalityCount": 15,
+      "uniformityPct": 89.5,
+      "fcrCurrent": 1.35,
+      "aiActionNote": "Crescimento zootécnico dentro da curva de calibração para água a 29.5°C no Polo Paraíba.",
+      "createdAt": "2026-10-04T00:14:54.524Z"
+    },
+    {
+      "id": "bio-seed-02",
+      "tenantId": "tenant-river-life",
+      "tankId": "tank-02",
+      "batchId": "batch-02",
+      "avgWeightG": 14.8,
+      "sampleSize": 75,
+      "mortalityCount": 8,
+      "uniformityPct": 92,
+      "fcrCurrent": 1.28,
+      "aiActionNote": "Conversão exemplar. Manter 3 tratos diários fracionados.",
+      "createdAt": "2026-10-02T00:14:54.524Z"
+    }
+  ],
+  "equipments": [
+    {
+      "id": "eq-01",
+      "tenantId": "tenant-river-life",
+      "name": "Aerador Palheta 2.0 CV (Motor Trifásico)",
+      "location": "Tanque 04",
+      "type": "Aeração Superficial",
+      "status": "critical",
+      "powerKw": 2.2,
+      "lastMaintenance": "2026-08-10",
+      "overdueDays": 9,
+      "healthScore": 68,
+      "aiDiagnostics": "Alerta preditivo: vibração excessiva no mancal acoplado e 9 dias sem lubrificação."
+    },
+    {
+      "id": "eq-02",
+      "tenantId": "tenant-river-life",
+      "name": "Soprador Roots Industrial 5.5 kW",
+      "location": "Berçário de PLs",
+      "type": "Aeração Submersa / Difusores",
+      "status": "operational",
+      "powerKw": 5.5,
+      "lastMaintenance": "2026-09-20",
+      "overdueDays": 0,
+      "healthScore": 98
+    },
+    {
+      "id": "eq-03",
+      "tenantId": "tenant-river-life",
+      "name": "Bomba de Captação e Drenagem 5.0 HP",
+      "location": "Canal Central de Abastecimento",
+      "type": "Bombeamento Hidráulico",
+      "status": "warning",
+      "powerKw": 3.7,
+      "lastMaintenance": "2026-09-02",
+      "overdueDays": 2,
+      "healthScore": 84
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv-seed-01",
+      "tenantId": "tenant-river-life",
+      "invoiceNumber": "NF-892341",
+      "batchCode": "Lote_04",
+      "quantityKg": 1200,
+      "pricePerKg": 10.25,
+      "totalValue": 12300,
+      "buyerName": "Frigorífico Polo Paraíba & NE",
+      "buyerCnpj": "02.429.144/0001-93",
+      "status": "issued",
+      "aiTaxReport": "Parecer Fiscal IA: Desoneração de ICMS na saída de produtor rural e isenção PIS/COFINS agro.",
+      "createdAt": "2026-10-06T00:14:54.524Z"
+    }
+  ]
+}

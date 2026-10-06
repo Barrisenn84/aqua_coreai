@@ -1,0 +1,6 @@
+{
+  "name": "AQUA-CORE AI | Sistema Nervoso da Aquicultura",
+  "description": "Engenharia de Produção Aquícola e Análise Preditiva de Elite para maximização de lucro, controle de FCR e alertas de emergência IoT em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
