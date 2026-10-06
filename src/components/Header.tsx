@@ -32,6 +32,7 @@ import {
   Moon,
   Landmark,
   Home,
+  RotateCcw,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -105,6 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
     currentTenant,
     currentUser,
     setIsAuthModalOpen,
+    setIsResetModalOpen,
   } = useAquaCore();
 
   const [solarData, setSolarData] = useState<{ sunrise: string; sunset: string; isDaylight: boolean } | null>(null);
@@ -460,6 +462,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Fast Action CTA */}
         <div className="flex items-center gap-2">
+          {/* 🔄 Botão de Governança: Zerar / Reiniciar Controlado */}
+          <button
+            onClick={() => setIsResetModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-950/70 hover:bg-amber-900/90 text-amber-300 border border-amber-600/60 shadow-md shadow-amber-950/30 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+            title="Zerar o que estou fazendo agora ou reiniciar dados salvos com proteção"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Zerar / Reiniciar</span>
+          </button>
+
           {onOpenFarmProfileModal && (
             <button
               onClick={onOpenFarmProfileModal}

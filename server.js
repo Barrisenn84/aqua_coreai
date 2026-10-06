@@ -2103,6 +2103,98 @@ var init_databaseService = __esm({
         this.saveData(this.data);
         return this.getFarmProfile(tenantId);
       }
+      // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM INDICAÇÃO E CONFIRMAÇÃO DO USUÁRIO
+      resetSavedData(tenantId, options) {
+        const modules = options.modules || [];
+        const resetAll = !!options.resetAllToFactory;
+        if (resetAll) {
+          const initial2 = JSON.parse(JSON.stringify(INITIAL_DB_DATA));
+          this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
+            initial2.biometries.filter((b) => b.tenantId === tenantId)
+          );
+          this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
+            initial2.feedingTrays.filter((t) => t.tenantId === tenantId)
+          );
+          this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
+            initial2.waterIonic.filter((w) => w.tenantId === tenantId)
+          );
+          this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
+            initial2.mortality.filter((m) => m.tenantId === tenantId)
+          );
+          this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
+            initial2.harvests.filter((h) => h.tenantId === tenantId)
+          );
+          this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
+            initial2.cashFlow.filter((c) => c.tenantId === tenantId)
+          );
+          this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
+            initial2.invoices.filter((i) => i.tenantId === tenantId)
+          );
+          this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
+            initial2.inventory.filter((i) => i.tenantId === tenantId)
+          );
+          this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId).concat(
+            initial2.equipments.filter((e) => e.tenantId === tenantId)
+          );
+          this.saveData(this.data);
+          return { message: "Todos os m\xF3dulos foram restaurados para os dados padr\xE3o de f\xE1brica.", modulesReset: ["all"] };
+        }
+        const resetReport = [];
+        const initial = JSON.parse(JSON.stringify(INITIAL_DB_DATA));
+        if (modules.includes("biometries")) {
+          this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
+            initial.biometries.filter((b) => b.tenantId === tenantId)
+          );
+          resetReport.push("Biometrias");
+        }
+        if (modules.includes("feedingTrays")) {
+          this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
+            initial.feedingTrays.filter((t) => t.tenantId === tenantId)
+          );
+          resetReport.push("Bandejas de Alimenta\xE7\xE3o");
+        }
+        if (modules.includes("waterIonic")) {
+          this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
+            initial.waterIonic.filter((w) => w.tenantId === tenantId)
+          );
+          resetReport.push("Balan\xE7o I\xF4nico e \xC1gua");
+        }
+        if (modules.includes("mortality")) {
+          this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
+            initial.mortality.filter((m) => m.tenantId === tenantId)
+          );
+          resetReport.push("Mortalidade e Mudas");
+        }
+        if (modules.includes("harvests")) {
+          this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
+            initial.harvests.filter((h) => h.tenantId === tenantId)
+          );
+          resetReport.push("Despescas");
+        }
+        if (modules.includes("cashFlow")) {
+          this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
+            initial.cashFlow.filter((c) => c.tenantId === tenantId)
+          );
+          resetReport.push("Fluxo de Caixa DFC");
+        }
+        if (modules.includes("invoices")) {
+          this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
+            initial.invoices.filter((i) => i.tenantId === tenantId)
+          );
+          resetReport.push("Notas Fiscais");
+        }
+        if (modules.includes("inventory")) {
+          this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
+            initial.inventory.filter((i) => i.tenantId === tenantId)
+          );
+          resetReport.push("Estoque e Insumos");
+        }
+        this.saveData(this.data);
+        return {
+          message: `M\xF3dulos selecionados reiniciados com sucesso: ${resetReport.join(", ")}.`,
+          modulesReset: resetReport
+        };
+      }
     };
     db = new DatabaseService();
   }
@@ -3647,6 +3739,26 @@ var DatabaseController = {
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
+  },
+  // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO EXPLÍCITA
+  resetData: async (req, res) => {
+    try {
+      const { tenantId, modules, resetAllToFactory, confirmationCode } = req.body;
+      const normalizedCode = (confirmationCode || "").trim().toUpperCase();
+      if (normalizedCode !== "ZERAR DADOS SALVOS" && normalizedCode !== "CONFIRMAR") {
+        return res.status(403).json({
+          error: 'C\xF3digo de confirma\xE7\xE3o inv\xE1lido. Digite exatamente "ZERAR DADOS SALVOS" para confirmar a opera\xE7\xE3o.'
+        });
+      }
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const result = db2.resetSavedData(tenantId || "tenant-river-life", {
+        modules: modules || [],
+        resetAllToFactory: !!resetAllToFactory
+      });
+      return res.json({ success: true, result });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 };
 var SolarController = {
@@ -3839,6 +3951,7 @@ app.get("/api/db/cash-flow", DatabaseController.getCashFlow);
 app.post("/api/db/cash-flow", DatabaseController.addCashFlow);
 app.get("/api/db/farm-profile", DatabaseController.getFarmProfile);
 app.put("/api/db/farm-profile", DatabaseController.updateFarmProfile);
+app.post("/api/db/reset", DatabaseController.resetData);
 app.get("/api/solar/cycle", SolarController.getCycle);
 app.get("/api/brasilapi/cnpj/:cnpj", BrasilApiController.getCnpj);
 app.get("/api/brasilapi/cep/:cep", BrasilApiController.getCep);

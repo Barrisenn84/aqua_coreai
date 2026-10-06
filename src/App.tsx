@@ -31,6 +31,7 @@ import { CashFlowView } from './components/CashFlowView';
 import { VoiceAssistantModal } from './components/VoiceAssistantModal';
 import { VisionAnalysisModal } from './components/VisionAnalysisModal';
 import { FarmProfileModal } from './components/FarmProfileModal';
+import { ResetControlModal } from './components/ResetControlModal';
 
 function AppContent() {
   const { setActiveTankId, isAuthModalOpen, setIsAuthModalOpen } = useAquaCore();
@@ -212,6 +213,9 @@ function AppContent() {
         isOpen={isFarmProfileModalOpen}
         onClose={() => setIsFarmProfileModalOpen(false)}
       />
+
+      {/* 🛡️ Modal de Governança: Zerar / Reiniciar Controlado */}
+      <ResetControlModal />
 
       {/* Floating IoT Stress Simulator Controls */}
       <IoTSimulatorControls />

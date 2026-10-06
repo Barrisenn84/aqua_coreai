@@ -107,6 +107,19 @@ interface AquaCoreContextType {
   updateFarmSettings: (settings: Partial<Farm>) => void;
   toggleSimulation: () => void;
   triggerScenario: (scenario: 'hypoxia_dawn' | 'ammonia_surge' | 'cold_front' | 'recover_optimal') => void;
+  isResetModalOpen: boolean;
+  setIsResetModalOpen: (open: boolean) => void;
+  resetActiveSession: (options?: {
+    resetScenario?: boolean;
+    resetTelemetryHistory?: boolean;
+    resetChat?: boolean;
+    resetFilters?: boolean;
+  }) => void;
+  resetSavedData: (options: {
+    modules: string[];
+    resetAllToFactory?: boolean;
+    confirmationCode: string;
+  }) => Promise<{ success: boolean; message: string }>;
 }
 
 const AquaCoreContext = createContext<AquaCoreContextType | undefined>(undefined);
@@ -160,6 +173,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     phone: '+5584988585211',
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
 
   const [farm, setFarm] = useState<Farm>(initialFarm);
   const [tanks, setTanks] = useState<Tank[]>(initialTanks);
@@ -608,6 +622,115 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  /**
+   * 🔄 REINICIAR / ZERAR O QUE ESTIVER SENDO FEITO NA HORA (ESTADO VOLÁTIL E SELEÇÃO)
+   * NUNCA APAGA DADOS SALVOS NO BANCO DE DADOS.
+   */
+  const resetActiveSession = (options?: {
+    resetScenario?: boolean;
+    resetTelemetryHistory?: boolean;
+    resetChat?: boolean;
+    resetFilters?: boolean;
+  }) => {
+    const opts = {
+      resetScenario: true,
+      resetTelemetryHistory: true,
+      resetChat: false,
+      resetFilters: true,
+      ...options,
+    };
+
+    if (opts.resetScenario) {
+      setActiveScenarioName(null);
+      setTanks((prev) => prev.map((t) => ({ ...t, aeratorActive: true, status: 'optimal' })));
+      setSensorReadings((prev) => {
+        const updated: Record<string, SensorReading> = {};
+        Object.entries(prev).forEach(([id, r]) => {
+          updated[id] = {
+            ...r,
+            dissolvedOxygen: 5.8,
+            temperature: 28.5,
+            ph: 7.5,
+            ammoniaTotal: 0.45,
+            ammoniaToxic: 0.012,
+          };
+        });
+        return updated;
+      });
+    }
+
+    if (opts.resetTelemetryHistory) {
+      const hist: Record<string, SensorReading[]> = {};
+      initialTanks.forEach((tank) => {
+        const base = initialSensorReadings[tank.id];
+        const points: SensorReading[] = [];
+        for (let i = 12; i >= 0; i--) {
+          const time = new Date(Date.now() - i * 5 * 60000);
+          points.push({
+            ...base,
+            id: `hist-${tank.id}-${i}`,
+            timestamp: time.toISOString(),
+            dissolvedOxygen: Number((5.8 + Math.sin(i / 2) * 0.2).toFixed(2)),
+            temperature: Number((28.5 + Math.cos(i / 3) * 0.2).toFixed(1)),
+          });
+        }
+        hist[tank.id] = points;
+      });
+      setSensorHistory(hist);
+    }
+
+    if (opts.resetChat) {
+      setWhatsAppMessages(initialWhatsAppMessages);
+    }
+
+    if (opts.resetFilters) {
+      setActiveTankId('tank-01');
+    }
+  };
+
+  /**
+   * 🛡️ REINICIAR DADOS SALVOS NO BANCO DE DADOS
+   * NUNCA EXECUTA SEM CONFIRMAÇÃO EXPLÍCITA E AUTORIZAÇÃO DO USUÁRIO.
+   */
+  const resetSavedData = async (options: {
+    modules: string[];
+    resetAllToFactory?: boolean;
+    confirmationCode: string;
+  }): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/db/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          modules: options.modules,
+          resetAllToFactory: options.resetAllToFactory,
+          confirmationCode: options.confirmationCode,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return {
+          success: false,
+          message: data.error || 'Falha na confirmação de segurança. Dados mantidos intactos.',
+        };
+      }
+
+      // Atualiza o estado da sessão após reset autorizado
+      resetActiveSession();
+      return {
+        success: true,
+        message: data.result?.message || 'Dados selecionados foram reiniciados com sucesso.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err.message || 'Erro ao conectar ao servidor para reinicialização.',
+      };
+    }
+  };
+
   // PILAR 1 & 3: WhatsApp Ghost UX Engine methods
   const sendWhatsAppMessage = async (text: string) => {
     const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -834,6 +957,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateFarmSettings,
         toggleSimulation,
         triggerScenario,
+        isResetModalOpen,
+        setIsResetModalOpen,
+        resetActiveSession,
+        resetSavedData,
       }}
     >
       {children}

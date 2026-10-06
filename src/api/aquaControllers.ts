@@ -549,6 +549,30 @@ export const DatabaseController = {
       return res.status(500).json({ error: err.message });
     }
   },
+
+  // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO EXPLÍCITA
+  resetData: async (req: Request, res: Response) => {
+    try {
+      const { tenantId, modules, resetAllToFactory, confirmationCode } = req.body;
+      const normalizedCode = (confirmationCode || '').trim().toUpperCase();
+
+      if (normalizedCode !== 'ZERAR DADOS SALVOS' && normalizedCode !== 'CONFIRMAR') {
+        return res.status(403).json({
+          error: 'Código de confirmação inválido. Digite exatamente "ZERAR DADOS SALVOS" para confirmar a operação.',
+        });
+      }
+
+      const { db } = await import('../db/databaseService');
+      const result = db.resetSavedData(tenantId || 'tenant-river-life', {
+        modules: modules || [],
+        resetAllToFactory: !!resetAllToFactory,
+      });
+
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
 };
 
 /**

@@ -139,6 +139,9 @@ app.post('/api/db/cash-flow', DatabaseController.addCashFlow);
 app.get('/api/db/farm-profile', DatabaseController.getFarmProfile);
 app.put('/api/db/farm-profile', DatabaseController.updateFarmProfile);
 
+// 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO DO USUÁRIO
+app.post('/api/db/reset', DatabaseController.resetData);
+
 // ☀️ APIS GRATUITAS: CICLO SOLAR, BRASILAPI & BANCO CENTRAL
 app.get('/api/solar/cycle', SolarController.getCycle);
 app.get('/api/brasilapi/cnpj/:cnpj', BrasilApiController.getCnpj);

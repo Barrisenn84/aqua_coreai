@@ -828,6 +828,110 @@ class DatabaseService {
     this.saveData(this.data);
     return this.getFarmProfile(tenantId);
   }
+
+  // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM INDICAÇÃO E CONFIRMAÇÃO DO USUÁRIO
+  public resetSavedData(
+    tenantId: string,
+    options: {
+      modules?: string[];
+      resetAllToFactory?: boolean;
+    }
+  ) {
+    const modules = options.modules || [];
+    const resetAll = !!options.resetAllToFactory;
+
+    if (resetAll) {
+      // Restaura todos os dados originais de fábrica para o tenant
+      const initial = JSON.parse(JSON.stringify(INITIAL_DB_DATA)) as DbSchema;
+      this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
+        initial.biometries.filter((b) => b.tenantId === tenantId)
+      );
+      this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
+        initial.feedingTrays.filter((t) => t.tenantId === tenantId)
+      );
+      this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
+        initial.waterIonic.filter((w) => w.tenantId === tenantId)
+      );
+      this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
+        initial.mortality.filter((m) => m.tenantId === tenantId)
+      );
+      this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
+        initial.harvests.filter((h) => h.tenantId === tenantId)
+      );
+      this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
+        initial.cashFlow.filter((c) => c.tenantId === tenantId)
+      );
+      this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
+        initial.invoices.filter((i) => i.tenantId === tenantId)
+      );
+      this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
+        initial.inventory.filter((i) => i.tenantId === tenantId)
+      );
+      this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId).concat(
+        initial.equipments.filter((e) => e.tenantId === tenantId)
+      );
+      this.saveData(this.data);
+      return { message: 'Todos os módulos foram restaurados para os dados padrão de fábrica.', modulesReset: ['all'] };
+    }
+
+    const resetReport: string[] = [];
+    const initial = JSON.parse(JSON.stringify(INITIAL_DB_DATA)) as DbSchema;
+
+    if (modules.includes('biometries')) {
+      this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
+        initial.biometries.filter((b) => b.tenantId === tenantId)
+      );
+      resetReport.push('Biometrias');
+    }
+    if (modules.includes('feedingTrays')) {
+      this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
+        initial.feedingTrays.filter((t) => t.tenantId === tenantId)
+      );
+      resetReport.push('Bandejas de Alimentação');
+    }
+    if (modules.includes('waterIonic')) {
+      this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
+        initial.waterIonic.filter((w) => w.tenantId === tenantId)
+      );
+      resetReport.push('Balanço Iônico e Água');
+    }
+    if (modules.includes('mortality')) {
+      this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
+        initial.mortality.filter((m) => m.tenantId === tenantId)
+      );
+      resetReport.push('Mortalidade e Mudas');
+    }
+    if (modules.includes('harvests')) {
+      this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
+        initial.harvests.filter((h) => h.tenantId === tenantId)
+      );
+      resetReport.push('Despescas');
+    }
+    if (modules.includes('cashFlow')) {
+      this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
+        initial.cashFlow.filter((c) => c.tenantId === tenantId)
+      );
+      resetReport.push('Fluxo de Caixa DFC');
+    }
+    if (modules.includes('invoices')) {
+      this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
+        initial.invoices.filter((i) => i.tenantId === tenantId)
+      );
+      resetReport.push('Notas Fiscais');
+    }
+    if (modules.includes('inventory')) {
+      this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
+        initial.inventory.filter((i) => i.tenantId === tenantId)
+      );
+      resetReport.push('Estoque e Insumos');
+    }
+
+    this.saveData(this.data);
+    return {
+      message: `Módulos selecionados reiniciados com sucesso: ${resetReport.join(', ')}.`,
+      modulesReset: resetReport,
+    };
+  }
 }
 
 export const db = new DatabaseService();
