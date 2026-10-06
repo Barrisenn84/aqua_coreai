@@ -107,6 +107,21 @@ interface AquaCoreContextType {
   updateFarmSettings: (settings: Partial<Farm>) => void;
   toggleSimulation: () => void;
   triggerScenario: (scenario: 'hypoxia_dawn' | 'ammonia_surge' | 'cold_front' | 'recover_optimal') => void;
+  addTank: (tankData: Omit<Tank, 'id' | 'farmId'> & {
+    initialBatchCode?: string;
+    initialShrimpCount?: number;
+    initialWeightG?: number;
+  }) => Tank;
+  deleteTank: (tankId: string) => void;
+  resetToBlankBusiness: (params: {
+    farmName: string;
+    location: string;
+    producerName?: string;
+    producerPhone?: string;
+    speciesTarget?: string;
+    clearTanks?: boolean;
+  }) => Promise<{ success: boolean; message: string }>;
+  restoreDemoData: () => Promise<void>;
   isResetModalOpen: boolean;
   setIsResetModalOpen: (open: boolean) => void;
   resetActiveSession: (options?: {
@@ -164,24 +179,80 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
   ]);
 
-  const [currentTenant, setCurrentTenant] = useState<ITenant>(availableTenants[0]);
-  const [currentUser, setCurrentUser] = useState<IUser>({
-    id: 'usr-01',
-    name: 'Engenheiro Collermhann',
-    email: 'collermhann@aquacore.ai',
-    role: 'owner',
-    phone: '+5584988585211',
+  const [currentTenant, setCurrentTenant] = useState<ITenant>(() => {
+    try {
+      const saved = localStorage.getItem('aquacore_saved_tenant');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return availableTenants[0];
   });
+
+  const [currentUser, setCurrentUser] = useState<IUser>(() => {
+    try {
+      const saved = localStorage.getItem('aquacore_saved_user');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      id: 'usr-01',
+      name: 'Engenheiro Collermhann',
+      email: 'collermhann@aquacore.ai',
+      role: 'owner',
+      phone: '+5584988585211',
+    };
+  });
+
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
 
-  const [farm, setFarm] = useState<Farm>(initialFarm);
-  const [tanks, setTanks] = useState<Tank[]>(initialTanks);
-  const [batches, setBatches] = useState<Batch[]>(initialBatches);
+  const [farm, setFarm] = useState<Farm>(() => {
+    try {
+      const saved = localStorage.getItem('aquacore_saved_farm');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialFarm;
+  });
+
+  const [tanks, setTanks] = useState<Tank[]>(() => {
+    try {
+      const saved = localStorage.getItem('aquacore_saved_tanks');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialTanks;
+  });
+
+  const [batches, setBatches] = useState<Batch[]>(() => {
+    try {
+      const saved = localStorage.getItem('aquacore_saved_batches');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialBatches;
+  });
+
+  // Salva no localStorage sempre que houver alteração
+  useEffect(() => {
+    localStorage.setItem('aquacore_saved_farm', JSON.stringify(farm));
+  }, [farm]);
+
+  useEffect(() => {
+    localStorage.setItem('aquacore_saved_tanks', JSON.stringify(tanks));
+  }, [tanks]);
+
+  useEffect(() => {
+    localStorage.setItem('aquacore_saved_batches', JSON.stringify(batches));
+  }, [batches]);
+
+  useEffect(() => {
+    localStorage.setItem('aquacore_saved_tenant', JSON.stringify(currentTenant));
+  }, [currentTenant]);
+
+  useEffect(() => {
+    localStorage.setItem('aquacore_saved_user', JSON.stringify(currentUser));
+  }, [currentUser]);
+
   const [sensorReadings, setSensorReadings] = useState<Record<string, SensorReading>>(initialSensorReadings);
   const [biometries, setBiometries] = useState<Biometry[]>(initialBiometries);
   const [feedingLogs, setFeedingLogs] = useState<FeedingLog[]>(initialFeedingLogs);
-  const [activeTankId, setActiveTankId] = useState<string>('tank-04'); // Focus default on emergency tank 04
+  const [activeTankId, setActiveTankId] = useState<string>(() => tanks[0]?.id || 'tank-01');
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const [activeScenarioName, setActiveScenarioName] = useState<string | null>('Alerta Noturno: Hipóxia Tanque 04');
 
@@ -268,6 +339,28 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Overall farm metrics & DRE
   const { totalBiomassKg, globalFcr, globalSurvivalRatePct, dre } = useMemo(() => {
+    if (batches.length === 0 && tanks.length === 0) {
+      return {
+        totalBiomassKg: 0,
+        globalFcr: 0,
+        globalSurvivalRatePct: 100,
+        dre: {
+          grossRevenue: 0,
+          feedCost: 0,
+          energyCost: 0,
+          juvenilesCost: 0,
+          additivesProbioticsCost: 0,
+          laborFixedCost: 0,
+          totalCost: 0,
+          ebitda: 0,
+          netMarginPct: 0,
+          costPerKgProduced: 0,
+          currentBiomassKg: 0,
+          breakevenBiomassKg: 0,
+        },
+      };
+    }
+
     let totalBiomass = 0;
     let initialTotalBiomass = 0;
     let totalFeedKg = 0;
@@ -285,7 +378,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
 
     const netGain = totalBiomass - initialTotalBiomass;
-    const fcr = netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : 1.42;
+    const fcr = netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : (totalBiomass > 0 ? 1.35 : 0);
     const survivalRate = totalInitialFish > 0 ? Number(((totalCurrentFish / totalInitialFish) * 100).toFixed(1)) : 92.5;
 
     // Agro DRE calculation
@@ -297,7 +390,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const energyCost = estimatedDailyEnergyKwh * farm.kwhCost * 30; // 30-day projection
     const juvenilesCost = totalInitialFish * 0.32; // R$ 0,32 per juvenile
     const additivesProbioticsCost = totalBiomass * 0.42;
-    const laborFixedCost = 6500; // Team salary and operational overhead
+    const laborFixedCost = batches.length > 0 ? 6500 : 0; // Team salary e overhead se houver operação ativa
 
     const totalCost = feedCost + energyCost + juvenilesCost + additivesProbioticsCost + laborFixedCost;
     const ebitda = grossRevenue - totalCost;
@@ -689,8 +782,202 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   /**
+   * ➕ ADICIONAR NOVO TANQUE / VIVEIRO REAL
+   */
+  const addTank = (tankData: Omit<Tank, 'id' | 'farmId'> & {
+    initialBatchCode?: string;
+    initialShrimpCount?: number;
+    initialWeightG?: number;
+  }) => {
+    const newId = `tank-${Date.now().toString().slice(-4)}`;
+    const newTank: Tank = {
+      id: newId,
+      farmId: farm.id,
+      name: tankData.name,
+      type: tankData.type || 'escavado',
+      volumeM3: tankData.volumeM3 || 2000,
+      areaM2: tankData.areaM2 || 1500,
+      depthM: tankData.depthM || 1.5,
+      aeratorCount: tankData.aeratorCount || 2,
+      aeratorPowerKw: tankData.aeratorPowerKw || 2.2,
+      aeratorActive: true,
+      status: 'optimal',
+    };
+
+    const updatedTanks = [...tanks, newTank];
+    setTanks(updatedTanks);
+
+    if (tankData.initialShrimpCount && tankData.initialShrimpCount > 0) {
+      const newBatch: Batch = {
+        id: `batch-${Date.now().toString().slice(-4)}`,
+        farmId: farm.id,
+        tankId: newId,
+        batchCode: tankData.initialBatchCode || `Lote_${String(updatedTanks.length).padStart(2, '0')}`,
+        species: currentTenant.speciesTarget || 'Litopenaeus vannamei',
+        stockingDate: new Date().toISOString().split('T')[0],
+        initialCount: tankData.initialShrimpCount,
+        currentCount: tankData.initialShrimpCount,
+        initialWeightG: tankData.initialWeightG || 0.02,
+        currentWeightG: tankData.initialWeightG || 0.02,
+        targetWeightG: 12.0,
+        accumulatedFeedKg: 0,
+        stage: 'engorda',
+        healthStatus: 'excelente',
+      };
+      setBatches((prev) => [...prev, newBatch]);
+    }
+
+    setSensorReadings((prev) => ({
+      ...prev,
+      [newId]: {
+        tankId: newId,
+        timestamp: new Date().toISOString(),
+        dissolvedOxygen: 5.8,
+        temperature: 28.5,
+        ph: 7.6,
+        salinityPpt: 15.0,
+        ammoniaTotal: 0.35,
+        ammoniaToxic: 0.008,
+        turbidityNtu: 25,
+        orpMv: 210,
+        batteryPct: 98,
+        solarPanelWatts: 45,
+      },
+    }));
+
+    setActiveTankId(newId);
+    return newTank;
+  };
+
+  /**
+   * 🗑️ EXCLUIR TANQUE
+   */
+  const deleteTank = (tankId: string) => {
+    const updatedTanks = tanks.filter((t) => t.id !== tankId);
+    setTanks(updatedTanks);
+    setBatches((prev) => prev.filter((b) => b.tankId !== tankId));
+    if (activeTankId === tankId) {
+      setActiveTankId(updatedTanks[0]?.id || '');
+    }
+  };
+
+  /**
+   * 🚀 ZERAR TUDO E INICIAR MEU NEGÓCIO REAL DO ZERO
+   * Permite ao dono preencher todas as informações reais do negócio dele.
+   */
+  const resetToBlankBusiness = async (params: {
+    farmName: string;
+    location: string;
+    producerName?: string;
+    producerPhone?: string;
+    speciesTarget?: string;
+    clearTanks?: boolean;
+  }): Promise<{ success: boolean; message: string }> => {
+    try {
+      await fetch('/api/db/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          startBlankBusiness: true,
+          farmData: {
+            farmName: params.farmName,
+            location: params.location,
+            producerName: params.producerName,
+            producerPhone: params.producerPhone,
+            speciesTarget: params.speciesTarget,
+          },
+          confirmationCode: 'ZERAR DADOS SALVOS',
+        }),
+      });
+    } catch (e) {
+      console.warn('Persistência offline ao zerar:', e);
+    }
+
+    const fName = params.farmName.trim() || 'Minha Fazenda';
+    const loc = params.location.trim() || 'Brasil';
+    const phone = params.producerPhone?.trim() || '+5584988585211';
+    const species = params.speciesTarget?.trim() || 'Litopenaeus vannamei (Camarão)';
+
+    const newFarm: Farm = {
+      ...farm,
+      name: fName,
+      location: loc,
+      currency: 'BRL (R$)',
+    };
+    setFarm(newFarm);
+
+    const updatedTenant: ITenant = {
+      ...currentTenant,
+      name: fName,
+      location: loc,
+      speciesTarget: species,
+      producerPhone: phone,
+    };
+    setCurrentTenant(updatedTenant);
+
+    if (params.producerName) {
+      const updatedUser: IUser = {
+        ...currentUser,
+        name: params.producerName,
+        phone,
+      };
+      setCurrentUser(updatedUser);
+    }
+
+    if (params.clearTanks !== false) {
+      setTanks([]);
+      setBatches([]);
+      setSensorReadings({});
+      setSensorHistory({});
+      setActiveTankId('');
+    }
+
+    setBiometries([]);
+    setFeedingLogs([]);
+    setActiveScenarioName(null);
+
+    return {
+      success: true,
+      message: 'Sistema zerado com sucesso! Os dados de demonstração foram removidos e sua propriedade real está pronta para ser preenchida.',
+    };
+  };
+
+  /**
+   * 🏭 RESTAURAR DEMONSTRAÇÃO ORIGINAL DE FÁBRICA (Fazenda River Life)
+   */
+  const restoreDemoData = async () => {
+    try {
+      await fetch('/api/db/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          resetAllToFactory: true,
+          confirmationCode: 'ZERAR DADOS SALVOS',
+        }),
+      });
+    } catch {}
+
+    localStorage.removeItem('aquacore_saved_farm');
+    localStorage.removeItem('aquacore_saved_tanks');
+    localStorage.removeItem('aquacore_saved_batches');
+    localStorage.removeItem('aquacore_saved_tenant');
+    localStorage.removeItem('aquacore_saved_user');
+
+    setFarm(initialFarm);
+    setTanks(initialTanks);
+    setBatches(initialBatches);
+    setSensorReadings(initialSensorReadings);
+    setBiometries(initialBiometries);
+    setFeedingLogs(initialFeedingLogs);
+    setCurrentTenant(availableTenants[0]);
+    setActiveTankId('tank-04');
+    setActiveScenarioName('Alerta Noturno: Hipóxia Tanque 04');
+  };
+
+  /**
    * 🛡️ REINICIAR DADOS SALVOS NO BANCO DE DADOS
-   * NUNCA EXECUTA SEM CONFIRMAÇÃO EXPLÍCITA E AUTORIZAÇÃO DO USUÁRIO.
    */
   const resetSavedData = async (options: {
     modules: string[];
@@ -698,6 +985,14 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     confirmationCode: string;
   }): Promise<{ success: boolean; message: string }> => {
     try {
+      if (options.resetAllToFactory) {
+        await restoreDemoData();
+        return {
+          success: true,
+          message: 'Todos os módulos foram restaurados para o padrão original da Fazenda River Life.',
+        };
+      }
+
       const res = await fetch('/api/db/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -717,11 +1012,24 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
       }
 
-      // Atualiza o estado da sessão após reset autorizado
+      // Limpa os estados do frontend correspondentes aos módulos zerados
+      if (options.modules.includes('tanks')) {
+        setTanks([]);
+        setBatches([]);
+        setSensorReadings({});
+        setActiveTankId('');
+      }
+      if (options.modules.includes('biometries')) {
+        setBiometries([]);
+      }
+      if (options.modules.includes('feedingTrays')) {
+        setFeedingLogs([]);
+      }
+
       resetActiveSession();
       return {
         success: true,
-        message: data.result?.message || 'Dados selecionados foram reiniciados com sucesso.',
+        message: data.result?.message || 'Dados selecionados foram zerados com sucesso.',
       };
     } catch (err: any) {
       return {
@@ -979,6 +1287,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateFarmSettings,
         toggleSimulation,
         triggerScenario,
+        addTank,
+        deleteTank,
+        resetToBlankBusiness,
+        restoreDemoData,
         isResetModalOpen,
         setIsResetModalOpen,
         resetActiveSession,

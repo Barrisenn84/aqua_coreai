@@ -6,13 +6,16 @@ import {
   Lock,
   CheckCircle2,
   X,
-  Sliders,
   Database,
-  Radio,
-  FileSpreadsheet,
   Activity,
-  Layers,
   Sparkles,
+  Building2,
+  Waves,
+  Briefcase,
+  Layers,
+  MapPin,
+  Phone,
+  Fish,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -22,10 +25,14 @@ export const ResetControlModal: React.FC = () => {
     setIsResetModalOpen,
     resetActiveSession,
     resetSavedData,
+    resetToBlankBusiness,
+    restoreDemoData,
     currentTenant,
+    currentUser,
+    farm,
   } = useAquaCore();
 
-  const [activeTab, setActiveTab] = useState<'session' | 'saved'>('session');
+  const [activeTab, setActiveTab] = useState<'session' | 'blank_business' | 'selective'>('blank_business');
 
   // Opções da Aba 1 (Sessão Atual)
   const [sessionOpts, setSessionOpts] = useState({
@@ -36,12 +43,36 @@ export const ResetControlModal: React.FC = () => {
   });
   const [sessionSuccessMessage, setSessionSuccessMessage] = useState<string | null>(null);
 
-  // Opções da Aba 2 (Dados Salvos)
+  // Opções da Aba 2 (Zerar e Iniciar Negócio Real)
+  const [realFarmName, setRealFarmName] = useState(
+    farm.name !== 'Fazenda River Life' ? farm.name : 'Minha Fazenda de Aquicultura'
+  );
+  const [realLocation, setRealLocation] = useState(
+    farm.location !== 'Polo de Mogeiro – PB (Centro de leitura)' ? farm.location : 'Brasil'
+  );
+  const [realProducerName, setRealProducerName] = useState(
+    currentUser.name !== 'Engenheiro Collermhann' ? currentUser.name : 'Produtor Responsável'
+  );
+  const [realProducerPhone, setRealProducerPhone] = useState(
+    currentTenant.producerPhone || '+5584988585211'
+  );
+  const [realSpecies, setRealSpecies] = useState(
+    currentTenant.speciesTarget || 'Litopenaeus vannamei (Camarão)'
+  );
+  const [clearTanksCheckbox, setClearTanksCheckbox] = useState(true);
+  const [blankConfirmInput, setBlankConfirmInput] = useState('');
+  const [isProcessingBlank, setIsProcessingBlank] = useState(false);
+  const [blankStatusMessage, setBlankStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Opções da Aba 3 (Módulos Seletivos)
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [resetAllToFactory, setResetAllToFactory] = useState(false);
-  const [confirmationInput, setConfirmationInput] = useState('');
-  const [isProcessingSaved, setIsProcessingSaved] = useState(false);
-  const [savedStatusMessage, setSavedStatusMessage] = useState<{
+  const [selectiveConfirmInput, setSelectiveConfirmInput] = useState('');
+  const [isProcessingSelective, setIsProcessingSelective] = useState(false);
+  const [selectiveStatusMessage, setSelectiveStatusMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
@@ -50,8 +81,10 @@ export const ResetControlModal: React.FC = () => {
 
   const handleClose = () => {
     setSessionSuccessMessage(null);
-    setSavedStatusMessage(null);
-    setConfirmationInput('');
+    setBlankStatusMessage(null);
+    setSelectiveStatusMessage(null);
+    setBlankConfirmInput('');
+    setSelectiveConfirmInput('');
     setIsResetModalOpen(false);
   };
 
@@ -64,46 +97,80 @@ export const ResetControlModal: React.FC = () => {
     }, 1800);
   };
 
+  // Executar Zerar Tudo & Iniciar Negócio Real
+  const isBlankConfirmationValid =
+    blankConfirmInput.trim().toUpperCase() === 'ZERAR DADOS' ||
+    blankConfirmInput.trim().toUpperCase() === 'CONFIRMAR' ||
+    blankConfirmInput.trim().toUpperCase() === 'ZERAR DADOS SALVOS';
+
+  const handleResetToBlankBusiness = async () => {
+    if (!isBlankConfirmationValid) return;
+    setIsProcessingBlank(true);
+    setBlankStatusMessage(null);
+
+    const result = await resetToBlankBusiness({
+      farmName: realFarmName,
+      location: realLocation,
+      producerName: realProducerName,
+      producerPhone: realProducerPhone,
+      speciesTarget: realSpecies,
+      clearTanks: clearTanksCheckbox,
+    });
+
+    setIsProcessingBlank(false);
+    if (result.success) {
+      setBlankStatusMessage({ type: 'success', text: result.message });
+      setBlankConfirmInput('');
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    } else {
+      setBlankStatusMessage({ type: 'error', text: result.message });
+    }
+  };
+
+  // Módulos Seletivos
   const toggleModule = (mod: string) => {
     setSelectedModules((prev) =>
       prev.includes(mod) ? prev.filter((m) => m !== mod) : [...prev, mod]
     );
   };
 
-  const isConfirmationValid =
-    confirmationInput.trim().toUpperCase() === 'ZERAR DADOS SALVOS' &&
+  const isSelectiveConfirmationValid =
+    (selectiveConfirmInput.trim().toUpperCase() === 'ZERAR DADOS SALVOS' ||
+      selectiveConfirmInput.trim().toUpperCase() === 'CONFIRMAR') &&
     (selectedModules.length > 0 || resetAllToFactory);
 
-  const handleResetSaved = async () => {
-    if (!isConfirmationValid) return;
-    setIsProcessingSaved(true);
-    setSavedStatusMessage(null);
+  const handleResetSelective = async () => {
+    if (!isSelectiveConfirmationValid) return;
+    setIsProcessingSelective(true);
+    setSelectiveStatusMessage(null);
 
     const result = await resetSavedData({
       modules: selectedModules,
       resetAllToFactory,
-      confirmationCode: confirmationInput.trim(),
+      confirmationCode: selectiveConfirmInput.trim(),
     });
 
-    setIsProcessingSaved(false);
+    setIsProcessingSelective(false);
     if (result.success) {
-      setSavedStatusMessage({ type: 'success', text: result.message });
+      setSelectiveStatusMessage({ type: 'success', text: result.message });
       setSelectedModules([]);
       setResetAllToFactory(false);
-      setConfirmationInput('');
+      setSelectiveConfirmInput('');
       setTimeout(() => {
         handleClose();
       }, 2200);
     } else {
-      setSavedStatusMessage({ type: 'error', text: result.message });
+      setSelectiveStatusMessage({ type: 'error', text: result.message });
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
         {/* Cabeçalho do Modal */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <RotateCcw className="w-5 h-5" />
@@ -116,7 +183,7 @@ export const ResetControlModal: React.FC = () => {
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Fazenda: <span className="text-cyan-300 font-medium">{currentTenant.name}</span>
+                Propriedade ativa: <span className="text-cyan-300 font-medium">{farm.name}</span>
               </p>
             </div>
           </div>
@@ -128,297 +195,416 @@ export const ResetControlModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Seletor de Abas com Código de Segurança */}
-        <div className="flex border-b border-slate-800 bg-slate-950/40 p-2 gap-2">
+        {/* Seletor de 3 Abas */}
+        <div className="flex border-b border-slate-800 bg-slate-950/50 p-2 gap-1.5">
+          <button
+            onClick={() => setActiveTab('blank_business')}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab === 'blank_business'
+                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-900/40'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Building2 className="w-4 h-4 text-cyan-300" />
+            <span>1. Iniciar Meu Negócio Real (Zerar Demo)</span>
+            <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.2 rounded font-mono font-bold">
+              Novo
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('selective')}
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab === 'selective'
+                ? 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Database className="w-4 h-4 text-red-400" />
+            <span>2. Módulos Específicos / Demo</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('session')}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'session'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
             <Activity className="w-4 h-4 text-emerald-400" />
-            <span>1. Zerar O Que Estou Fazendo Agora</span>
-            <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.2 rounded font-mono">
-              Seguro
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('saved')}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              activeTab === 'saved'
-                ? 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-red-300 hover:bg-slate-800/60'
-            }`}
-          >
-            <Lock className="w-4 h-4 text-red-400" />
-            <span>2. Zerar Dados Salvos no Banco</span>
-            <span className="text-[10px] bg-red-500/30 text-red-300 px-1.5 py-0.2 rounded font-mono">
-              Blindado
-            </span>
+            <span>3. Sessão</span>
           </button>
         </div>
 
-        {/* Conteúdo do Modal */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1">
-          {/* ================= ABA 1: SESSÃO ATUAL ================= */}
-          {activeTab === 'session' && (
+        {/* Conteúdo das Abas */}
+        <div className="p-6 overflow-y-auto space-y-5 text-xs font-mono">
+          {/* ========================================================================= */}
+          {/* ABA 1: ZERAR TUDO E INICIAR MEU NEGÓCIO REAL */}
+          {/* ========================================================================= */}
+          {activeTab === 'blank_business' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-800/50 flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-emerald-200/90 leading-relaxed">
-                  <p className="font-bold text-emerald-300 text-sm">
-                    Garantia de Preservação de Dados:
-                  </p>
-                  Esta opção reseta <strong>apenas o estado em andamento na tela</strong> (simulações ativas, alertas de teste ou filtros de exibição).
-                  <span className="block mt-1 text-emerald-300 font-semibold">
-                    ✓ NENHUM dado gravado no banco de dados (biometrias, estoque, notas ou financeiro) será apagado ou alterado.
-                  </span>
+              <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-800/60 space-y-2">
+                <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <span>Configuração da Sua Fazenda / Empresa Real</span>
                 </div>
+                <p className="text-slate-300 leading-relaxed text-xs font-sans">
+                  Esta opção zera todos os dados fictícios de demonstração da <strong>"Fazenda River Life"</strong> (tanques de exemplo, biometrias, ração, despescas e custos simulados) e configura o sistema com os dados reais do seu negócio.
+                </p>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold block">
-                  Selecione o que deseja reiniciar agora:
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={sessionOpts.resetScenario}
-                    onChange={(e) =>
-                      setSessionOpts({ ...sessionOpts, resetScenario: e.target.checked })
-                    }
-                    className="mt-1 rounded accent-emerald-500 w-4 h-4 cursor-pointer"
-                  />
-                  <div className="text-xs">
-                    <span className="text-white font-bold block">
-                      Zerar Cenário de Simulação / Estresse Ativo
-                    </span>
-                    <span className="text-slate-400">
-                      Interrompe testes de hipóxia, amônia ou frente fria, retornando todos os viveiros e aeradores para a condição nominal verde.
-                    </span>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={sessionOpts.resetTelemetryHistory}
-                    onChange={(e) =>
-                      setSessionOpts({ ...sessionOpts, resetTelemetryHistory: e.target.checked })
-                    }
-                    className="mt-1 rounded accent-emerald-500 w-4 h-4 cursor-pointer"
-                  />
-                  <div className="text-xs">
-                    <span className="text-white font-bold block">
-                      Zerar Histórico Volátil de Gráficos da Sessão
-                    </span>
-                    <span className="text-slate-400">
-                      Restaura as curvas das últimas leituras instantâneas dos sensores para a linha de base calibrada.
-                    </span>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={sessionOpts.resetFilters}
-                    onChange={(e) =>
-                      setSessionOpts({ ...sessionOpts, resetFilters: e.target.checked })
-                    }
-                    className="mt-1 rounded accent-emerald-500 w-4 h-4 cursor-pointer"
-                  />
-                  <div className="text-xs">
-                    <span className="text-white font-bold block">
-                      Redefinir Seleção de Viveiro & Filtros
-                    </span>
-                    <span className="text-slate-400">
-                      Volta a tela para o viveiro principal (Tanque 01) e limpa filtros temporários de busca.
-                    </span>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={sessionOpts.resetChat}
-                    onChange={(e) =>
-                      setSessionOpts({ ...sessionOpts, resetChat: e.target.checked })
-                    }
-                    className="mt-1 rounded accent-emerald-500 w-4 h-4 cursor-pointer"
-                  />
-                  <div className="text-xs">
-                    <span className="text-white font-bold block">
-                      Limpar Mensagens Temporárias do Assistente WhatsApp
-                    </span>
-                    <span className="text-slate-400">
-                      Reinicia a tela de diálogo do chat de teste para a saudação matinal padrão.
-                    </span>
-                  </div>
-                </label>
-              </div>
-
-              {sessionSuccessMessage && (
-                <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-600 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{sessionSuccessMessage}</span>
+              {blankStatusMessage && (
+                <div
+                  className={`p-3.5 rounded-xl flex items-center gap-2.5 text-xs ${
+                    blankStatusMessage.type === 'success'
+                      ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-200'
+                      : 'bg-red-500/20 border border-red-500/50 text-red-200'
+                  }`}
+                >
+                  {blankStatusMessage.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  )}
+                  <span>{blankStatusMessage.text}</span>
                 </div>
               )}
+
+              {/* Formulário de Identificação do Negócio Real */}
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <span className="text-cyan-400 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5" />
+                  Dados do Seu Negócio Real
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1">Nome da Sua Fazenda / Negócio</label>
+                    <input
+                      type="text"
+                      value={realFarmName}
+                      onChange={(e) => setRealFarmName(e.target.value)}
+                      placeholder="Ex: Fazenda Boa Vista, Aquacultura Maré Alta"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-cyan-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 mb-1">Localização (Cidade – UF)</label>
+                    <input
+                      type="text"
+                      value={realLocation}
+                      onChange={(e) => setRealLocation(e.target.value)}
+                      placeholder="Ex: Natal – RN, Mogeiro – PB, Aracati – CE"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-cyan-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 mb-1">Nome do Dono / Responsável</label>
+                    <input
+                      type="text"
+                      value={realProducerName}
+                      onChange={(e) => setRealProducerName(e.target.value)}
+                      placeholder="Ex: Barrisenn Araújo"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-cyan-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 mb-1">WhatsApp para Alertas & Relatórios</label>
+                    <input
+                      type="text"
+                      value={realProducerPhone}
+                      onChange={(e) => setRealProducerPhone(e.target.value)}
+                      placeholder="Ex: 84988585211"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-cyan-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Espécie Cultivada Principal</label>
+                  <select
+                    value={realSpecies}
+                    onChange={(e) => setRealSpecies(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-cyan-300 font-bold focus:border-cyan-500 outline-none"
+                  >
+                    <option value="Litopenaeus vannamei (Camarão)">Litopenaeus vannamei (Camarão Branco do Pacífico)</option>
+                    <option value="Oreochromis niloticus (Tilápia do Nilo)">Oreochromis niloticus (Tilápia do Nilo)</option>
+                    <option value="Macrobrachium rosenbergii (Camarão Gigante da Malásia)">Macrobrachium rosenbergii (Camarão Gigante da Malásia)</option>
+                    <option value="Policultivo (Camarão + Tilápia)">Policultivo (Camarão + Tilápia)</option>
+                  </select>
+                </div>
+
+                <div className="pt-2">
+                  <label className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-900/90 border border-slate-700 cursor-pointer hover:border-cyan-500/50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={clearTanksCheckbox}
+                      onChange={(e) => setClearTanksCheckbox(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500"
+                    />
+                    <div>
+                      <div className="font-bold text-white text-xs">
+                        Zerar os 7 tanques demonstrativos de exemplo
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-sans">
+                        Deixa a lista com 0 tanques para você cadastrar seus tanques reais através do botão "+ Cadastrar Novo Tanque".
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Trava de Segurança */}
+              <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-800/40 space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Confirmação de Segurança:</span>
+                </div>
+                <p className="text-slate-400 text-[11px]">
+                  Para autorizar a reinicialização e configurar sua fazenda real, digite exatamente:{' '}
+                  <span className="text-amber-300 font-bold bg-amber-950/70 px-1.5 py-0.5 rounded border border-amber-700/50">
+                    ZERAR DADOS
+                  </span>
+                </p>
+                <input
+                  type="text"
+                  value={blankConfirmInput}
+                  onChange={(e) => setBlankConfirmInput(e.target.value)}
+                  placeholder="Digite ZERAR DADOS"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold tracking-wider uppercase focus:border-amber-500 outline-none"
+                />
+              </div>
+
+              {/* Botão de Submissão */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleResetToBlankBusiness}
+                  disabled={!isBlankConfirmationValid || isProcessingBlank}
+                  className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                    isBlankConfirmationValid && !isProcessingBlank
+                      ? 'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-lg shadow-cyan-900/50 hover:scale-[1.01]'
+                      : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-300" />
+                  <span>{isProcessingBlank ? 'Processando...' : '🚀 Zerar e Iniciar Meu Negócio Real'}</span>
+                </button>
+              </div>
             </div>
           )}
 
-          {/* ================= ABA 2: DADOS SALVOS (BLINDADA) ================= */}
-          {activeTab === 'saved' && (
+          {/* ========================================================================= */}
+          {/* ABA 2: MÓDULOS ESPECÍFICOS / RESTAURAR DEMO */}
+          {/* ========================================================================= */}
+          {activeTab === 'selective' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-red-950/40 border border-red-700/60 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-red-200 leading-relaxed">
-                  <p className="font-bold text-red-300 text-sm">
-                    ZONA DE PROTEÇÃO RÍGIDA CONTRA PERDA ACIDENTAL:
-                  </p>
-                  O sistema <strong>NUNCA</strong> apaga dados salvos sem sua expressa autorização. Para prosseguir, selecione exatamente os módulos que deseja redefinir e digite a frase de confirmação de segurança abaixo.
+              <div className="p-4 rounded-2xl bg-red-950/30 border border-red-800/40 space-y-1.5">
+                <div className="flex items-center gap-2 text-red-300 font-bold text-xs">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <span>Zona de Limpeza Granular ou Restauração da Demonstração:</span>
                 </div>
+                <p className="text-slate-400 text-xs font-sans">
+                  Selecione exatamente os módulos que deseja zerar individualmente ou marque para restaurar o padrão de demonstração de fábrica da Fazenda River Life.
+                </p>
               </div>
 
-              <div>
-                <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-bold block mb-2">
-                  Escolha os módulos salvos que deseja zerar/restaurar:
+              {selectiveStatusMessage && (
+                <div
+                  className={`p-3.5 rounded-xl flex items-center gap-2.5 text-xs ${
+                    selectiveStatusMessage.type === 'success'
+                      ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-200'
+                      : 'bg-red-500/20 border border-red-500/50 text-red-200'
+                  }`}
+                >
+                  {selectiveStatusMessage.type === 'success' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  )}
+                  <span>{selectiveStatusMessage.text}</span>
+                </div>
+              )}
+
+              {/* Lista de Módulos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {[
+                  { id: 'tanks', label: 'Tanques & Viveiros Cadastrados', desc: 'Zera todos os tanques e lotes em memória' },
+                  { id: 'biometries', label: 'Biometrias & Pesagens', desc: 'Registros de FCR, peso médio e uniformidade' },
+                  { id: 'feedingTrays', label: 'Bandejas & Comedouros', desc: 'Checagem de sobras e arraçoamento' },
+                  { id: 'waterIonic', label: 'Qualidade da Água & Íons', desc: 'pH, amônia, cálcio, magnésio e alcalinidade' },
+                  { id: 'mortality', label: 'Mortalidade & Mudas', desc: 'Histórico sanitário e ciclo lunar' },
+                  { id: 'harvests', label: 'Despescas & Romaneios', desc: 'Registros de colheita e GTA' },
+                  { id: 'cashFlow', label: 'Fluxo de Caixa (DFC)', desc: 'Entradas e saídas financeiras' },
+                  { id: 'invoices', label: 'Notas Fiscais Emitidas', desc: 'Histórico fiscal' },
+                  { id: 'inventory', label: 'Estoque de Insumos', desc: 'Sacaria de ração e corretivos' },
+                  { id: 'equipments', label: 'Equipamentos & Aeradores', desc: 'Lista de motores e manutenção' },
+                ].map((mod) => (
+                  <label
+                    key={mod.id}
+                    className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                      selectedModules.includes(mod.id)
+                        ? 'bg-red-950/40 border-red-500/50 text-white'
+                        : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedModules.includes(mod.id)}
+                      onChange={() => toggleModule(mod.id)}
+                      className="mt-0.5 rounded border-slate-700 text-red-500 focus:ring-red-500"
+                    />
+                    <div>
+                      <div className="font-bold text-xs text-white">{mod.label}</div>
+                      <div className="text-[10px] text-slate-400 font-sans">{mod.desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {/* Restauração de Fábrica */}
+              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={resetAllToFactory}
+                    onChange={(e) => setResetAllToFactory(e.target.checked)}
+                    className="mt-0.5 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <div>
+                    <div className="font-bold text-cyan-300 text-xs">
+                      Restaurar Demonstração Original de Fábrica (Fazenda River Life)
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-sans">
+                      Restaura todos os 7 tanques, biometrias e telemetrias originais de exemplo.
+                    </div>
+                  </div>
                 </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {[
-                    { id: 'biometries', label: 'Biometrias & Pesagens', desc: 'Registros de FCR e peso' },
-                    { id: 'feedingTrays', label: 'Bandejas & Comedouros', desc: 'Checagem de sobras e tratos' },
-                    { id: 'waterIonic', label: 'Qualidade da Água & Íons', desc: 'pH, amônia, Ca e Mg' },
-                    { id: 'mortality', label: 'Mortalidade & Mudas', desc: 'Histórico sanitário' },
-                    { id: 'harvests', label: 'Despescas & Romaneios', desc: 'Registros de colheita e GTA' },
-                    { id: 'cashFlow', label: 'Fluxo de Caixa (DFC)', desc: 'Entradas e saídas financeiras' },
-                    { id: 'invoices', label: 'Notas Fiscais Emitidas', desc: 'Histórico fiscal' },
-                    { id: 'inventory', label: 'Estoque de Insumos', desc: 'Sacaria de ração e calcário' },
-                  ].map((item) => {
-                    const isChecked = selectedModules.includes(item.id) || resetAllToFactory;
-                    return (
-                      <label
-                        key={item.id}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
-                          isChecked
-                            ? 'bg-red-950/30 border-red-500/50 text-white'
-                            : 'bg-slate-800/40 border-slate-700/60 text-slate-300 hover:bg-slate-800'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          disabled={resetAllToFactory}
-                          onChange={() => toggleModule(item.id)}
-                          className="mt-0.5 rounded accent-red-500 w-3.5 h-3.5 cursor-pointer"
-                        />
-                        <div>
-                          <span className="font-bold block">{item.label}</span>
-                          <span className="text-[11px] text-slate-400">{item.desc}</span>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
               </div>
 
-              {/* Opção Geral de Fábrica */}
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-red-950/20 border border-red-800/40 cursor-pointer hover:bg-red-950/40 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={resetAllToFactory}
-                  onChange={(e) => setResetAllToFactory(e.target.checked)}
-                  className="rounded accent-red-500 w-4 h-4 cursor-pointer"
-                />
-                <div className="text-xs">
-                  <span className="text-red-300 font-bold block">
-                    Restaurar TODOS os dados salvos para o padrão original de fábrica (Demonstração)
-                  </span>
-                  <span className="text-slate-400">
-                    Substitui todas as tabelas salvas pelos dados iniciais da Fazenda River Life.
-                  </span>
-                </div>
-              </label>
-
-              {/* Trava de Segurança por Digitação Obrigatória */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                <label className="text-xs font-mono font-bold text-red-400 flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5" />
+              {/* Trava */}
+              <div className="p-4 rounded-2xl bg-red-950/30 border border-red-800/40 space-y-2">
+                <div className="flex items-center gap-2 text-red-300 font-bold text-xs">
+                  <Lock className="w-3.5 h-3.5 text-red-400" />
                   <span>Trava de Segurança Obrigatória:</span>
-                </label>
-                <p className="text-[11px] text-slate-400">
-                  Para autorizar e desbloquear o botão, digite exatamente em maiúsculas:{' '}
-                  <span className="text-white font-mono font-bold px-1.5 py-0.5 rounded bg-red-950 border border-red-700">
+                </div>
+                <p className="text-slate-400 text-[11px]">
+                  Digite exatamente:{' '}
+                  <span className="text-red-300 font-bold bg-red-950/70 px-1.5 py-0.5 rounded border border-red-700/50">
                     ZERAR DADOS SALVOS
                   </span>
                 </p>
                 <input
                   type="text"
-                  value={confirmationInput}
-                  onChange={(e) => setConfirmationInput(e.target.value)}
-                  placeholder="Digite aqui: ZERAR DADOS SALVOS"
-                  className="w-full bg-slate-900 border border-slate-700 text-white font-mono text-xs p-2.5 rounded-lg focus:outline-none focus:border-red-500 uppercase tracking-wider"
+                  value={selectiveConfirmInput}
+                  onChange={(e) => setSelectiveConfirmInput(e.target.value)}
+                  placeholder="Digite ZERAR DADOS SALVOS"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold tracking-wider uppercase focus:border-red-500 outline-none"
                 />
               </div>
 
-              {savedStatusMessage && (
-                <div
-                  className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                    savedStatusMessage.type === 'success'
-                      ? 'bg-emerald-950 border border-emerald-600 text-emerald-300'
-                      : 'bg-red-950 border border-red-600 text-red-300'
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleResetSelective}
+                  disabled={!isSelectiveConfirmationValid || isProcessingSelective}
+                  className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                    isSelectiveConfirmationValid && !isProcessingSelective
+                      ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/50'
+                      : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
                   }`}
                 >
-                  {savedStatusMessage.type === 'success' ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                  )}
-                  <span>{savedStatusMessage.text}</span>
-                </div>
-              )}
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>{isProcessingSelective ? 'Processando...' : 'Autorizar e Executar'}</span>
+                </button>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Rodapé de Ações */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between gap-3">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            Cancelar
-          </button>
+          {/* ========================================================================= */}
+          {/* ABA 3: SESSÃO ATUAL (SEGURO) */}
+          {/* ========================================================================= */}
+          {activeTab === 'session' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-800/40 space-y-1.5">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Reinicialização Segura de Simulação & Visualização</span>
+                </div>
+                <p className="text-slate-400 text-xs font-sans">
+                  Limpa cenários de estresse ativados (ex: alerta de hipóxia simulada), normaliza a telemetria ao vivo e redefine os filtros visuais da tela.
+                </p>
+              </div>
 
-          {activeTab === 'session' ? (
-            <button
-              onClick={handleResetSession}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950 flex items-center gap-2 transition-all cursor-pointer font-mono"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reiniciar Sessão Atual</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleResetSaved}
-              disabled={!isConfirmationValid || isProcessingSaved}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all font-mono ${
-                isConfirmationValid && !isProcessingSaved
-                  ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-950 cursor-pointer'
-                  : 'bg-slate-800 text-slate-500 border border-slate-700/50 cursor-not-allowed opacity-60'
-              }`}
-            >
-              <AlertTriangle className="w-4 h-4" />
-              <span>
-                {isProcessingSaved
-                  ? 'Processando...'
-                  : 'Autorizar e Zerar Dados Salvos Selecionados'}
-              </span>
-            </button>
+              {sessionSuccessMessage && (
+                <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>{sessionSuccessMessage}</span>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between cursor-pointer">
+                  <span className="font-bold text-white">Normalizar Cenários & Simulações de Estresse</span>
+                  <input
+                    type="checkbox"
+                    checked={sessionOpts.resetScenario}
+                    onChange={(e) => setSessionOpts({ ...sessionOpts, resetScenario: e.target.checked })}
+                    className="rounded border-slate-700 text-emerald-500"
+                  />
+                </label>
+
+                <label className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between cursor-pointer">
+                  <span className="font-bold text-white">Redefinir Histórico Visual de Telemetria</span>
+                  <input
+                    type="checkbox"
+                    checked={sessionOpts.resetTelemetryHistory}
+                    onChange={(e) => setSessionOpts({ ...sessionOpts, resetTelemetryHistory: e.target.checked })}
+                    className="rounded border-slate-700 text-emerald-500"
+                  />
+                </label>
+
+                <label className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between cursor-pointer">
+                  <span className="font-bold text-white">Redefinir Filtros e Tanque Ativo</span>
+                  <input
+                    type="checkbox"
+                    checked={sessionOpts.resetFilters}
+                    onChange={(e) => setSessionOpts({ ...sessionOpts, resetFilters: e.target.checked })}
+                    className="rounded border-slate-700 text-emerald-500"
+                  />
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={handleResetSession}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/40 cursor-pointer"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Limpar Sessão Agora</span>
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

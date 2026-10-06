@@ -11,6 +11,7 @@ import {
   Sparkles,
   Save
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface FarmProfile {
   tenantId: string;
@@ -36,15 +37,16 @@ interface FarmProfileModalProps {
 }
 
 export const FarmProfileModal: React.FC<FarmProfileModalProps> = ({ isOpen, onClose }) => {
+  const { farm, updateFarmSettings, currentTenant } = useAquaCore();
   const [profile, setProfile] = useState<FarmProfile>({
-    tenantId: 'tenant-river-life',
-    name: 'Fazenda River Life Aquicultura',
-    corporateName: 'River Life Carcinicultura do Nordeste LTDA',
+    tenantId: currentTenant.id,
+    name: farm.name,
+    corporateName: farm.name,
     cnpj: '45.182.903/0001-44',
     stateRegistration: '16.920.441-0',
-    address: 'Sítio Riacho Fundo, Zona Rural',
-    city: 'Mogeiro',
-    state: 'PB',
+    address: farm.location,
+    city: farm.location.split('–')[0]?.trim() || 'Mogeiro',
+    state: farm.location.split('–')[1]?.trim() || 'PB',
     waterSourceType: 'Poço Artesiano Salobro & Captação Fluvial',
     averageSalinityPpt: 12.0,
     totalAreaHectares: 18.5,
@@ -118,9 +120,13 @@ export const FarmProfileModal: React.FC<FarmProfileModalProps> = ({ isOpen, onCl
       const res = await fetch('/api/db/farm-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile)
+        body: JSON.stringify({ ...profile, tenantId: currentTenant.id })
       });
       if (res.ok) {
+        updateFarmSettings({
+          name: profile.name,
+          location: `${profile.city}${profile.state ? ' – ' + profile.state : ''}`,
+        });
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 3000);
       }

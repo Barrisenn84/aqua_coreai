@@ -229,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-cyan-300/80 font-medium truncate max-w-sm sm:max-w-md">
-              Fazenda River Life • Polo de Mogeiro – PB (Centro de leitura)
+              {farm.name} • {farm.location}
             </p>
           </div>
         </div>

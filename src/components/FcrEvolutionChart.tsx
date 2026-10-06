@@ -250,12 +250,12 @@ export const FcrEvolutionChart: React.FC = () => {
             onChange={(e) => setSelectedTankFilter(e.target.value)}
             className="bg-slate-950 text-cyan-300 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold focus:outline-none focus:border-cyan-500 cursor-pointer"
           >
-            <option value="all">Fazenda River Life (Média Geral)</option>
+            <option value="all">{farm.name} (Média Geral)</option>
             {tanks.map((t) => {
               const b = batches.find((x) => x.tankId === t.id);
               return (
                 <option key={t.id} value={t.id}>
-                  {t.name.replace(' - Escavado (0,158 ha)', '')} ({b?.batchCode || 'Lote'})
+                  {t.name} ({b?.batchCode || 'Lote'})
                 </option>
               );
             })}

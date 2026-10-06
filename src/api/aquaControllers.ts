@@ -553,16 +553,27 @@ export const DatabaseController = {
   // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO EXPLÍCITA
   resetData: async (req: Request, res: Response) => {
     try {
-      const { tenantId, modules, resetAllToFactory, confirmationCode } = req.body;
+      const { tenantId, modules, resetAllToFactory, startBlankBusiness, farmData, confirmationCode } = req.body;
       const normalizedCode = (confirmationCode || '').trim().toUpperCase();
 
-      if (normalizedCode !== 'ZERAR DADOS SALVOS' && normalizedCode !== 'CONFIRMAR') {
+      if (
+        normalizedCode !== 'ZERAR DADOS SALVOS' &&
+        normalizedCode !== 'CONFIRMAR' &&
+        normalizedCode !== 'ZERAR DADOS' &&
+        normalizedCode !== 'ZERAR TUDO'
+      ) {
         return res.status(403).json({
-          error: 'Código de confirmação inválido. Digite exatamente "ZERAR DADOS SALVOS" para confirmar a operação.',
+          error: 'Código de confirmação inválido. Digite exatamente "ZERAR DADOS SALVOS" ou "CONFIRMAR" para autorizar a operação.',
         });
       }
 
       const { db } = await import('../db/databaseService');
+
+      if (startBlankBusiness) {
+        const result = db.resetTenantToBlank(tenantId || 'tenant-river-life', farmData);
+        return res.json({ success: true, result });
+      }
+
       const result = db.resetSavedData(tenantId || 'tenant-river-life', {
         modules: modules || [],
         resetAllToFactory: !!resetAllToFactory,

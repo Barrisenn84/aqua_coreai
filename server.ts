@@ -138,6 +138,7 @@ app.post('/api/db/cash-flow', DatabaseController.addCashFlow);
 // 🏡 Minha Fazenda (Cadastro & Licenciamento Ambiental)
 app.get('/api/db/farm-profile', DatabaseController.getFarmProfile);
 app.put('/api/db/farm-profile', DatabaseController.updateFarmProfile);
+app.post('/api/db/farm-profile', DatabaseController.updateFarmProfile);
 
 // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO DO USUÁRIO
 app.post('/api/db/reset', DatabaseController.resetData);

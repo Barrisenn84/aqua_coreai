@@ -28,11 +28,13 @@ import {
   Wind,
   Sun,
   ArrowRight,
+  PlusCircle,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 import { TankCard } from './TankCard';
 import { ProfitDial } from './ProfitDial';
 import { FcrEvolutionChart } from './FcrEvolutionChart';
+import { AddTankModal } from './AddTankModal';
 import { configureJoaoPessoaCriticalOxygenThresholds } from '../utils/aquacultureMath';
 
 interface NerveCenterDashboardProps {
@@ -58,8 +60,11 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
     alerts,
     triggerScenario,
     emergencyOverrideAllAerators,
+    currentTenant,
+    currentUser,
   } = useAquaCore();
 
+  const [isAddTankModalOpen, setIsAddTankModalOpen] = useState<boolean>(false);
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning' | 'optimal'>('all');
   const [ambientTempJP, setAmbientTempJP] = useState<number>(34.0); // Sensação térmica Mogeiro
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -291,10 +296,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-bold text-white text-sm">
-              Fazenda River Life • Polo de Mogeiro – PB (Centro de Leitura)
+              {farm.name} • {farm.location} (Centro de Leitura)
             </span>
             <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-[10px] font-bold">
-              GHOST UX: +55 84 98858-5211 (Collermhann)
+              GHOST UX: {currentTenant.producerPhone || farm.producerPhone || '+55 84 98858-5211'} ({currentUser.name})
             </span>
             <span className="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 text-[10px] font-bold flex items-center gap-1">
               <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
@@ -362,41 +367,49 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
       )}
 
-      {/* INDICADORES GERAIS (KPIS DINÂMICOS - PROMPT 3) */}
+      {/* INDICADORES GERAIS (KPIS DINÂMICOS) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 font-mono">
         {/* KPI 1: Tanques Povoados */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-2xl font-black text-cyan-400">7</span>
-            <span className="text-[10px] text-slate-500">/ 7 ativos</span>
+            <span className="text-2xl font-black text-cyan-400">{tanks.length}</span>
+            <span className="text-[10px] text-slate-500">/ {tanks.length} ativos</span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Escavados (0,158 ha)</span>
+          <span className="text-[9px] text-slate-500 mt-1">
+            {tanks.length > 0 ? `${tanks[0].type} (${(tanks.reduce((a, t) => a + t.areaM2, 0) / 10000).toFixed(3)} ha)` : 'Nenhum viveiro'}
+          </span>
         </div>
 
         {/* KPI 2: Custo em Cultivo */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-amber-300">R$ 12.500</span>
+            <span className="text-lg font-black text-amber-300">
+              R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR') : '0'}
+            </span>
           </div>
-          <span className="text-[9px] text-slate-400 mt-1">Estimativa IA</span>
+          <span className="text-[9px] text-slate-400 mt-1">Estimativa Real & IA</span>
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-emerald-400">R$ 22.500</span>
+            <span className="text-lg font-black text-emerald-400">
+              R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR') : '0'}
+            </span>
           </div>
-          <span className="text-[9px] text-emerald-500/90 mt-1">Grade Especial</span>
+          <span className="text-[9px] text-emerald-500/90 mt-1">Grade Comercial</span>
         </div>
 
         {/* KPI 4: Biomassa Total */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Biomassa Total</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">8.500 <span className="text-xs text-slate-400">kg</span></span>
+            <span className="text-lg font-black text-white">
+              {totalBiomassKg.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
+            </span>
           </div>
           <span className="text-[9px] text-cyan-400 mt-1">IA Preditiva</span>
         </div>
@@ -405,27 +418,33 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">População Total</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">15.000 <span className="text-xs text-slate-400">un.</span></span>
+            <span className="text-lg font-black text-white">
+              {batches.reduce((acc, b) => acc + b.currentCount, 0).toLocaleString('pt-BR')} <span className="text-xs text-slate-400">un.</span>
+            </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Sobrevivência 98%</span>
+          <span className="text-[9px] text-slate-500 mt-1">Sobrevivência {globalSurvivalRatePct}%</span>
         </div>
 
         {/* KPI 6: Ração Total */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">1.200 <span className="text-xs text-slate-400">kg</span></span>
+            <span className="text-lg font-black text-white">
+              {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
+            </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Estoque + Projeção</span>
+          <span className="text-[9px] text-slate-500 mt-1">Consumo Real</span>
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
           <div className="mt-1">
-            <span className="text-lg font-black text-cyan-300">1.35</span>
+            <span className="text-lg font-black text-cyan-300">
+              {globalFcr > 0 ? globalFcr.toFixed(2) : '1.35'}
+            </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta Batida ✓</span>
+          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.35</span>
         </div>
       </div>
 
@@ -444,10 +463,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-white text-sm tracking-wide">
-                    Saturação Dinâmica de O₂ • Polo de Mogeiro – PB
+                    Saturação Dinâmica de O₂ • {farm.location}
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-950 text-cyan-300 border border-cyan-800/60">
-                    River Life
+                    {farm.name}
                   </span>
                 </div>
                 <p className="text-slate-400 text-[11px] mt-0.5">
@@ -505,13 +524,13 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               <span className="text-base font-bold text-white font-mono">
                 {avgO2.toFixed(2)} <span className="text-xs text-slate-400">mg/L</span>
               </span>
-              <span className="text-[10px] text-slate-500 block mt-0.5">Média dos 7 tanques</span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">Média dos {tanks.length} tanques</span>
             </div>
           </div>
 
           <div className="mt-2.5 flex items-center gap-2 text-[11px] bg-slate-950/90 px-3 py-1.5 rounded-xl border border-slate-800/60 text-slate-300">
             <Waves className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span className="font-semibold text-cyan-300 shrink-0">Prescrição Mogeiro:</span>
+            <span className="font-semibold text-cyan-300 shrink-0">Prescrição Técnica:</span>
             <span className="truncate">{jpDynamicO2.recommendedAction}</span>
           </div>
         </div>
@@ -520,7 +539,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
       {/* Gráfico de Linha Recharts: Evolução do FCR Semanal vs Meta de 1.35 */}
       <FcrEvolutionChart />
 
-      {/* 2. TABELA DE TANQUES CADASTRADOS (7 TANQUES - PROMPT 3) */}
+      {/* 2. TABELA DE TANQUES CADASTRADOS */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 font-mono text-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
@@ -528,12 +547,23 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
             <h2 className="text-base font-bold text-white uppercase tracking-wider">
               Lista de Tanques Cadastrados ({tanks.length} Tanques)
             </h2>
-            <span className="text-xs text-slate-500 hidden md:inline">
-              • Tipo: Escavado | Área: 0,158 ha
-            </span>
+            {tanks.length > 0 && (
+              <span className="text-xs text-slate-500 hidden md:inline">
+                • Área Total: {(tanks.reduce((a, t) => a + t.areaM2, 0) / 10000).toFixed(3)} ha
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAddTankModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-cyan-900/40 transition-all cursor-pointer"
+              title="Cadastrar tanque ou viveiro real no seu negócio"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Cadastrar Novo Tanque</span>
+            </button>
+
             {/* View switcher */}
             <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
               <button
@@ -556,101 +586,121 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           </div>
         </div>
 
-        {/* Mode 1: Table View */}
-        {activeViewMode === 'table' ? (
-          <div className="overflow-x-auto mt-4">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider bg-slate-950/60">
-                  <th className="py-2.5 px-3">Tanque</th>
-                  <th className="py-2.5 px-3">Tipo</th>
-                  <th className="py-2.5 px-3">Área</th>
-                  <th className="py-2.5 px-3">Lote</th>
-                  <th className="py-2.5 px-3">Ciclo</th>
-                  <th className="py-2.5 px-3">O₂ / Temp</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/80">
-                {tanks.map((tank) => {
-                  const batch = batches.find((b) => b.tankId === tank.id);
-                  const reading = sensorReadings[tank.id];
-                  const isCrit = tank.status === 'critical' || (reading && reading.dissolvedOxygen < 4.0);
-
-                  return (
-                    <tr key={tank.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-3 font-bold text-white">
-                        {tank.name.replace(' - Escavado (0,158 ha)', '')}
-                      </td>
-                      <td className="py-3 px-3 text-slate-300">
-                        Escavado
-                      </td>
-                      <td className="py-3 px-3 text-slate-300">
-                        0,158 ha <span className="text-[10px] text-slate-500">(1.580 m²)</span>
-                      </td>
-                      <td className="py-3 px-3 font-bold text-cyan-300">
-                        {batch?.batchCode || 'Lote_01'}
-                      </td>
-                      <td className="py-3 px-3 text-slate-300">
-                        Engorda <span className="text-[10px] text-slate-500">(PLs)</span>
-                      </td>
-                      <td className="py-3 px-3 font-mono">
-                        <span className={`font-bold ${isCrit ? 'text-red-400' : 'text-emerald-400'}`}>
-                          {reading ? reading.dissolvedOxygen.toFixed(2) : '5.40'} mg/L
-                        </span>
-                        <span className="text-slate-500 text-[10px] ml-1.5">
-                          {reading ? reading.temperature.toFixed(1) : '29.2'}°C
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          isCrit
-                            ? 'bg-red-950 text-red-300 border border-red-800 animate-pulse'
-                            : tank.status === 'warning'
-                            ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                            : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                        }`}>
-                          {isCrit ? 'CRÍTICO' : 'ATIVO'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={() => onOpenAudit(tank.id)}
-                          className="px-3 py-1 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 hover:border-cyan-600 transition-all font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <span>Ver Detalhes</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        {/* Empty State quando o usuário zera os tanques */}
+        {tanks.length === 0 ? (
+          <div className="py-12 px-4 text-center rounded-2xl bg-slate-950/60 border border-slate-800/80 my-4 space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto">
+              <Waves className="w-6 h-6" />
+            </div>
+            <h3 className="text-white font-bold text-sm">Nenhum Viveiro Cadastrado no Momento</h3>
+            <p className="text-slate-400 text-xs max-w-md mx-auto font-sans leading-relaxed">
+              O sistema foi zerado para você configurar seu negócio real. Cadastre os tanques ou viveiros da sua propriedade clicando no botão abaixo.
+            </p>
+            <button
+              onClick={() => setIsAddTankModalOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs inline-flex items-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>+ Cadastrar Primeiro Tanque Real</span>
+            </button>
           </div>
         ) : (
-          /* Mode 2: Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-            {filteredTanks.map((tank) => {
-              const batch = batches.find((b) => b.tankId === tank.id);
-              const reading = sensorReadings[tank.id];
-              if (!batch || !reading) return null;
+          <>
+            {/* Mode 1: Table View */}
+            {activeViewMode === 'table' ? (
+              <div className="overflow-x-auto mt-4">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider bg-slate-950/60">
+                      <th className="py-2.5 px-3">Tanque</th>
+                      <th className="py-2.5 px-3">Tipo</th>
+                      <th className="py-2.5 px-3">Área</th>
+                      <th className="py-2.5 px-3">Lote</th>
+                      <th className="py-2.5 px-3">Ciclo</th>
+                      <th className="py-2.5 px-3">O₂ / Temp</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80">
+                    {tanks.map((tank) => {
+                      const batch = batches.find((b) => b.tankId === tank.id);
+                      const reading = sensorReadings[tank.id];
+                      const isCrit = tank.status === 'critical' || (reading && reading.dissolvedOxygen < 4.0);
 
-              return (
-                <TankCard
-                  key={tank.id}
-                  tank={tank}
-                  batch={batch}
-                  reading={reading}
-                  onOpenAudit={onOpenAudit}
-                  onOpenBiometry={onOpenBiometry}
-                />
-              );
-            })}
-          </div>
+                      return (
+                        <tr key={tank.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-3 px-3 font-bold text-white">
+                            {tank.name}
+                          </td>
+                          <td className="py-3 px-3 text-slate-300">
+                            {tank.type ? (tank.type.charAt(0).toUpperCase() + tank.type.slice(1)) : 'Escavado'}
+                          </td>
+                          <td className="py-3 px-3 text-slate-300">
+                            {(tank.areaM2 / 10000).toFixed(3)} ha <span className="text-[10px] text-slate-500">({tank.areaM2.toLocaleString('pt-BR')} m²)</span>
+                          </td>
+                          <td className="py-3 px-3 font-bold text-cyan-300">
+                            {batch?.batchCode || 'Sem Lote'}
+                          </td>
+                          <td className="py-3 px-3 text-slate-300">
+                            {batch?.stage ? (batch.stage.charAt(0).toUpperCase() + batch.stage.slice(1)) : 'Engorda'} <span className="text-[10px] text-slate-500">({currentTenant.speciesTarget ? currentTenant.speciesTarget.split(' ')[0] : 'PLs'})</span>
+                          </td>
+                          <td className="py-3 px-3 font-mono">
+                            <span className={`font-bold ${isCrit ? 'text-red-400' : 'text-emerald-400'}`}>
+                              {reading ? reading.dissolvedOxygen.toFixed(2) : '5.40'} mg/L
+                            </span>
+                            <span className="text-slate-500 text-[10px] ml-1.5">
+                              {reading ? reading.temperature.toFixed(1) : '28.5'}°C
+                            </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              isCrit
+                                ? 'bg-red-950 text-red-300 border border-red-800 animate-pulse'
+                                : tank.status === 'warning'
+                                ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                                : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                            }`}>
+                              {isCrit ? 'CRÍTICO' : 'ATIVO'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              onClick={() => onOpenAudit(tank.id)}
+                              className="px-3 py-1 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 hover:border-cyan-600 transition-all font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              Ver Detalhes →
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-4">
+                {filteredTanks.map((tank) => (
+                  <TankCard
+                    key={tank.id}
+                    tank={tank}
+                    batch={batches.find((b) => b.tankId === tank.id)}
+                    reading={sensorReadings[tank.id]}
+                    onOpenBiometry={onOpenBiometry}
+                    onOpenAudit={onOpenAudit}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {/* Modal de Adicionar Novo Tanque Real */}
+      <AddTankModal
+        isOpen={isAddTankModalOpen}
+        onClose={() => setIsAddTankModalOpen(false)}
+      />
 
       {/* Simulator Quick Action Toolbar */}
       <div className="bg-slate-900/60 border border-slate-800 p-3 sm:p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono">

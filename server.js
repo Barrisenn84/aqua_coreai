@@ -2133,91 +2133,130 @@ var init_databaseService = __esm({
         const modules = options.modules || [];
         const resetAll = !!options.resetAllToFactory;
         if (resetAll) {
-          const initial2 = JSON.parse(JSON.stringify(INITIAL_DB_DATA));
-          this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
-            initial2.biometries.filter((b) => b.tenantId === tenantId)
-          );
-          this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
-            initial2.feedingTrays.filter((t) => t.tenantId === tenantId)
-          );
-          this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
-            initial2.waterIonic.filter((w) => w.tenantId === tenantId)
-          );
-          this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
-            initial2.mortality.filter((m) => m.tenantId === tenantId)
-          );
-          this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
-            initial2.harvests.filter((h) => h.tenantId === tenantId)
-          );
-          this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
-            initial2.cashFlow.filter((c) => c.tenantId === tenantId)
-          );
-          this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
-            initial2.invoices.filter((i) => i.tenantId === tenantId)
-          );
-          this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
-            initial2.inventory.filter((i) => i.tenantId === tenantId)
-          );
-          this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId).concat(
-            initial2.equipments.filter((e) => e.tenantId === tenantId)
-          );
-          this.saveData(this.data);
-          return { message: "Todos os m\xF3dulos foram restaurados para os dados padr\xE3o de f\xE1brica.", modulesReset: ["all"] };
-        }
-        const resetReport = [];
-        const initial = JSON.parse(JSON.stringify(INITIAL_DB_DATA));
-        if (modules.includes("biometries")) {
+          const initial = JSON.parse(JSON.stringify(INITIAL_DB_DATA));
           this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId).concat(
             initial.biometries.filter((b) => b.tenantId === tenantId)
           );
-          resetReport.push("Biometrias");
-        }
-        if (modules.includes("feedingTrays")) {
           this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId).concat(
             initial.feedingTrays.filter((t) => t.tenantId === tenantId)
           );
-          resetReport.push("Bandejas de Alimenta\xE7\xE3o");
-        }
-        if (modules.includes("waterIonic")) {
           this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId).concat(
             initial.waterIonic.filter((w) => w.tenantId === tenantId)
           );
-          resetReport.push("Balan\xE7o I\xF4nico e \xC1gua");
-        }
-        if (modules.includes("mortality")) {
           this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId).concat(
             initial.mortality.filter((m) => m.tenantId === tenantId)
           );
-          resetReport.push("Mortalidade e Mudas");
-        }
-        if (modules.includes("harvests")) {
           this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId).concat(
             initial.harvests.filter((h) => h.tenantId === tenantId)
           );
-          resetReport.push("Despescas");
-        }
-        if (modules.includes("cashFlow")) {
           this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId).concat(
             initial.cashFlow.filter((c) => c.tenantId === tenantId)
           );
-          resetReport.push("Fluxo de Caixa DFC");
-        }
-        if (modules.includes("invoices")) {
           this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId).concat(
             initial.invoices.filter((i) => i.tenantId === tenantId)
           );
-          resetReport.push("Notas Fiscais");
-        }
-        if (modules.includes("inventory")) {
           this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId).concat(
             initial.inventory.filter((i) => i.tenantId === tenantId)
           );
+          this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId).concat(
+            initial.equipments.filter((e) => e.tenantId === tenantId)
+          );
+          this.saveData(this.data);
+          return { message: "Todos os m\xF3dulos foram restaurados para os dados padr\xE3o de f\xE1brica (Demonstra\xE7\xE3o).", modulesReset: ["all"] };
+        }
+        const resetReport = [];
+        if (modules.includes("biometries")) {
+          this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId);
+          resetReport.push("Biometrias");
+        }
+        if (modules.includes("feedingTrays")) {
+          this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId);
+          resetReport.push("Bandejas de Alimenta\xE7\xE3o");
+        }
+        if (modules.includes("waterIonic")) {
+          this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId);
+          resetReport.push("Balan\xE7o I\xF4nico e \xC1gua");
+        }
+        if (modules.includes("mortality")) {
+          this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId);
+          resetReport.push("Mortalidade e Mudas");
+        }
+        if (modules.includes("harvests")) {
+          this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId);
+          resetReport.push("Despescas");
+        }
+        if (modules.includes("cashFlow")) {
+          this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId);
+          resetReport.push("Fluxo de Caixa DFC");
+        }
+        if (modules.includes("invoices")) {
+          this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId);
+          resetReport.push("Notas Fiscais");
+        }
+        if (modules.includes("inventory")) {
+          this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId);
           resetReport.push("Estoque e Insumos");
+        }
+        if (modules.includes("equipments")) {
+          this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId);
+          resetReport.push("Equipamentos");
         }
         this.saveData(this.data);
         return {
-          message: `M\xF3dulos selecionados reiniciados com sucesso: ${resetReport.join(", ")}.`,
+          message: `M\xF3dulos selecionados foram zerados com sucesso: ${resetReport.join(", ")}.`,
           modulesReset: resetReport
+        };
+      }
+      // 🚀 ZERAR TUDO E INICIAR MEU NEGÓCIO REAL DO ZERO
+      resetTenantToBlank(tenantId, farmData) {
+        this.data.biometries = this.data.biometries.filter((b) => b.tenantId !== tenantId);
+        this.data.feedingTrays = this.data.feedingTrays.filter((t) => t.tenantId !== tenantId);
+        this.data.waterIonic = this.data.waterIonic.filter((w) => w.tenantId !== tenantId);
+        this.data.mortality = this.data.mortality.filter((m) => m.tenantId !== tenantId);
+        this.data.harvests = this.data.harvests.filter((h) => h.tenantId !== tenantId);
+        this.data.cashFlow = this.data.cashFlow.filter((c) => c.tenantId !== tenantId);
+        this.data.invoices = this.data.invoices.filter((i) => i.tenantId !== tenantId);
+        this.data.inventory = this.data.inventory.filter((i) => i.tenantId !== tenantId);
+        this.data.equipments = this.data.equipments.filter((e) => e.tenantId !== tenantId);
+        const fName = farmData?.farmName?.trim() || "Minha Fazenda";
+        const loc = farmData?.location?.trim() || "Brasil";
+        const phone = farmData?.producerPhone?.trim() || "+5584988585211";
+        const species = farmData?.speciesTarget?.trim() || "Litopenaeus vannamei (Camar\xE3o)";
+        const existingProfileIdx = this.data.farmProfiles.findIndex((p) => p.tenantId === tenantId);
+        const newProfile = {
+          tenantId,
+          name: fName,
+          corporateName: fName,
+          cnpj: "",
+          stateRegistration: "",
+          address: loc,
+          city: loc.split("-")[0]?.trim() || loc,
+          state: loc.split("-")[1]?.trim() || "",
+          waterSourceType: "Capta\xE7\xE3o Pr\xF3pria",
+          averageSalinityPpt: 15,
+          totalAreaHectares: 0,
+          waterSurfaceHectares: 0,
+          technicianInCharge: farmData?.producerName?.trim() || "Produtor Respons\xE1vel",
+          councilRegistration: "",
+          environmentalLicense: ""
+        };
+        if (existingProfileIdx >= 0) {
+          this.data.farmProfiles[existingProfileIdx] = newProfile;
+        } else {
+          this.data.farmProfiles.push(newProfile);
+        }
+        const tIdx = this.data.tenants.findIndex((t) => t.id === tenantId);
+        if (tIdx >= 0) {
+          this.data.tenants[tIdx].name = fName;
+          this.data.tenants[tIdx].location = loc;
+          this.data.tenants[tIdx].speciesTarget = species;
+          this.data.tenants[tIdx].producerPhone = phone;
+        }
+        this.saveData(this.data);
+        return {
+          success: true,
+          message: "Sistema zerado com sucesso! Os dados fict\xEDcios de demonstra\xE7\xE3o foram removidos e sua fazenda real est\xE1 configurada.",
+          profile: newProfile
         };
       }
     };
@@ -3768,14 +3807,18 @@ var DatabaseController = {
   // 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO EXPLÍCITA
   resetData: async (req, res) => {
     try {
-      const { tenantId, modules, resetAllToFactory, confirmationCode } = req.body;
+      const { tenantId, modules, resetAllToFactory, startBlankBusiness, farmData, confirmationCode } = req.body;
       const normalizedCode = (confirmationCode || "").trim().toUpperCase();
-      if (normalizedCode !== "ZERAR DADOS SALVOS" && normalizedCode !== "CONFIRMAR") {
+      if (normalizedCode !== "ZERAR DADOS SALVOS" && normalizedCode !== "CONFIRMAR" && normalizedCode !== "ZERAR DADOS" && normalizedCode !== "ZERAR TUDO") {
         return res.status(403).json({
-          error: 'C\xF3digo de confirma\xE7\xE3o inv\xE1lido. Digite exatamente "ZERAR DADOS SALVOS" para confirmar a opera\xE7\xE3o.'
+          error: 'C\xF3digo de confirma\xE7\xE3o inv\xE1lido. Digite exatamente "ZERAR DADOS SALVOS" ou "CONFIRMAR" para autorizar a opera\xE7\xE3o.'
         });
       }
       const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      if (startBlankBusiness) {
+        const result2 = db2.resetTenantToBlank(tenantId || "tenant-river-life", farmData);
+        return res.json({ success: true, result: result2 });
+      }
       const result = db2.resetSavedData(tenantId || "tenant-river-life", {
         modules: modules || [],
         resetAllToFactory: !!resetAllToFactory
@@ -3976,6 +4019,7 @@ app.get("/api/db/cash-flow", DatabaseController.getCashFlow);
 app.post("/api/db/cash-flow", DatabaseController.addCashFlow);
 app.get("/api/db/farm-profile", DatabaseController.getFarmProfile);
 app.put("/api/db/farm-profile", DatabaseController.updateFarmProfile);
+app.post("/api/db/farm-profile", DatabaseController.updateFarmProfile);
 app.post("/api/db/reset", DatabaseController.resetData);
 app.get("/api/solar/cycle", SolarController.getCycle);
 app.get("/api/brasilapi/cnpj/:cnpj", BrasilApiController.getCnpj);
