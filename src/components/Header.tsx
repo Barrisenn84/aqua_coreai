@@ -235,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Layers className="w-4 h-4 text-cyan-400" />
-            <span>Nerve Center</span>
+            <span>Centro de Controle</span>
             {criticalCount > 0 && (
               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white animate-pulse">
                 {criticalCount}
@@ -252,9 +252,9 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <MessageSquare className="w-4 h-4 text-emerald-400" />
-            <span>WhatsApp Ghost UX</span>
+            <span>Assistente WhatsApp</span>
             <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-emerald-500/30 text-emerald-300 font-mono">
-              Meta AI
+              IA Meta
             </span>
           </button>
 
@@ -267,9 +267,9 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Box className="w-4 h-4 text-cyan-400" />
-            <span>Caixa Preta HaaS</span>
+            <span>Caixas Pretas IoT</span>
             <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-cyan-500/30 text-cyan-300 font-mono">
-              ESP32
+              4G
             </span>
           </button>
 
@@ -282,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Compass className="w-4 h-4 text-blue-400" />
-            <span>Preditor Biomassa</span>
+            <span>Preditor de Biomassa</span>
           </button>
 
           <button
@@ -294,7 +294,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <PiggyBank className="w-4 h-4 text-emerald-400" />
-            <span>Otimizador Ração</span>
+            <span>Otimizador de Ração</span>
             <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-emerald-500/30 text-emerald-300">
               -15%
             </span>
@@ -309,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Handshake className="w-4 h-4 text-amber-400" />
-            <span>Market-Bridge</span>
+            <span>Bolsa & Cotações</span>
           </button>
 
           <button
@@ -321,7 +321,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <TrendingUp className="w-4 h-4 text-amber-400" />
-            <span>Oráculo MEY</span>
+            <span>Oráculo de Despesca</span>
           </button>
 
           <button
@@ -333,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Sliders className="w-4 h-4 text-blue-400" />
-            <span>Biometria & FCR</span>
+            <span>Biometria & Conversão</span>
           </button>
 
           <button
@@ -357,7 +357,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Cpu className="w-4 h-4 text-purple-400" />
-            <span>Terminal IA</span>
+            <span>Terminal de Decisão IA</span>
           </button>
 
           <button
@@ -369,7 +369,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Smartphone className="w-4 h-4 text-cyan-400" />
-            <span>App Flutter</span>
+            <span>App do Viveiro</span>
           </button>
 
           <button
@@ -381,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Cloud className="w-4 h-4 text-indigo-400" />
-            <span>Blueprint GCP</span>
+            <span>Arquitetura da Nuvem</span>
           </button>
 
           {/* NOVAS ABAS INTEGRADAS DO MEU PESCADO */}
@@ -394,7 +394,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Utensils className="w-4 h-4 text-amber-400" />
-            <span>Bandejas</span>
+            <span>Bandejas & Comedouro</span>
           </button>
 
           <button
@@ -406,7 +406,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Droplets className="w-4 h-4 text-cyan-400" />
-            <span>Qualidade & Íons</span>
+            <span>Qualidade & Balanço Iônico</span>
           </button>
 
           <button
@@ -430,7 +430,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Anchor className="w-4 h-4 text-emerald-400" />
-            <span>Despescas</span>
+            <span>Despescas & Romaneio</span>
           </button>
 
           <button
@@ -454,7 +454,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Landmark className="w-4 h-4 text-teal-400" />
-            <span>Fluxo Caixa DFC</span>
+            <span>Fluxo de Caixa (DFC)</span>
           </button>
         </nav>
 
