@@ -13,6 +13,7 @@ import {
   Users,
   X,
   Zap,
+  Crown,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -206,6 +207,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               })}
             </div>
 
+            {/* 👑 Acesso Master Proprietário Irrestrito */}
+            <div className="pt-2 border-t border-slate-800">
+              <span className="text-[11px] text-amber-400 block mb-2 font-bold flex items-center gap-1.5">
+                <Crown className="w-4 h-4 text-amber-400" />
+                <span>Conta Master do Proprietário (Acesso Completo Irrestrito):</span>
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  handleQuickLogin('nuncaparedelutar1988@gmail.com', 'tenant-river-life')
+                }
+                className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border border-amber-500/60 hover:border-amber-400 hover:from-amber-900/90 text-left transition-all cursor-pointer shadow-lg shadow-amber-950/40 flex items-center justify-between gap-3 mb-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
+                    <Crown className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-bold text-sm">Proprietário Geral • Master</span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-400 text-slate-950 uppercase">
+                        SUPERADMIN
+                      </span>
+                    </div>
+                    <span className="text-amber-300/80 text-[11px] font-mono">
+                      nuncaparedelutar1988@gmail.com
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] uppercase font-mono">
+                  Acessar Tudo
+                </span>
+              </button>
+            </div>
+
             {/* Acessos Rápidos de Demonstração */}
             <div className="pt-2 border-t border-slate-800">
               <span className="text-[11px] text-slate-400 block mb-2 font-bold">
@@ -263,6 +299,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   required
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => setEmailInput('nuncaparedelutar1988@gmail.com')}
+                className="mt-1.5 text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer font-bold"
+              >
+                <Crown className="w-3 h-3 text-amber-400" />
+                <span>Usar conta Master: nuncaparedelutar1988@gmail.com</span>
+              </button>
             </div>
 
             <div className="space-y-1">

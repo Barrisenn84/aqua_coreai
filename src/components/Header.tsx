@@ -33,6 +33,7 @@ import {
   Landmark,
   Home,
   RotateCcw,
+  Crown,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -156,7 +157,14 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             <span className="text-white">{currentTenant.name}</span>
             <span className="text-slate-500">•</span>
-            <span className="text-cyan-300 font-mono text-[11px]">{currentUser.name}</span>
+            {currentUser.email === 'nuncaparedelutar1988@gmail.com' ? (
+              <span className="text-amber-300 font-mono text-[11px] flex items-center gap-1 font-black bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-600/60">
+                <Crown className="w-3 h-3 text-amber-400" />
+                <span>Proprietário Master</span>
+              </span>
+            ) : (
+              <span className="text-cyan-300 font-mono text-[11px]">{currentUser.name}</span>
+            )}
           </button>
         </div>
 

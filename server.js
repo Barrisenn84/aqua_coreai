@@ -1546,6 +1546,14 @@ var init_databaseService = __esm({
       ],
       users: [
         {
+          id: "usr-master-owner",
+          tenantId: "tenant-river-life",
+          email: "nuncaparedelutar1988@gmail.com",
+          name: "Propriet\xE1rio Geral \u2022 Master",
+          role: "superadmin_owner",
+          phone: "+5584988585211"
+        },
+        {
           id: "usr-01",
           tenantId: "tenant-river-life",
           email: "collermhann@aquacore.ai",
@@ -1942,7 +1950,24 @@ var init_databaseService = __esm({
         return this.data.users;
       }
       findUserByEmail(email) {
-        return this.data.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+        const cleanEmail = (email || "").toLowerCase().trim();
+        if (cleanEmail === "nuncaparedelutar1988@gmail.com") {
+          let master = this.data.users.find((u) => u.email.toLowerCase() === "nuncaparedelutar1988@gmail.com");
+          if (!master) {
+            master = {
+              id: "usr-master-owner",
+              tenantId: "tenant-river-life",
+              email: "nuncaparedelutar1988@gmail.com",
+              name: "Propriet\xE1rio Geral \u2022 Master",
+              role: "superadmin_owner",
+              phone: "+5584988585211"
+            };
+            this.data.users.unshift(master);
+            this.saveData(this.data);
+          }
+          return master;
+        }
+        return this.data.users.find((u) => u.email.toLowerCase() === cleanEmail);
       }
       createUser(user) {
         const newUser = { id: `usr-${Date.now()}`, ...user };

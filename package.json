@@ -1,15 +1,16 @@
 {
-  "name": "react-example",
+  "name": "aqua-core-ai",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:express --external:dotenv --external:vite --external:@google/genai",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && vite build && esbuild server.ts --bundle --platform=node --format=esm --outfile=server.js --external:express --external:dotenv --external:vite --external:@google/genai --external:@prisma/client",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "start": "tsx server.ts"
+    "start": "node server.js"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
