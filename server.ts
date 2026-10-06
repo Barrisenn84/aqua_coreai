@@ -14,6 +14,9 @@ import {
   SolarController,
   BrasilApiController,
   AIAuditController,
+  VisionController,
+  VoiceController,
+  AgroCreditController,
 } from './src/api/aquaControllers';
 import { mqttIngestor } from './src/iot/mqttIngestor';
 import { messagingHub } from './src/services/MessagingHub';
@@ -106,10 +109,48 @@ app.put('/api/db/equipments/:id', DatabaseController.updateEquipment);
 app.get('/api/db/invoices/:tenantId', DatabaseController.getInvoices);
 app.post('/api/db/invoices', DatabaseController.addInvoice);
 
-// ☀️ APIS GRATUITAS: CICLO SOLAR & BRASILAPI
+// 🍽️ Bandejas de Alimentação & Comedouros
+app.get('/api/db/feeding-trays', DatabaseController.getFeedingTrays);
+app.post('/api/db/feeding-trays', DatabaseController.addFeedingTray);
+
+// 📦 Estoque de Insumos & Armazém Inteligente
+app.get('/api/db/inventory', DatabaseController.getInventory);
+app.post('/api/db/inventory', DatabaseController.addInventoryItem);
+app.patch('/api/db/inventory/:id', DatabaseController.updateInventoryStock);
+
+// 💧 Balanço Iônico & Qualidade da Água
+app.get('/api/db/water-ionic', DatabaseController.getWaterIonic);
+app.post('/api/db/water-ionic', DatabaseController.addWaterIonic);
+
+// 🦐 Mortalidade & Ciclo de Mudas Lunares
+app.get('/api/db/mortality', DatabaseController.getMortality);
+app.post('/api/db/mortality', DatabaseController.addMortality);
+
+// 🎣 Despescas & Romaneio Comercial
+app.get('/api/db/harvests', DatabaseController.getHarvests);
+app.post('/api/db/harvests', DatabaseController.addHarvest);
+
+// 🏦 Contas Bancárias & Fluxo de Caixa Diário (DFC)
+app.get('/api/db/bank-accounts', DatabaseController.getBankAccounts);
+app.get('/api/db/cash-flow', DatabaseController.getCashFlow);
+app.post('/api/db/cash-flow', DatabaseController.addCashFlow);
+
+// 🏡 Minha Fazenda (Cadastro & Licenciamento Ambiental)
+app.get('/api/db/farm-profile', DatabaseController.getFarmProfile);
+app.put('/api/db/farm-profile', DatabaseController.updateFarmProfile);
+
+// ☀️ APIS GRATUITAS: CICLO SOLAR, BRASILAPI & BANCO CENTRAL
 app.get('/api/solar/cycle', SolarController.getCycle);
 app.get('/api/brasilapi/cnpj/:cnpj', BrasilApiController.getCnpj);
 app.get('/api/brasilapi/cep/:cep', BrasilApiController.getCep);
+app.get('/api/brasilapi/feriados', BrasilApiController.getFeriados);
+app.get('/api/agro/credit-benchmark', AgroCreditController.getBenchmark);
+
+// 📷 VISÃO COMPUTACIONAL MULTIMODAL IA (5 Modos Especialistas)
+app.post('/api/vision/analyze', VisionController.analyzeImage);
+
+// 🎤 COMANDO POR VOZ MULTILATERAL (Voz IA Dr. Camarão)
+app.post('/api/voice/command', VoiceController.processCommand);
 
 // 🧠 IA EM TODA A POTÊNCIA: AUDITORIAS ESPECIALIZADAS COM GEMINI
 app.post('/api/ai/audit-invoice', AIAuditController.auditInvoice);

@@ -21,6 +21,17 @@ import { BlackBoxHaaSView } from './components/BlackBoxHaaSView';
 import { IoTSimulatorControls } from './components/IoTSimulatorControls';
 import { AuthModal } from './components/AuthModal';
 
+// Componentes Adicionados do Meu Pescado
+import { FeedingTraysView } from './components/FeedingTraysView';
+import { WaterQualityIonView } from './components/WaterQualityIonView';
+import { InventoryWarehouseView } from './components/InventoryWarehouseView';
+import { HarvestCommercialView } from './components/HarvestCommercialView';
+import { MortalityMoltView } from './components/MortalityMoltView';
+import { CashFlowView } from './components/CashFlowView';
+import { VoiceAssistantModal } from './components/VoiceAssistantModal';
+import { VisionAnalysisModal } from './components/VisionAnalysisModal';
+import { FarmProfileModal } from './components/FarmProfileModal';
+
 function AppContent() {
   const { setActiveTankId, isAuthModalOpen, setIsAuthModalOpen } = useAquaCore();
   const [activeTab, setActiveTab] = useState<
@@ -36,11 +47,20 @@ function AppContent() {
     | 'terminal'
     | 'flutter-mobile'
     | 'architecture'
+    | 'feeding-trays'
+    | 'water-quality'
+    | 'inventory-warehouse'
+    | 'harvest-commercial'
+    | 'mortality-molt'
+    | 'cash-flow'
   >('nerve-center');
   const [isBiometryModalOpen, setIsBiometryModalOpen] = useState<boolean>(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState<boolean>(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState<boolean>(false);
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState<boolean>(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
+  const [isVisionModalOpen, setIsVisionModalOpen] = useState<boolean>(false);
+  const [isFarmProfileModalOpen, setIsFarmProfileModalOpen] = useState<boolean>(false);
   const [biometryTankTarget, setBiometryTankTarget] = useState<string>('tank-02');
   const [auditTankTarget, setAuditTankTarget] = useState<string>('tank-04');
 
@@ -65,6 +85,9 @@ function AppContent() {
         onOpenScannerModal={() => setIsScannerModalOpen(true)}
         onOpenInvoiceModal={() => setIsInvoiceModalOpen(true)}
         onOpenEquipmentModal={() => setIsEquipmentModalOpen(true)}
+        onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
+        onOpenVisionModal={() => setIsVisionModalOpen(true)}
+        onOpenFarmProfileModal={() => setIsFarmProfileModalOpen(true)}
       />
 
       {/* Emergency Hypoxia / Critical Banner (Visible on all tabs when triggered) */}
@@ -110,6 +133,21 @@ function AppContent() {
         )}
 
         {activeTab === 'architecture' && <CloudArchitectureView />}
+
+        {/* TELAS INTEGRADAS DO MEU PESCADO */}
+        {activeTab === 'feeding-trays' && <FeedingTraysView />}
+
+        {activeTab === 'water-quality' && <WaterQualityIonView />}
+
+        {activeTab === 'inventory-warehouse' && (
+          <InventoryWarehouseView onOpenScanner={() => setIsScannerModalOpen(true)} />
+        )}
+
+        {activeTab === 'harvest-commercial' && <HarvestCommercialView />}
+
+        {activeTab === 'mortality-molt' && <MortalityMoltView />}
+
+        {activeTab === 'cash-flow' && <CashFlowView />}
       </main>
 
       {/* Footer System Telemetry */}
@@ -150,6 +188,29 @@ function AppContent() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* Modal de Voz IA Bilateral (Dr. Camarão) */}
+      <VoiceAssistantModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onNavigateTab={(tab) => setActiveTab(tab as any)}
+        onOpenVision={() => {
+          setIsVoiceModalOpen(false);
+          setIsVisionModalOpen(true);
+        }}
+      />
+
+      {/* Modal de Visão Computacional Multimodal (5 Modos) */}
+      <VisionAnalysisModal
+        isOpen={isVisionModalOpen}
+        onClose={() => setIsVisionModalOpen(false)}
+      />
+
+      {/* Modal de Minha Fazenda / Cadastro Institucional & Licença */}
+      <FarmProfileModal
+        isOpen={isFarmProfileModalOpen}
+        onClose={() => setIsFarmProfileModalOpen(false)}
       />
 
       {/* Floating IoT Stress Simulator Controls */}

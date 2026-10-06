@@ -25,6 +25,13 @@ import {
   UserCheck,
   FileCheck,
   Wrench,
+  Mic,
+  Utensils,
+  Anchor,
+  Warehouse,
+  Moon,
+  Landmark,
+  Home,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -41,7 +48,13 @@ interface HeaderProps {
     | 'dre'
     | 'terminal'
     | 'flutter-mobile'
-    | 'architecture';
+    | 'architecture'
+    | 'feeding-trays'
+    | 'water-quality'
+    | 'inventory-warehouse'
+    | 'harvest-commercial'
+    | 'mortality-molt'
+    | 'cash-flow';
   setActiveTab: (
     tab:
       | 'nerve-center'
@@ -56,11 +69,20 @@ interface HeaderProps {
       | 'terminal'
       | 'flutter-mobile'
       | 'architecture'
+      | 'feeding-trays'
+      | 'water-quality'
+      | 'inventory-warehouse'
+      | 'harvest-commercial'
+      | 'mortality-molt'
+      | 'cash-flow'
   ) => void;
   onOpenBiometryModal: () => void;
   onOpenScannerModal: () => void;
   onOpenInvoiceModal?: () => void;
   onOpenEquipmentModal?: () => void;
+  onOpenVoiceModal?: () => void;
+  onOpenVisionModal?: () => void;
+  onOpenFarmProfileModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -70,6 +92,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenScannerModal,
   onOpenInvoiceModal,
   onOpenEquipmentModal,
+  onOpenVoiceModal,
+  onOpenVisionModal,
+  onOpenFarmProfileModal,
 }) => {
   const {
     farm,
@@ -358,10 +383,116 @@ export const Header: React.FC<HeaderProps> = ({
             <Cloud className="w-4 h-4 text-indigo-400" />
             <span>Blueprint GCP</span>
           </button>
+
+          {/* NOVAS ABAS INTEGRADAS DO MEU PESCADO */}
+          <button
+            onClick={() => setActiveTab('feeding-trays')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'feeding-trays'
+                ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-500/20'
+                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Utensils className="w-4 h-4 text-amber-400" />
+            <span>Bandejas</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('water-quality')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'water-quality'
+                ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-sm shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Droplets className="w-4 h-4 text-cyan-400" />
+            <span>Qualidade & Íons</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('inventory-warehouse')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'inventory-warehouse'
+                ? 'bg-orange-500/25 text-orange-300 border border-orange-500/50 shadow-sm shadow-orange-500/20'
+                : 'text-slate-400 hover:text-orange-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Warehouse className="w-4 h-4 text-orange-400" />
+            <span>Estoque & Galpão</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('harvest-commercial')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'harvest-commercial'
+                ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/50 shadow-sm shadow-emerald-500/20'
+                : 'text-slate-400 hover:text-emerald-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Anchor className="w-4 h-4 text-emerald-400" />
+            <span>Despescas</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('mortality-molt')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'mortality-molt'
+                ? 'bg-rose-500/25 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/20'
+                : 'text-slate-400 hover:text-rose-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Moon className="w-4 h-4 text-rose-400" />
+            <span>Mudas & Sanidade</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('cash-flow')}
+            className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'cash-flow'
+                ? 'bg-teal-500/25 text-teal-300 border border-teal-500/50 shadow-sm shadow-teal-500/20'
+                : 'text-slate-400 hover:text-teal-300 hover:bg-slate-800/60'
+            }`}
+          >
+            <Landmark className="w-4 h-4 text-teal-400" />
+            <span>Fluxo Caixa DFC</span>
+          </button>
         </nav>
 
         {/* Fast Action CTA */}
         <div className="flex items-center gap-2">
+          {onOpenFarmProfileModal && (
+            <button
+              onClick={onOpenFarmProfileModal}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-cyan-800/60 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+              title="Cadastro institucional da Fazenda, CNPJ e Licença Ambiental"
+            >
+              <Home className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Minha Fazenda</span>
+            </button>
+          )}
+
+          {onOpenVoiceModal && (
+            <button
+              onClick={onOpenVoiceModal}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 text-purple-200 border border-purple-600/50 shadow-md shadow-purple-950/40 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+              title="Comando e Diálogo por Voz com o Oráculo Dr. Camarão"
+            >
+              <Mic className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
+              <span>Voz IA</span>
+            </button>
+          )}
+
+          {onOpenVisionModal && (
+            <button
+              onClick={onOpenVisionModal}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-teal-900/80 to-cyan-900/80 hover:from-teal-800 hover:to-cyan-800 text-teal-200 border border-teal-600/50 shadow-md shadow-teal-950/40 transition-all flex items-center gap-1.5 cursor-pointer font-mono"
+              title="Visão Computacional Multimodal (Bandeja, Camarão, Fitas, Sacos)"
+            >
+              <Camera className="w-3.5 h-3.5 text-teal-300" />
+              <span>Foto IA</span>
+            </button>
+          )}
+
           {onOpenInvoiceModal && (
             <button
               onClick={onOpenInvoiceModal}

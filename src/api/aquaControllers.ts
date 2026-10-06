@@ -379,6 +379,176 @@ export const DatabaseController = {
       return res.status(500).json({ error: err.message });
     }
   },
+
+  // 🍽️ Bandejas de Alimentação
+  getFeedingTrays: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ trays: db.getFeedingTrays(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addFeedingTray: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addFeedingTray(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 📦 Estoque de Insumos
+  getInventory: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ items: db.getInventory(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addInventoryItem: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addInventoryItem(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  updateInventoryStock: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { currentStockKg } = req.body;
+      const { db } = await import('../db/databaseService');
+      const record = db.updateInventoryStock(id, Number(currentStockKg));
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 💧 Balanço Iônico & Água
+  getWaterIonic: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ logs: db.getWaterIonic(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addWaterIonic: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addWaterIonic(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 🦐 Mortalidade & Mudas Lunares
+  getMortality: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ logs: db.getMortality(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addMortality: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addMortality(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 🎣 Despescas & Romaneio
+  getHarvests: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ harvests: db.getHarvests(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addHarvest: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addHarvest(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 🏦 Contas & Fluxo de Caixa
+  getBankAccounts: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ accounts: db.getBankAccounts(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  getCashFlow: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ movements: db.getCashFlow(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  addCashFlow: async (req: Request, res: Response) => {
+    try {
+      const { db } = await import('../db/databaseService');
+      const record = db.addCashFlow(req.body);
+      return res.json({ success: true, record });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  // 🏡 Perfil Institucional da Fazenda
+  getFarmProfile: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      return res.json({ profile: db.getFarmProfile(tenantId) });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+
+  updateFarmProfile: async (req: Request, res: Response) => {
+    try {
+      const tenantId = (req.query.tenantId as string) || 'tenant-river-life';
+      const { db } = await import('../db/databaseService');
+      const updated = db.updateFarmProfile(tenantId, req.body);
+      return res.json({ success: true, profile: updated });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
 };
 
 /**
@@ -399,7 +569,7 @@ export const SolarController = {
 };
 
 /**
- * 🇧🇷 CONTROLLER BRASILAPI (CNPJ & CEP)
+ * 🇧🇷 CONTROLLER BRASILAPI (CNPJ, CEP & Feriados)
  */
 export const BrasilApiController = {
   getCnpj: async (req: Request, res: Response) => {
@@ -423,10 +593,67 @@ export const BrasilApiController = {
       return res.status(500).json({ error: err.message });
     }
   },
+
+  getFeriados: async (req: Request, res: Response) => {
+    try {
+      const year = req.query.year ? Number(req.query.year) : new Date().getFullYear();
+      const { consultarFeriadosBrasilApi } = await import('../services/freeApisService');
+      const feriados = await consultarFeriadosBrasilApi(year);
+      return res.json({ feriados });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
 };
 
 /**
- * 🧠 CONTROLLER DE AUDITORIAS ESPECIALIZADAS COM IA (Gemini 2.5 Flash)
+ * 💰 CONTROLLER DE CRÉDITO AGRO (Banco Central do Brasil / Selic / PRONAF)
+ */
+export const AgroCreditController = {
+  getBenchmark: async (_req: Request, res: Response) => {
+    try {
+      const { getAgroCreditBenchmark } = await import('../services/freeApisService');
+      const data = await getAgroCreditBenchmark();
+      return res.json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+};
+
+/**
+ * 📷 CONTROLLER DE VISÃO COMPUTACIONAL MULTIMODAL
+ */
+export const VisionController = {
+  analyzeImage: async (req: Request, res: Response) => {
+    try {
+      const { analyzeVisionCarciniculture } = await import('../ai/geminiOracle');
+      const analysis = await analyzeVisionCarciniculture(req.body);
+      return res.json(analysis);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+};
+
+/**
+ * 🎤 CONTROLLER DO ASSISTENTE DE VOZ IA (Dr. Camarão)
+ */
+export const VoiceController = {
+  processCommand: async (req: Request, res: Response) => {
+    try {
+      const { transcript } = req.body;
+      const { processVoiceAssistantCommand } = await import('../ai/geminiOracle');
+      const response = await processVoiceAssistantCommand(transcript || '');
+      return res.json(response);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+};
+
+/**
+ * 🧠 CONTROLLER DE AUDITORIAS ESPECIALIZADAS COM IA (Gemini 2.0 Flash)
  */
 export const AIAuditController = {
   auditInvoice: async (req: Request, res: Response) => {

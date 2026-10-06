@@ -184,3 +184,140 @@ model FeedingLog {
   costPerKg  Float     @default(4.20)
   createdAt  DateTime  @default(now())
 }
+
+// 🍽️ Manejo por Bandejas / Comedouros (Padrão Ouro de Carcinicultura)
+model FeedingTrayLog {
+  id                    String    @id @default(uuid())
+  tenantId              String
+  tankId                String
+  batchId               String
+  checkTime             String    @default("09:30")
+  traysInspectedCount   Int       @default(10)
+  trayStatus            String    @default("LIMPO") // LIMPO | POUCA_SOBRA | SOBRA_MEDIA | SOBRA_ALTA
+  leftoverPercentage    Float     @default(0.0)
+  adjustmentSuggestedPct Float    @default(0.0) // +10%, 0%, -15%, -100%
+  aiRecommendation      String?
+  createdAt             DateTime  @default(now())
+}
+
+// 📦 Armazém e Controle de Estoque de Insumos Inteligente
+model FeedInventoryItem {
+  id               String    @id @default(uuid())
+  tenantId         String
+  brand            String
+  name             String
+  category         String    @default("ENGORDA") // INICIAL_PL | CRESCIMENTO | ENGORDA | PROBIOTICO | CALCARIO | FERTILIZANTE
+  itemType         String    @default("Ração")
+  unit             String    @default("kg")
+  proteinPercent   Float     @default(35.0)
+  currentStockKg   Float     @default(1500.0)
+  minStockAlertKg  Float     @default(400.0)
+  costPerKg        Float     @default(6.20)
+  location         String    @default("Galpão Principal")
+  status           String    @default("NORMAL") // NORMAL | ABAIXO_MINIMO | ESGOTADO
+  expiryDate       DateTime?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// 💧 Balanço Iônico & Qualidade de Água Expandida
+model WaterQualityIonicLog {
+  id                   String    @id @default(uuid())
+  tenantId             String
+  tankId               String
+  salinityPpt          Float     @default(15.0)
+  dissolvedOxygenMgL   Float
+  temperatureC         Float
+  ph                   Float
+  totalAlkalinityMgL   Float     @default(140.0) // mg/L CaCO3 (Min 120 para muda)
+  totalHardnessMgL     Float     @default(650.0) // mg/L CaCO3
+  calciumMgL           Float     @default(120.0)
+  magnesiumMgL         Float     @default(360.0) // Ideal relação Mg:Ca ~ 3:1
+  toxicAmmoniaNh3MgL   Float     @default(0.015)
+  nitriteNo2MgL        Float     @default(0.04)
+  transparencySecchiCm Float     @default(32.0) // 30-40cm ideal
+  calcificationStatus  String    @default("IDEAL") // IDEAL | EXIGE_CALAGEM | DESEQUILIBRIO_IONICO
+  createdAt            DateTime  @default(now())
+}
+
+// 🦐 Mortalidade & Ciclo de Mudas (Ecdise Lunar)
+model MortalityMoltLog {
+  id            String    @id @default(uuid())
+  tenantId      String
+  tankId        String
+  batchId       String
+  quantity      Int
+  lunarPhase    String    @default("LUA_CHEIA") // LUA_CHEIA | LUA_NOVA | CRESCENTE | MINGUANTE
+  probableCause String    @default("ROTINA_MUDA") // ROTINA_MUDA | HIPOXIA_NOTURNA | SINDROME_MANCHA_BRANCA | BAIXA_ALCALINIDADE | TOXIDEZ_NITRITO
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+// 🎣 Despescas, Colheitas e Romaneio Comercial
+model HarvestLog {
+  id                       String    @id @default(uuid())
+  tenantId                 String
+  tankId                   String
+  batchId                  String
+  harvestType              String    @default("TOTAL") // TOTAL | DESBASTE_PARCIAL
+  totalWeightKg            Float
+  shrimpCountEstimated     Int
+  avgWeightG               Float
+  commercialClassification String    @default("60/70") // 40/50 | 50/60 | 60/70 | 70/80 | 80/100
+  pricePerKg               Float     @default(24.50)
+  totalRevenue             Float
+  buyerName                String
+  gtaNumber                String?
+  notes                    String?
+  createdAt                DateTime  @default(now())
+}
+
+// 🏦 Contas Bancárias & Fluxo de Caixa (DFC)
+model BankAccount {
+  id               String    @id @default(uuid())
+  tenantId         String
+  bankName         String
+  accountType      String    @default("CORRENTE")
+  agency           String    @default("1618-7")
+  accountNumber    String    @default("25489-0")
+  holderName       String    @default("River Life Aquicultura Ltda")
+  currentBalanceRs Float     @default(45000.0)
+  pixKey           String    @default("financeiro@aquacore.ai")
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+}
+
+model CashFlowMovement {
+  id           String    @id @default(uuid())
+  tenantId     String
+  movementType String    // ENTRADA | SAIDA
+  category     String    // VENDA_CAMARAO | RACAO | POS_LARVAS | ENERGIA_ELETRICA | PROBIOTICOS | MANUTENCAO | IMPOSTOS
+  description  String
+  amountRs     Float
+  status       String    @default("REALIZADO") // REALIZADO | PREVISTO
+  documentRef  String?
+  createdAt    DateTime  @default(now())
+}
+
+// 🏡 Cadastro Institucional da Propriedade (Minha Fazenda)
+model FarmProfile {
+  id                    String    @id @default(uuid())
+  tenantId              String    @unique
+  name                  String    @default("River Life Aquicultura & Camarão")
+  corporateName         String    @default("River Life Carcinicultura do Nordeste Ltda")
+  cnpj                  String    @default("32.845.912/0001-44")
+  stateRegistration     String    @default("16.984.231-0")
+  address               String    @default("Rodovia PB-018, Km 14, Zona Rural")
+  city                  String    @default("João Pessoa")
+  state                 String    @default("PB")
+  waterSourceType       String    @default("Estuário do Rio Paraíba (Maré Salobra)")
+  averageSalinityPpt    Float     @default(18.5)
+  totalAreaHectares     Float     @default(18.4)
+  waterSurfaceHectares  Float     @default(12.2)
+  technicianInCharge    String    @default("Dr. Arnaldo Bezerra (Eng. de Pesca - UFRPE/UFPB)")
+  councilRegistration   String    @default("CREA-PB 14.892-D")
+  environmentalLicense  String    @default("SUDEMA-PB LO nº 2024/0981-L")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}

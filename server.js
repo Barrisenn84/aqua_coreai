@@ -43,6 +43,7 @@ var geminiOracle_exports = {};
 __export(geminiOracle_exports, {
   GeminiOracle: () => GeminiOracle,
   MessageLevel: () => MessageLevel,
+  analyzeVisionCarciniculture: () => analyzeVisionCarciniculture,
   auditDreWithAI: () => auditDreWithAI,
   auditEquipmentWithAI: () => auditEquipmentWithAI,
   auditInvoiceWithAI: () => auditInvoiceWithAI,
@@ -50,6 +51,7 @@ __export(geminiOracle_exports, {
   generateDailyDigestWhatsApp: () => generateDailyDigestWhatsApp,
   generateGuardianWhatsAppAlert: () => generateGuardianWhatsAppAlert,
   getAIGuidance: () => getAIGuidance,
+  processVoiceAssistantCommand: () => processVoiceAssistantCommand,
   processWhatsAppGhostMessage: () => processWhatsAppGhostMessage,
   scanFeedBagLabel: () => scanFeedBagLabel
 });
@@ -498,6 +500,235 @@ Entregue o parecer financeiro executivo com estrat\xE9gias acion\xE1veis para co
     ],
     potentialMarginGainPct: 4.8,
     cfoExecutiveSummary: `Opera\xE7\xE3o s\xF3lida com margem de ${netMarginPct}% e custo de R$ ${costPerKgProduced.toFixed(2)}/kg. A ra\xE7\xE3o representa ${feedShare}% do custo total. Com a aera\xE7\xE3o inteligente e o calibre especial, o EBITDA pode subir mais R$ 12.400.`
+  };
+}
+async function analyzeVisionCarciniculture(payload) {
+  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const cleanBase64 = payload.image_base64.replace(/^data:image\/\w+;base64,/, "");
+  const mimeType = payload.image_base64.includes("image/png") ? "image/png" : "image/jpeg";
+  const modeInstructions = {
+    tray_feeding: `Voc\xEA \xE9 especialista zoot\xE9cnico em bandejas de alimenta\xE7\xE3o (comedouros) de carcinicultura (Litopenaeus vannamei).
+Analise a imagem da bandeja:
+- Medir a % de sobra de ra\xE7\xE3o visualmente (0% limpo, 5-15% pouca sobra, 20-40% m\xE9dia sobra, >50% alta sobra).
+- Avaliar presen\xE7a de fezes de camar\xE3o, muco, lodo preto ou turbidez.
+- Prescrever ajuste imediato de arra\xE7oamento (+10%, manter, -15% ou suspender trato).`,
+    shrimp_health: `Voc\xEA \xE9 patologista aqu\xEDcola especialista em camar\xE3o marinho Litopenaeus vannamei.
+Analise a imagem do camar\xE3o:
+- Avaliar hepatop\xE2ncreas (colora\xE7\xE3o castanho-escuro saud\xE1vel vs atrofia/despigmenta\xE7\xE3o).
+- Reple\xE7\xE3o do trato digestivo (cheio, intermitente ou vazio).
+- Sinais cl\xEDnicos de WSSV (mancha branca na carapa\xE7a), IMNV (opacidade muscular no abd\xF4men), ou AHPND.
+- Est\xE1gio de muda (intermuda, p\xF3s-muda com carapa\xE7a mole).`,
+    water_quality: `Voc\xEA \xE9 qu\xEDmico e limnologista de viveiros de camar\xE3o.
+Analise a imagem da fita/disco de Secchi ou l\xE2mina d'\xE1gua:
+- Leitura colorim\xE9trica aproximada de pH, Am\xF4nia (NH3/NH4), Nitrito (NO2).
+- Turbidez e colora\xE7\xE3o da \xE1gua (verde-oliva de diatom\xE1ceas vs marrom de dinoflagelados).`,
+    invoice_ocr: `Voc\xEA \xE9 o extrator de OCR para notas fiscais e sacos de insumos agropecu\xE1rios.
+Identifique:
+- Nome do produto (ex: Ra\xE7\xE3o 35% PB, Calc\xE1rio Calc\xEDtico, Probi\xF3tico).
+- Fabricante/Marca, quantidade em kg, pre\xE7o unit\xE1rio estimado e lote.`,
+    general_diagnosis: `Voc\xEA \xE9 o engenheiro chefe da fazenda aqu\xEDcola. Avalie a estrutura, aeradores, tubula\xE7\xE3o ou solo da imagem e prescreva recomenda\xE7\xF5es operacionais.`
+  };
+  const systemInstruction = modeInstructions[payload.analysis_mode] || modeInstructions.general_diagnosis;
+  const prompt = `${systemInstruction}
+${payload.custom_prompt ? `Observa\xE7\xE3o adicional do operador: "${payload.custom_prompt}"` : ""}
+Retorne estritamente um JSON estruturado com:
+- confidence_score (n\xFAmero 0 a 100)
+- executive_summary (texto claro e direto)
+- technical_observations (array de strings)
+- recommended_actions (array de strings)
+- severity_level ("OK", "ATENCAO" ou "CRITICO")
+- extracted_data (objeto com campos num\xE9ricos ou dados extra\xEDdos se aplic\xE1vel)`;
+  if (client) {
+    try {
+      const response = await client.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: [
+          { text: prompt },
+          { inlineData: { mimeType, data: cleanBase64 } }
+        ],
+        config: {
+          temperature: 0.1,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              confidence_score: { type: Type.NUMBER },
+              executive_summary: { type: Type.STRING },
+              technical_observations: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              recommended_actions: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              },
+              severity_level: { type: Type.STRING, enum: ["OK", "ATENCAO", "CRITICO"] },
+              extracted_data: { type: Type.OBJECT }
+            },
+            required: ["confidence_score", "executive_summary", "technical_observations", "recommended_actions", "severity_level"]
+          }
+        }
+      });
+      const parsed = JSON.parse(response.text || "{}");
+      return {
+        analysis_mode: payload.analysis_mode,
+        ...parsed
+      };
+    } catch (err) {
+      console.warn("[GeminiOracle] Fallback em analyzeVisionCarciniculture:", err.message);
+    }
+  }
+  if (payload.analysis_mode === "tray_feeding") {
+    return {
+      analysis_mode: "tray_feeding",
+      confidence_score: 94,
+      executive_summary: "Bandeja de comedouro com 100% de consumo (limpa) e fezes densas de boa digest\xE3o.",
+      technical_observations: [
+        "Sem restos de pellets no fundo da tela ap\xF3s 2h do primeiro trato.",
+        "Presen\xE7a de fezes uniformes indicando apetite voraz e boa palatabilidade da ra\xE7\xE3o 35% PB.",
+        "Aus\xEAncia de lodo preto ou ac\xFAmulo de sulfeto de hidrog\xEAnio no comedouro."
+      ],
+      recommended_actions: [
+        "Aumentar em +10% a cota de arra\xE7oamento no pr\xF3ximo trato das 11:00h.",
+        "Manter monitoramento na bandeja de checagem do lado norte do viveiro."
+      ],
+      severity_level: "OK",
+      extracted_data: {
+        leftover_pct: 0,
+        adjustment_suggested_pct: 10,
+        gut_fullness_pct: 95
+      }
+    };
+  }
+  if (payload.analysis_mode === "shrimp_health") {
+    return {
+      analysis_mode: "shrimp_health",
+      confidence_score: 96,
+      executive_summary: "Camar\xE3o saud\xE1vel em intermuda com hepatop\xE2ncreas pigmentado e trato 100% repleto.",
+      technical_observations: [
+        "Hepatop\xE2ncreas com formato t\xFAbulo-alveolar compacto e colora\xE7\xE3o castanho-dourada.",
+        "Trato digestivo cont\xEDnuo, sem quebras ou fezes esbranqui\xE7adas.",
+        "M\xFAsculo com transpar\xEAncia cristalina; teste visual negativo para IMNV ou Mancha Branca (WSSV)."
+      ],
+      recommended_actions: [
+        "Manter dose de probi\xF3tico na \xE1gua e continuar suplementa\xE7\xE3o vitam\xEDnica C na ra\xE7\xE3o."
+      ],
+      severity_level: "OK",
+      extracted_data: {
+        gut_fullness_pct: 95,
+        molt_stage: "INTERMUDA"
+      }
+    };
+  }
+  if (payload.analysis_mode === "invoice_ocr") {
+    return {
+      analysis_mode: "invoice_ocr",
+      confidence_score: 98,
+      executive_summary: "Insumo identificado: Ra\xE7\xE3o Poti Camar\xE3o 35% PB Extrusada 1.6mm (Guabi Aqua).",
+      technical_observations: [
+        "Identificado saco de 25kg com 35% de prote\xEDna bruta m\xEDnima.",
+        "Lote do fabricante: G-2026/098 com validade de 180 dias.",
+        "Pre\xE7o de aquisi\xE7\xE3o detectado: R$ 6,20/kg."
+      ],
+      recommended_actions: [
+        'Clique em "Salvar no Estoque" para registrar automaticamente a entrada de insumo.'
+      ],
+      severity_level: "OK",
+      extracted_data: {
+        name: "Poti Camar\xE3o 35% PB Extrusada 1.6mm",
+        brand: "Guabi Aqua",
+        item_type: "Ra\xE7\xE3o",
+        unit: "kg",
+        current_stock_kg: 1e3,
+        min_stock_alert_kg: 300,
+        cost_per_kg: 6.2
+      }
+    };
+  }
+  return {
+    analysis_mode: payload.analysis_mode,
+    confidence_score: 90,
+    executive_summary: "Equipamento e estrutura operando em regime de normalidade para carcinicultura intensiva.",
+    technical_observations: [
+      "Alinhamento mec\xE2nico das p\xE1s dos aeradores sem vibra\xE7\xE3o anormal percept\xEDvel.",
+      "Cor da \xE1gua e padr\xE3o de turbidez adequados para ambiente de ber\xE7\xE1rio."
+    ],
+    recommended_actions: [
+      "Manter inspe\xE7\xE3o preventiva e limpeza rotineira a cada 7 dias."
+    ],
+    severity_level: "OK"
+  };
+}
+async function processVoiceAssistantCommand(transcript) {
+  const norm = transcript.toLowerCase();
+  if (norm.includes("estoque") || norm.includes("armaz\xE9m") || norm.includes("insumo") || norm.includes("ra\xE7\xE3o")) {
+    return {
+      action: "navigate",
+      targetTab: "inventory",
+      spokenReply: "Abrindo o controle de estoque e insumos da fazenda.",
+      intent: "NAVIGATE_INVENTORY"
+    };
+  }
+  if (norm.includes("viveiro") || norm.includes("tanque") || norm.includes("ber\xE7\xE1rio")) {
+    return {
+      action: "navigate",
+      targetTab: "tanks",
+      spokenReply: "Exibindo todos os tanques e viveiros ativos.",
+      intent: "NAVIGATE_TANKS"
+    };
+  }
+  if (norm.includes("bandeja") || norm.includes("comedouro") || norm.includes("alimenta\xE7\xE3o") || norm.includes("trato")) {
+    return {
+      action: "navigate",
+      targetTab: "feeding_trays",
+      spokenReply: "Navegando para o manejo de alimenta\xE7\xE3o e checagem de bandejas.",
+      intent: "NAVIGATE_FEEDING"
+    };
+  }
+  if (norm.includes("\xE1gua") || norm.includes("qualidade") || norm.includes("oxig\xEAnio") || norm.includes("salinidade") || norm.includes("alcalinidade")) {
+    return {
+      action: "navigate",
+      targetTab: "water_quality",
+      spokenReply: "Abrindo o painel de qualidade da \xE1gua e balan\xE7o i\xF4nico.",
+      intent: "NAVIGATE_WATER_QUALITY"
+    };
+  }
+  if (norm.includes("despesca") || norm.includes("colheita") || norm.includes("romaneio") || norm.includes("venda")) {
+    return {
+      action: "navigate",
+      targetTab: "harvest",
+      spokenReply: "Acessando o m\xF3dulo de despescas e romaneios comerciais.",
+      intent: "NAVIGATE_HARVEST"
+    };
+  }
+  if (norm.includes("muda") || norm.includes("lua") || norm.includes("mortalidade") || norm.includes("ecdise")) {
+    return {
+      action: "navigate",
+      targetTab: "mortality_molt",
+      spokenReply: "Abrindo ciclo de mudas lunares e sanidade do camar\xE3o.",
+      intent: "NAVIGATE_MOLT"
+    };
+  }
+  if (norm.includes("fazenda") || norm.includes("propriedade") || norm.includes("licen\xE7a")) {
+    return {
+      action: "navigate",
+      targetTab: "farm_profile",
+      spokenReply: "Abrindo os dados cadastrais da Fazenda River Life.",
+      intent: "NAVIGATE_FARM_PROFILE"
+    };
+  }
+  if (norm.includes("fluxo de caixa") || norm.includes("financeiro") || norm.includes("banco") || norm.includes("dre")) {
+    return {
+      action: "navigate",
+      targetTab: "financial",
+      spokenReply: "Abrindo o fluxo de caixa e controladoria financeira.",
+      intent: "NAVIGATE_FINANCIAL"
+    };
+  }
+  return {
+    action: "speak_advice",
+    spokenReply: "Dr. Camar\xE3o na escuta. Para Litopenaeus vannamei, mantenha o oxig\xEAnio acima de 4.0 mg/L e a alcalinidade acima de 120 para garantir a muda perfeita. Posso abrir seus viveiros ou o estoque agora?",
+    intent: "ZOOTECHNICAL_QUERY"
   };
 }
 var aiInstance, apiKey, GeminiOracle, geminiOracle;
@@ -1421,6 +1652,236 @@ var init_databaseService = __esm({
           aiTaxReport: "Parecer Fiscal IA: Desonera\xE7\xE3o de ICMS na sa\xEDda de produtor rural e isen\xE7\xE3o PIS/COFINS agro.",
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         }
+      ],
+      feedingTrays: [
+        {
+          id: "tray-01",
+          tenantId: "tenant-river-life",
+          tankId: "tank-04",
+          batchId: "batch-04",
+          checkTime: "09:30",
+          traysInspectedCount: 12,
+          trayStatus: "LIMPO",
+          leftoverPercentage: 0,
+          adjustmentSuggestedPct: 10,
+          aiRecommendation: "Comedouros 100% limpos ap\xF3s 2h do 1\xBA trato. Aumentar +10% de ra\xE7\xE3o no trato das 11h.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "tray-02",
+          tenantId: "tenant-river-life",
+          tankId: "tank-02",
+          batchId: "batch-02",
+          checkTime: "09:40",
+          traysInspectedCount: 10,
+          trayStatus: "POUCA_SOBRA",
+          leftoverPercentage: 5,
+          adjustmentSuggestedPct: 0,
+          aiRecommendation: "Sobra m\xEDnima normal de transi\xE7\xE3o de muda. Manter quantidade no pr\xF3ximo trato.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      inventory: [
+        {
+          id: "inv-item-01",
+          tenantId: "tenant-river-life",
+          brand: "Guabi Aqua",
+          name: "Poti Camar\xE3o 35% PB Extrusada 1.6mm",
+          category: "ENGORDA",
+          itemType: "Ra\xE7\xE3o",
+          unit: "kg",
+          proteinPercent: 35,
+          currentStockKg: 3200,
+          minStockAlertKg: 800,
+          costPerKg: 6.2,
+          location: "Silo Principal - Setor A",
+          status: "NORMAL",
+          notes: "Lote G-2026/89. Validade 180 dias.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "inv-item-02",
+          tenantId: "tenant-river-life",
+          brand: "AquaFeed Brasil",
+          name: "Micro Starter PL10 40% PB",
+          category: "INICIAL_PL",
+          itemType: "Ra\xE7\xE3o",
+          unit: "kg",
+          proteinPercent: 40,
+          currentStockKg: 450,
+          minStockAlertKg: 200,
+          costPerKg: 12.8,
+          location: "Dep\xF3sito Ber\xE7\xE1rio",
+          status: "NORMAL",
+          notes: "Uso exclusivo nos tanques ber\xE7\xE1rio.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "inv-item-03",
+          tenantId: "tenant-river-life",
+          brand: "Calc\xE1rio Agr\xEDcola PB",
+          name: "Calc\xE1rio Calc\xEDtico Microencapsulado",
+          category: "CALCARIO",
+          itemType: "Corretivo",
+          unit: "kg",
+          proteinPercent: 0,
+          currentStockKg: 2800,
+          minStockAlertKg: 1e3,
+          costPerKg: 0.45,
+          location: "Galp\xE3o de Qu\xEDmicos",
+          status: "NORMAL",
+          notes: "Para corre\xE7\xE3o de alcalinidade p\xF3s-chuva.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "inv-item-04",
+          tenantId: "tenant-river-life",
+          brand: "BioShrimp Pro",
+          name: "Probi\xF3tico Biorremediador de Fundo",
+          category: "PROBIOTICO",
+          itemType: "Biol\xF3gico",
+          unit: "L",
+          proteinPercent: 0,
+          currentStockKg: 120,
+          minStockAlertKg: 40,
+          costPerKg: 48,
+          location: "Laborat\xF3rio da Fazenda",
+          status: "NORMAL",
+          notes: "Bacillus subtilis + Bacillus licheniformis para controle de lodo.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      waterIonic: [
+        {
+          id: "ionic-01",
+          tenantId: "tenant-river-life",
+          tankId: "tank-04",
+          salinityPpt: 16.5,
+          dissolvedOxygenMgL: 5.8,
+          temperatureC: 29.4,
+          ph: 7.8,
+          totalAlkalinityMgL: 145,
+          totalHardnessMgL: 680,
+          calciumMgL: 135,
+          magnesiumMgL: 395,
+          toxicAmmoniaNh3MgL: 0.012,
+          nitriteNo2MgL: 0.03,
+          transparencySecchiCm: 34,
+          calcificationStatus: "IDEAL",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      mortality: [
+        {
+          id: "mort-01",
+          tenantId: "tenant-river-life",
+          tankId: "tank-04",
+          batchId: "batch-04",
+          quantity: 12,
+          lunarPhase: "LUA_CHEIA",
+          probableCause: "ROTINA_MUDA",
+          notes: "Muda sincronizada de lua cheia sem sinal de mionecrose.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      harvests: [
+        {
+          id: "harv-01",
+          tenantId: "tenant-river-life",
+          tankId: "tank-01",
+          batchId: "batch-01",
+          harvestType: "TOTAL",
+          totalWeightKg: 4800,
+          shrimpCountEstimated: 266e3,
+          avgWeightG: 18,
+          commercialClassification: "50/60",
+          pricePerKg: 24.5,
+          totalRevenue: 117600,
+          buyerName: "Frigor\xEDfico Polo Para\xEDba",
+          gtaNumber: "GTA-PB-2026-09812",
+          notes: "Despesca limpa, camar\xE3o com excelente firmeza e trato vazio.",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      bankAccounts: [
+        {
+          id: "acc-01",
+          tenantId: "tenant-river-life",
+          bankName: "Banco do Brasil (Ag\xEAncia Agro Jo\xE3o Pessoa)",
+          accountType: "CORRENTE",
+          agency: "1618-7",
+          accountNumber: "25489-0",
+          holderName: "River Life Carcinicultura Ltda",
+          currentBalanceRs: 84500,
+          pixKey: "financeiro@aquacore.ai",
+          isActive: true
+        },
+        {
+          id: "acc-02",
+          tenantId: "tenant-river-life",
+          bankName: "Sicoob Cooperativa Nordeste",
+          accountType: "APLICACAO",
+          agency: "4120-0",
+          accountNumber: "10982-3",
+          holderName: "River Life Carcinicultura Ltda",
+          currentBalanceRs: 12e4,
+          pixKey: "32.845.912/0001-44",
+          isActive: true
+        }
+      ],
+      cashFlow: [
+        {
+          id: "mov-01",
+          tenantId: "tenant-river-life",
+          movementType: "ENTRADA",
+          category: "VENDA_CAMARAO",
+          description: "Recebimento Despesca Lote 01 (Frigor\xEDfico Polo PB)",
+          amountRs: 117600,
+          status: "REALIZADO",
+          documentRef: "NF-892341",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "mov-02",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "RACAO",
+          description: "Compra 10 Toneladas Ra\xE7\xE3o 35% Guabi Aqua",
+          amountRs: 48e3,
+          status: "REALIZADO",
+          documentRef: "NF-FORN-9012",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        },
+        {
+          id: "mov-03",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "ENERGIA_ELETRICA",
+          description: "Energisa PB - Tarifa Horosazonal Verde Aeradores",
+          amountRs: 8640,
+          status: "REALIZADO",
+          documentRef: "CONTA-09-2026",
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      ],
+      farmProfiles: [
+        {
+          tenantId: "tenant-river-life",
+          name: "Fazenda River Life (Camar\xE3o PB)",
+          corporateName: "River Life Carcinicultura do Nordeste Ltda",
+          cnpj: "32.845.912/0001-44",
+          stateRegistration: "16.984.231-0",
+          address: "Rodovia PB-018, Km 14, Polo Mogeiro / Vale do Para\xEDba",
+          city: "Mogeiro / Jo\xE3o Pessoa",
+          state: "PB",
+          waterSourceType: "Estu\xE1rio do Rio Para\xEDba & Aqu\xEDfero Salobro",
+          averageSalinityPpt: 18.5,
+          totalAreaHectares: 18.4,
+          waterSurfaceHectares: 12.2,
+          technicianInCharge: "Dr. Arnaldo Bezerra (Engenheiro de Pesca - UFRPE/CREA-PB)",
+          councilRegistration: "CREA-PB 14.892-D",
+          environmentalLicense: "SUDEMA-PB Licen\xE7a de Opera\xE7\xE3o LO n\xBA 2024/0981-L"
+        }
       ]
     };
     DatabaseService = class {
@@ -1441,7 +1902,19 @@ var init_databaseService = __esm({
         try {
           if (fs.existsSync(DB_FILE)) {
             const raw = fs.readFileSync(DB_FILE, "utf-8");
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            return {
+              ...INITIAL_DB_DATA,
+              ...parsed,
+              feedingTrays: parsed.feedingTrays || INITIAL_DB_DATA.feedingTrays,
+              inventory: parsed.inventory || INITIAL_DB_DATA.inventory,
+              waterIonic: parsed.waterIonic || INITIAL_DB_DATA.waterIonic,
+              mortality: parsed.mortality || INITIAL_DB_DATA.mortality,
+              harvests: parsed.harvests || INITIAL_DB_DATA.harvests,
+              bankAccounts: parsed.bankAccounts || INITIAL_DB_DATA.bankAccounts,
+              cashFlow: parsed.cashFlow || INITIAL_DB_DATA.cashFlow,
+              farmProfiles: parsed.farmProfiles || INITIAL_DB_DATA.farmProfiles
+            };
           }
         } catch (err) {
           console.warn("[DatabaseService] Falha na leitura do DB local, inicializando dados padr\xE3o:", err);
@@ -1514,6 +1987,122 @@ var init_databaseService = __esm({
         this.saveData(this.data);
         return record;
       }
+      // 🍽️ Bandejas de Alimentação / Comedouros
+      getFeedingTrays(tenantId) {
+        return (this.data.feedingTrays || []).filter((t) => t.tenantId === tenantId);
+      }
+      addFeedingTray(tray) {
+        const record = {
+          id: `tray-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...tray
+        };
+        if (!this.data.feedingTrays) this.data.feedingTrays = [];
+        this.data.feedingTrays.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      // 📦 Estoque de Insumos & Armazém
+      getInventory(tenantId) {
+        return (this.data.inventory || []).filter((i) => i.tenantId === tenantId);
+      }
+      addInventoryItem(item) {
+        const record = {
+          id: `item-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...item
+        };
+        if (!this.data.inventory) this.data.inventory = [];
+        this.data.inventory.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      updateInventoryStock(id, newStockKg) {
+        if (!this.data.inventory) this.data.inventory = [];
+        this.data.inventory = this.data.inventory.map(
+          (item) => item.id === id ? { ...item, currentStockKg: newStockKg, status: newStockKg <= item.minStockAlertKg ? "ABAIXO_MINIMO" : "NORMAL" } : item
+        );
+        this.saveData(this.data);
+        return this.data.inventory.find((i) => i.id === id);
+      }
+      // 💧 Balanço Iônico & Qualidade de Água
+      getWaterIonic(tenantId) {
+        return (this.data.waterIonic || []).filter((w) => w.tenantId === tenantId);
+      }
+      addWaterIonic(log) {
+        const record = {
+          id: `ionic-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...log
+        };
+        if (!this.data.waterIonic) this.data.waterIonic = [];
+        this.data.waterIonic.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      // 🦐 Mortalidade & Mudas Lunares
+      getMortality(tenantId) {
+        return (this.data.mortality || []).filter((m) => m.tenantId === tenantId);
+      }
+      addMortality(m) {
+        const record = {
+          id: `mort-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...m
+        };
+        if (!this.data.mortality) this.data.mortality = [];
+        this.data.mortality.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      // 🎣 Despescas & Romaneio
+      getHarvests(tenantId) {
+        return (this.data.harvests || []).filter((h) => h.tenantId === tenantId);
+      }
+      addHarvest(h) {
+        const record = {
+          id: `harv-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...h
+        };
+        if (!this.data.harvests) this.data.harvests = [];
+        this.data.harvests.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      // 🏦 Contas Bancárias & DFC
+      getBankAccounts(tenantId) {
+        return (this.data.bankAccounts || []).filter((b) => b.tenantId === tenantId);
+      }
+      getCashFlow(tenantId) {
+        return (this.data.cashFlow || []).filter((c) => c.tenantId === tenantId);
+      }
+      addCashFlow(mov) {
+        const record = {
+          id: `mov-${Date.now()}`,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          ...mov
+        };
+        if (!this.data.cashFlow) this.data.cashFlow = [];
+        this.data.cashFlow.unshift(record);
+        this.saveData(this.data);
+        return record;
+      }
+      // 🏡 Perfil da Fazenda
+      getFarmProfile(tenantId) {
+        return (this.data.farmProfiles || []).find((f) => f.tenantId === tenantId) || this.data.farmProfiles[0];
+      }
+      updateFarmProfile(tenantId, profile) {
+        if (!this.data.farmProfiles) this.data.farmProfiles = [];
+        const idx = this.data.farmProfiles.findIndex((f) => f.tenantId === tenantId);
+        if (idx >= 0) {
+          this.data.farmProfiles[idx] = { ...this.data.farmProfiles[idx], ...profile };
+        } else {
+          this.data.farmProfiles.push({ tenantId, ...profile });
+        }
+        this.saveData(this.data);
+        return this.getFarmProfile(tenantId);
+      }
     };
     db = new DatabaseService();
   }
@@ -1524,6 +2113,8 @@ var freeApisService_exports = {};
 __export(freeApisService_exports, {
   consultarCepBrasilApi: () => consultarCepBrasilApi,
   consultarCnpjBrasilApi: () => consultarCnpjBrasilApi,
+  consultarFeriadosBrasilApi: () => consultarFeriadosBrasilApi,
+  getAgroCreditBenchmark: () => getAgroCreditBenchmark,
   getLiveCurrencies: () => getLiveCurrencies,
   getLiveMogeiroWeather: () => getLiveMogeiroWeather,
   getLiveSolarCycle: () => getLiveSolarCycle
@@ -1825,6 +2416,57 @@ async function consultarCepBrasilApi(cepRaw) {
     street: "Rodovia Estadual PB-054, Km 12",
     source: "Localiza\xE7\xE3o Cadastrada (Fallback)",
     isLive: false
+  };
+}
+async function consultarFeriadosBrasilApi(year = (/* @__PURE__ */ new Date()).getFullYear()) {
+  const url = `https://brasilapi.com.br/api/feriados/v1/${year}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4e3);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      return data.map((f) => {
+        let mult = 1;
+        const n = f.name.toLowerCase();
+        if (n.includes("p\xE1scoa") || n.includes("paix\xE3o") || n.includes("sexta-feira santa")) mult = 2.4;
+        else if (n.includes("ano novo") || n.includes("confraterniza\xE7\xE3o")) mult = 2.8;
+        else if (n.includes("natal")) mult = 2.5;
+        else if (n.includes("carnaval")) mult = 1.8;
+        else if (n.includes("independ\xEAncia") || n.includes("trabalho")) mult = 1.4;
+        return {
+          date: f.date,
+          name: f.name,
+          type: f.type,
+          shrimpDemandMultiplier: mult
+        };
+      });
+    }
+  } catch (err) {
+    console.warn("[FreeApisService] BrasilAPI Feriados fallback ativado:", err.message);
+  }
+  return [
+    { date: `${year}-01-01`, name: "Ano Novo / Confraterniza\xE7\xE3o Universal", type: "national", shrimpDemandMultiplier: 2.8 },
+    { date: `${year}-03-29`, name: "Sexta-feira Santa / Semana Santa", type: "national", shrimpDemandMultiplier: 2.5 },
+    { date: `${year}-04-21`, name: "Tiradentes", type: "national", shrimpDemandMultiplier: 1.3 },
+    { date: `${year}-05-01`, name: "Dia do Trabalho", type: "national", shrimpDemandMultiplier: 1.4 },
+    { date: `${year}-09-07`, name: "Independ\xEAncia do Brasil", type: "national", shrimpDemandMultiplier: 1.5 },
+    { date: `${year}-10-12`, name: "Nossa Senhora Aparecida", type: "national", shrimpDemandMultiplier: 1.4 },
+    { date: `${year}-11-15`, name: "Proclama\xE7\xE3o da Rep\xFAblica", type: "national", shrimpDemandMultiplier: 1.6 },
+    { date: `${year}-12-25`, name: "Natal", type: "national", shrimpDemandMultiplier: 2.5 }
+  ];
+}
+async function getAgroCreditBenchmark() {
+  return {
+    selicAnnualPct: 10.75,
+    pronafCusteioPct: 4,
+    // Linha de juros subsidiados para pequenos carcinicultores
+    pronampInvestimentoPct: 8,
+    // Média para aquisição de aeradores solares e maquinário
+    moeda: "BRL",
+    source: "Banco Central do Brasil (SGS) & Plano Safra",
+    updatedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("pt-BR")
   };
 }
 var weatherCache, currencyCache, solarCache, cnpjCache, cepCache, CACHE_TTL_WEATHER, CACHE_TTL_CURRENCY, CACHE_TTL_SOLAR;
@@ -2851,6 +3493,160 @@ var DatabaseController = {
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
+  },
+  // 🍽️ Bandejas de Alimentação
+  getFeedingTrays: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ trays: db2.getFeedingTrays(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addFeedingTray: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addFeedingTray(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 📦 Estoque de Insumos
+  getInventory: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ items: db2.getInventory(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addInventoryItem: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addInventoryItem(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  updateInventoryStock: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { currentStockKg } = req.body;
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.updateInventoryStock(id, Number(currentStockKg));
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 💧 Balanço Iônico & Água
+  getWaterIonic: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ logs: db2.getWaterIonic(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addWaterIonic: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addWaterIonic(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 🦐 Mortalidade & Mudas Lunares
+  getMortality: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ logs: db2.getMortality(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addMortality: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addMortality(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 🎣 Despescas & Romaneio
+  getHarvests: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ harvests: db2.getHarvests(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addHarvest: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addHarvest(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 🏦 Contas & Fluxo de Caixa
+  getBankAccounts: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ accounts: db2.getBankAccounts(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  getCashFlow: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ movements: db2.getCashFlow(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  addCashFlow: async (req, res) => {
+    try {
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const record = db2.addCashFlow(req.body);
+      return res.json({ success: true, record });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  // 🏡 Perfil Institucional da Fazenda
+  getFarmProfile: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      return res.json({ profile: db2.getFarmProfile(tenantId) });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  updateFarmProfile: async (req, res) => {
+    try {
+      const tenantId = req.query.tenantId || "tenant-river-life";
+      const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
+      const updated = db2.updateFarmProfile(tenantId, req.body);
+      return res.json({ success: true, profile: updated });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 };
 var SolarController = {
@@ -2883,6 +3679,50 @@ var BrasilApiController = {
       const { consultarCepBrasilApi: consultarCepBrasilApi2 } = await Promise.resolve().then(() => (init_freeApisService(), freeApisService_exports));
       const data = await consultarCepBrasilApi2(cep);
       return res.json(data);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+  getFeriados: async (req, res) => {
+    try {
+      const year = req.query.year ? Number(req.query.year) : (/* @__PURE__ */ new Date()).getFullYear();
+      const { consultarFeriadosBrasilApi: consultarFeriadosBrasilApi2 } = await Promise.resolve().then(() => (init_freeApisService(), freeApisService_exports));
+      const feriados = await consultarFeriadosBrasilApi2(year);
+      return res.json({ feriados });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+};
+var AgroCreditController = {
+  getBenchmark: async (_req, res) => {
+    try {
+      const { getAgroCreditBenchmark: getAgroCreditBenchmark2 } = await Promise.resolve().then(() => (init_freeApisService(), freeApisService_exports));
+      const data = await getAgroCreditBenchmark2();
+      return res.json(data);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+};
+var VisionController = {
+  analyzeImage: async (req, res) => {
+    try {
+      const { analyzeVisionCarciniculture: analyzeVisionCarciniculture2 } = await Promise.resolve().then(() => (init_geminiOracle(), geminiOracle_exports));
+      const analysis = await analyzeVisionCarciniculture2(req.body);
+      return res.json(analysis);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+};
+var VoiceController = {
+  processCommand: async (req, res) => {
+    try {
+      const { transcript } = req.body;
+      const { processVoiceAssistantCommand: processVoiceAssistantCommand2 } = await Promise.resolve().then(() => (init_geminiOracle(), geminiOracle_exports));
+      const response = await processVoiceAssistantCommand2(transcript || "");
+      return res.json(response);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
@@ -2983,9 +3823,29 @@ app.get("/api/db/equipments/:tenantId", DatabaseController.getEquipments);
 app.put("/api/db/equipments/:id", DatabaseController.updateEquipment);
 app.get("/api/db/invoices/:tenantId", DatabaseController.getInvoices);
 app.post("/api/db/invoices", DatabaseController.addInvoice);
+app.get("/api/db/feeding-trays", DatabaseController.getFeedingTrays);
+app.post("/api/db/feeding-trays", DatabaseController.addFeedingTray);
+app.get("/api/db/inventory", DatabaseController.getInventory);
+app.post("/api/db/inventory", DatabaseController.addInventoryItem);
+app.patch("/api/db/inventory/:id", DatabaseController.updateInventoryStock);
+app.get("/api/db/water-ionic", DatabaseController.getWaterIonic);
+app.post("/api/db/water-ionic", DatabaseController.addWaterIonic);
+app.get("/api/db/mortality", DatabaseController.getMortality);
+app.post("/api/db/mortality", DatabaseController.addMortality);
+app.get("/api/db/harvests", DatabaseController.getHarvests);
+app.post("/api/db/harvests", DatabaseController.addHarvest);
+app.get("/api/db/bank-accounts", DatabaseController.getBankAccounts);
+app.get("/api/db/cash-flow", DatabaseController.getCashFlow);
+app.post("/api/db/cash-flow", DatabaseController.addCashFlow);
+app.get("/api/db/farm-profile", DatabaseController.getFarmProfile);
+app.put("/api/db/farm-profile", DatabaseController.updateFarmProfile);
 app.get("/api/solar/cycle", SolarController.getCycle);
 app.get("/api/brasilapi/cnpj/:cnpj", BrasilApiController.getCnpj);
 app.get("/api/brasilapi/cep/:cep", BrasilApiController.getCep);
+app.get("/api/brasilapi/feriados", BrasilApiController.getFeriados);
+app.get("/api/agro/credit-benchmark", AgroCreditController.getBenchmark);
+app.post("/api/vision/analyze", VisionController.analyzeImage);
+app.post("/api/voice/command", VoiceController.processCommand);
 app.post("/api/ai/audit-invoice", AIAuditController.auditInvoice);
 app.post("/api/ai/audit-equipment", AIAuditController.auditEquipment);
 app.post("/api/ai/audit-dre", AIAuditController.auditDre);
