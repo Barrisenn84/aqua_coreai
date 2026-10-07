@@ -24,6 +24,7 @@ import { geminiOracle, MessageLevel } from './src/ai/geminiOracle';
 import { aquacultureMath } from './src/utils/aquacultureMath';
 import { environment } from './src/config/environment';
 import { getLiveMogeiroWeather, getLiveCurrencies } from './src/services/freeApisService';
+import { aiSentinelService } from './src/services/aiSentinelService';
 
 dotenv.config();
 
@@ -160,6 +161,34 @@ app.post('/api/voice/command', VoiceController.processCommand);
 app.post('/api/ai/audit-invoice', AIAuditController.auditInvoice);
 app.post('/api/ai/audit-equipment', AIAuditController.auditEquipment);
 app.post('/api/ai/audit-dre', AIAuditController.auditDre);
+
+// 🛡️ SENTINELA IA: VARREDURA AUTÔNOMA A CADA 15 MINUTOS (TODOS OS SUBSISTEMAS INTEGRADOS)
+app.get('/api/sentinel/status', (_req, res) => {
+  res.json(aiSentinelService.getStatus());
+});
+
+app.get('/api/sentinel/logs', (_req, res) => {
+  res.json({ logs: aiSentinelService.getHistory() });
+});
+
+app.post('/api/sentinel/run', async (_req, res) => {
+  try {
+    const report = await aiSentinelService.runFullSystemAudit('manual_forced');
+    res.json({ success: true, report });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sentinel/resolve', async (req, res) => {
+  try {
+    const { actionId, fixActionType, payload } = req.body;
+    const result = await aiSentinelService.resolveAction(actionId, fixActionType, payload);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * 🌊 POLO JOÃO PESSOA / PB: CÁLCULO DINÂMICO DE LIMITES DE OXIGÊNIO

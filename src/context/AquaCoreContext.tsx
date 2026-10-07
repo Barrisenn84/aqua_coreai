@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import {
   AgroDRE,
   Batch,
@@ -8,6 +8,8 @@ import {
   FeedingLog,
   SensorReading,
   Tank,
+  SentinelAuditItem,
+  SentinelAuditReport,
 } from '../types/aquacore';
 import {
   IBlackBoxHardware,
@@ -135,6 +137,15 @@ interface AquaCoreContextType {
     resetAllToFactory?: boolean;
     confirmationCode: string;
   }) => Promise<{ success: boolean; message: string }>;
+
+  // 🛡️ Sentinela IA (Auditoria Periódica de 15 Minutos)
+  sentinelReport: SentinelAuditReport | null;
+  sentinelCountdownSeconds: number;
+  isSentinelAuditing: boolean;
+  isSentinelModalOpen: boolean;
+  setIsSentinelModalOpen: (open: boolean) => void;
+  runSentinelAuditNow: () => Promise<void>;
+  resolveSentinelAction: (actionId: string, fixActionType: string, payload?: any) => Promise<boolean>;
 }
 
 const AquaCoreContext = createContext<AquaCoreContextType | undefined>(undefined);
@@ -284,6 +295,86 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // PILAR 2: Hardware-as-a-Service Caixa Preta fleet
   const [blackBoxes, setBlackBoxes] = useState<IBlackBoxHardware[]>(initialBlackBoxes);
+
+  // 🛡️ SENTINELA IA: Monitoramento e Auditoria Autônoma de 15 em 15 minutos
+  const [sentinelReport, setSentinelReport] = useState<SentinelAuditReport | null>(null);
+  const [sentinelCountdownSeconds, setSentinelCountdownSeconds] = useState<number>(15 * 60);
+  const [isSentinelAuditing, setIsSentinelAuditing] = useState<boolean>(false);
+  const [isSentinelModalOpen, setIsSentinelModalOpen] = useState<boolean>(false);
+
+  const runSentinelAuditNow = useCallback(async () => {
+    setIsSentinelAuditing(true);
+    try {
+      const res = await fetch('/api/sentinel/run', { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.report) {
+          setSentinelReport(json.report);
+          setSentinelCountdownSeconds(15 * 60);
+        }
+      }
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao disparar /api/sentinel/run:', err);
+    } finally {
+      setIsSentinelAuditing(false);
+    }
+  }, []);
+
+  const resolveSentinelAction = useCallback(async (actionId: string, fixActionType: string, payload?: any): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/sentinel/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actionId, fixActionType, payload }),
+      });
+      if (res.ok) {
+        setSentinelReport((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            items: prev.items.map((it) => it.id === actionId ? { ...it, resolved: true } : it),
+          };
+        });
+        return true;
+      }
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao resolver ação do Sentinela:', err);
+    }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    const fetchSentinelStatus = async () => {
+      try {
+        const res = await fetch('/api/sentinel/status');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.latestReport) {
+            setSentinelReport(json.latestReport);
+          }
+          if (typeof json.nextRunInSeconds === 'number') {
+            setSentinelCountdownSeconds(json.nextRunInSeconds);
+          }
+        }
+      } catch (err) {
+        console.warn('[AquaCoreContext] Fallback ao carregar status do Sentinela:', err);
+      }
+    };
+
+    fetchSentinelStatus();
+
+    const countdownTimer = setInterval(() => {
+      setSentinelCountdownSeconds((prev) => {
+        if (prev <= 1) {
+          runSentinelAuditNow();
+          return 15 * 60;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdownTimer);
+  }, [runSentinelAuditNow]);
 
   // Time-series history for charts and sparklines
   const [sensorHistory, setSensorHistory] = useState<Record<string, SensorReading[]>>(() => {
@@ -1321,6 +1412,13 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsResetModalOpen,
         resetActiveSession,
         resetSavedData,
+        sentinelReport,
+        sentinelCountdownSeconds,
+        isSentinelAuditing,
+        isSentinelModalOpen,
+        setIsSentinelModalOpen,
+        runSentinelAuditNow,
+        resolveSentinelAction,
       }}
     >
       {children}

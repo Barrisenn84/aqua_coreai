@@ -35,6 +35,8 @@ import { TankCard } from './TankCard';
 import { ProfitDial } from './ProfitDial';
 import { FcrEvolutionChart } from './FcrEvolutionChart';
 import { AddTankModal } from './AddTankModal';
+import { AiSentinelBanner } from './AiSentinelBanner';
+import { AiSentinelModal } from './AiSentinelModal';
 import { configureJoaoPessoaCriticalOxygenThresholds } from '../utils/aquacultureMath';
 
 interface NerveCenterDashboardProps {
@@ -356,6 +358,9 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 🛡️ BANNER SENTINELA IA: VARREDURA A CADA 15 MINUTOS */}
+      <AiSentinelBanner />
 
       {/* Sync Toast Notification */}
       {syncNotice && (
@@ -888,6 +893,9 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* 🛡️ MODAL DETALHADO DO SENTINELA IA (VARREDURA 15 MINUTOS) */}
+      <AiSentinelModal />
     </div>
   );
 };

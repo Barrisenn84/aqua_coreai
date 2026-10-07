@@ -220,3 +220,31 @@ export interface MarketBridgeListing {
   bestOfferPricePerKg: number;
   bestBuyerName: string;
 }
+
+export interface SentinelAuditItem {
+  id: string;
+  category: 'ESTOQUE' | 'RACAO_NUTRICAO' | 'BIOMETRIA' | 'QUALIDADE_AGUA' | 'CLIMA_LUA' | 'FINANCEIRO' | 'SISTEMA_DADOS';
+  severity: 'CRITICO' | 'ATENCAO' | 'AJUSTE' | 'OTIMO';
+  title: string;
+  description: string;
+  correlation: string; // Explica a correlação cruzada com outros módulos do sistema
+  recommendedAction: string;
+  autoFixAvailable: boolean;
+  fixActionType?: 'COMPRA_RACAO' | 'PROGRAMAR_BIOMETRIA' | 'AJUSTAR_AERADOR' | 'ATUALIZAR_DADOS' | 'NOTIFICAR_PRODUTOR';
+  fixPayload?: Record<string, any>;
+  resolved?: boolean;
+}
+
+export interface SentinelAuditReport {
+  id: string;
+  timestamp: string;
+  cycleIntervalMinutes: number; // 15
+  systemHealthScore: number; // 0 a 100
+  overallStatus: 'OTIMO' | 'ATENCAO' | 'CRITICO';
+  totalAnomaliesCount: number;
+  criticalCount: number;
+  warningCount: number;
+  executiveSummary: string;
+  items: SentinelAuditItem[];
+  nextRunInSeconds: number;
+}
