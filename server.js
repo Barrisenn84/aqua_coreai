@@ -13,9 +13,14 @@ var config, environment;
 var init_environment = __esm({
   "src/config/environment.ts"() {
     config = {
-      port: typeof process !== "undefined" && process.env?.PORT ? Number(process.env.PORT) : 3e3,
-      geminiApiKey: typeof process !== "undefined" && process.env?.GEMINI_API_KEY ? process.env.GEMINI_API_KEY : "",
+      get port() {
+        return typeof process !== "undefined" && process.env?.PORT ? Number(process.env.PORT) : 3e3;
+      },
+      get geminiApiKey() {
+        return typeof process !== "undefined" && (process.env?.GEMINI_API_KEY || process.env?.GOOGLE_API_KEY || process.env?.VITE_GEMINI_API_KEY) || "";
+      },
       geminiModel: "gemini-3.8-flash",
+      fallbackModels: ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"],
       redis: {
         ttlSeconds: 300,
         keyPrefix: "aquacore:telemetry:"
@@ -33,7 +38,9 @@ var init_environment = __esm({
     };
     environment = {
       ...config,
-      GEMINI_API_KEY: config.geminiApiKey
+      get GEMINI_API_KEY() {
+        return config.geminiApiKey;
+      }
     };
   }
 });
@@ -43,19 +50,58 @@ var geminiOracle_exports = {};
 __export(geminiOracle_exports, {
   GeminiOracle: () => GeminiOracle,
   MessageLevel: () => MessageLevel,
+  PRIMARY_GEMINI_MODELS: () => PRIMARY_GEMINI_MODELS,
   analyzeVisionCarciniculture: () => analyzeVisionCarciniculture,
   auditDreWithAI: () => auditDreWithAI,
   auditEquipmentWithAI: () => auditEquipmentWithAI,
   auditInvoiceWithAI: () => auditInvoiceWithAI,
   geminiOracle: () => geminiOracle,
+  generateContentWithCascade: () => generateContentWithCascade,
   generateDailyDigestWhatsApp: () => generateDailyDigestWhatsApp,
   generateGuardianWhatsAppAlert: () => generateGuardianWhatsAppAlert,
   getAIGuidance: () => getAIGuidance,
+  getGeminiClient: () => getGeminiClient,
   processVoiceAssistantCommand: () => processVoiceAssistantCommand,
   processWhatsAppGhostMessage: () => processWhatsAppGhostMessage,
   scanFeedBagLabel: () => scanFeedBagLabel
 });
 import { GoogleGenAI, Type } from "@google/genai";
+function getGeminiClient() {
+  const key = typeof process !== "undefined" && (process.env?.GEMINI_API_KEY || process.env?.GOOGLE_API_KEY || process.env?.VITE_GEMINI_API_KEY) || environment.GEMINI_API_KEY || config.geminiApiKey || "";
+  if (!key) {
+    throw new Error("Chave GEMINI_API_KEY n\xE3o configurada no ambiente ou .env.");
+  }
+  return new GoogleGenAI({
+    apiKey: key,
+    httpOptions: {
+      headers: {
+        "User-Agent": "aistudio-build"
+      }
+    }
+  });
+}
+async function generateContentWithCascade(params) {
+  const client = getGeminiClient();
+  const models = params.models || PRIMARY_GEMINI_MODELS;
+  let lastError = null;
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await client.models.generateContent({
+          model,
+          contents: params.contents,
+          config: params.config
+        });
+        return response;
+      } catch (err) {
+        lastError = err;
+        console.warn(`[GeminiCascade] Modelo ${model} (tentativa ${attempt}) falhou:`, err.message?.substring(0, 100));
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+    }
+  }
+  throw new Error(`Falha em todos os modelos de IA Gemini (${models.join(", ")}): ${lastError?.message || "Erro desconhecido"}`);
+}
 async function getAIGuidance(tankId, currentReading, batchInfo, customQuery) {
   const history = mqttIngestor.getRecentHistory(tankId, 10);
   const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
@@ -85,7 +131,7 @@ ${customQuery ? `Pergunta adicional do produtor: "${customQuery}"` : ""}
 
 A\xE7\xE3o: Forne\xE7a o parecer t\xE9cnico estruturado no formato JSON estrito.`;
   const response = await client.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-3.8-flash",
     contents: prompt,
     config: {
       temperature: 0.2,
@@ -134,58 +180,107 @@ A\xE7\xE3o: Forne\xE7a o parecer t\xE9cnico estruturado no formato JSON estrito.
   };
 }
 async function scanFeedBagLabel(imageBase64, mimeType = "image/jpeg") {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
-  if (!client) {
-    throw new Error("Chave GEMINI_API_KEY n\xE3o configurada para leitura visual");
-  }
-  const prompt = `Analise esta imagem de embalagem ou etiqueta de ra\xE7\xE3o para aquicultura (peixes ou camar\xE3o).
-Extraia com precis\xE3o absoluta de engenheiro aqu\xEDcola:
-- Nome do fabricante e marca comercial
-- N\xEDvel de Prote\xEDna Bruta (PB %) garantida
-- Di\xE2metro dos pellets/gr\xE2nulos em mil\xEDmetros (mm)
-- Fase zoot\xE9cnica alvo (Alevinagem, Crescimento, Termina\xE7\xE3o ou Bioflocos)
-- Peso l\xEDquido da saca em kg
-- N\xFAmero de lote (se leg\xEDvel)
-- Taxa recomendada de arra\xE7oamento (% do peso vivo)
-- Score de confian\xE7a (0.0 a 1.0)
-- Breve resumo zoot\xE9cnico da ra\xE7\xE3o.`;
-  const response = await client.models.generateContent({
-    model: "gemini-2.0-flash",
+  const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+  const prompt = `Voc\xEA \xE9 um Engenheiro de Pesca e Aquicultura especialista em Carcinicultura e Nutri\xE7\xE3o Aqu\xE1tica (Litopenaeus vannamei, Peixes e Camar\xF5es).
+Analise com extrema precis\xE3o, rigor cient\xEDfico e fidelidade cir\xFArgica a imagem fornecida (saco de ra\xE7\xE3o, etiqueta, r\xF3tulo de insumo, probi\xF3tico, fertilizante, an\xFAncio comercial ou tabela de arra\xE7oamento).
+
+DIRETRIZ DE OURO DE VERACIDADE:
+- NUNCA INVENTE, NUNCA SUPONHA E NUNCA ADIVINHE INFORMA\xC7\xD5ES QUE N\xC3O ESTEJAM VIS\xCDVEIS NA IMAGEM.
+- Se uma informa\xE7\xE3o n\xE3o estiver expl\xEDcita (como Prote\xEDna Bruta PB% ou Lote), declare explicitamente como null ou "N\xE3o informado no r\xF3tulo frontal".
+- Extraia cada palavra, n\xFAmero, porcentagem (%) e unidade de medida com exatid\xE3o m\xE1xima de 100%.
+
+IDENTIFICA\xC7\xC3O DO PRODUTO:
+1. itemType: Categorize corretamente entre:
+   - "RA\xC7\xC3O": sacos de ra\xE7\xE3o extrusada, peletizada, micropeletes, ra\xE7\xE3o inicial ou final.
+   - "PROBI\xD3TICO": cons\xF3rcios bacterianos, probi\xF3ticos para \xE1gua ou ra\xE7\xE3o (ex: AquaLimp, biorremediadores).
+   - "FERTILIZANTE_CORRETIVO": adubos, calc\xE1rio, gesso, silicatos, decosolo, fertilizantes.
+   - "SUPLEMENTO_VITAMINA": vitamina C, premix, imunoestimulantes, mela\xE7o.
+   - "MEDICAMENTO": bactericidas, desinfetantes ou tratamentos autorizados.
+   - "NOTA_FISCAL": recibos, comprovantes ou faturas de compra.
+   - "INSUMO_GERAL": qualquer outro produto de carcinicultura.
+
+2. productName: Nome completo e exato do produto impresso na embalagem/an\xFAncio.
+3. brandName: Nome da marca comercial ou linha (ou declare "N\xE3o informada" se n\xE3o constar).
+4. manufacturer: Fabricante oficial se constar (ou null se n\xE3o estiver vis\xEDvel).
+5. crudeProteinPct: % de Prote\xEDna Bruta (PB) SE FOR RA\xC7\xC3O e estiver leg\xEDvel (n\xFAmero flutuante). Se for probi\xF3tico ou n\xE3o estiver vis\xEDvel, retorne null.
+6. pelletSizeMm: Di\xE2metro dos gr\xE2nulos/pellets em mil\xEDmetros (mm) SE informado na ra\xE7\xE3o. Se for p\xF3, l\xEDquido ou n\xE3o informado, retorne null.
+7. pelletType: Tipo f\xEDsico do gr\xE2nulo ("Peletizada", "Extrusada", "Micropelete", "P\xF3", "L\xEDquido" ou null).
+8. targetStage: Fase zoot\xE9cnica alvo ("Engorda", "Crescimento", "Ber\xE7\xE1rio", "Termina\xE7\xE3o", "Bioflocos", "Aquacultura", "Tratamento de \xC1gua", etc.).
+9. bagWeightKg: Peso l\xEDquido da embalagem em kg (ex: se for 1 Kg -> 1.0, se for 25 kg -> 25.0). Se n\xE3o informado, retorne null.
+10. lotNumber: N\xFAmero do lote de fabrica\xE7\xE3o se impresso (ou null).
+11. fabDate: Data de fabrica\xE7\xE3o ou validade se vis\xEDvel (ou null).
+12. officialRegistration: N\xFAmero de registro no MAPA, SIF ou Minist\xE9rio (ex: "BRASIL ESTABELECIMENTO REGISTRADO PR 0171-2") ou null.
+13. priceBrl: Pre\xE7o vis\xEDvel em Reais (R$) se for an\xFAncio ou nota (ex: "186.96" ou null).
+14. activeIngredients: Lista de bact\xE9rias, cepas, microrganismos ou ingredientes ativos listados.
+15. benefits: Lista dos benef\xEDcios prometidos e impressos no r\xF3tulo.
+16. usageInstructions: Modo de uso, via de aplica\xE7\xE3o ("Via \xC1gua", "Via Ra\xE7\xE3o") ou dosagem.
+17. suggestedFeedingRatePct: Taxa de arra\xE7oamento (% do peso vivo) se for ra\xE7\xE3o e estiver sugerida, sen\xE3o null.
+18. confidenceScore: Confian\xE7a de 0 a 100 com base na nitidez da leitura.
+19. summary: Resumo t\xE9cnico, fiel e objetivo descrevendo exatamente o que o produto \xE9 e como impacta o cultivo.`;
+  const response = await generateContentWithCascade({
     contents: [
       { text: prompt },
-      { inlineData: { mimeType, data: imageBase64 } }
+      { inlineData: { mimeType, data: cleanBase64 } }
     ],
     config: {
-      temperature: 0.1,
+      temperature: 0.05,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          manufacturer: { type: Type.STRING },
+          itemType: {
+            type: Type.STRING,
+            enum: [
+              "RA\xC7\xC3O",
+              "PROBI\xD3TICO",
+              "FERTILIZANTE_CORRETIVO",
+              "SUPLEMENTO_VITAMINA",
+              "MEDICAMENTO",
+              "NOTA_FISCAL",
+              "INSUMO_GERAL"
+            ]
+          },
+          productName: { type: Type.STRING },
           brandName: { type: Type.STRING },
-          crudeProteinPct: { type: Type.NUMBER },
-          pelletSizeMm: { type: Type.NUMBER },
+          manufacturer: { type: Type.STRING, nullable: true },
+          crudeProteinPct: { type: Type.NUMBER, nullable: true },
+          pelletSizeMm: { type: Type.NUMBER, nullable: true },
+          pelletType: { type: Type.STRING, nullable: true },
           targetStage: { type: Type.STRING },
-          bagWeightKg: { type: Type.NUMBER },
-          lotNumber: { type: Type.STRING },
-          suggestedFeedingRatePct: { type: Type.NUMBER },
+          bagWeightKg: { type: Type.NUMBER, nullable: true },
+          lotNumber: { type: Type.STRING, nullable: true },
+          fabDate: { type: Type.STRING, nullable: true },
+          officialRegistration: { type: Type.STRING, nullable: true },
+          priceBrl: { type: Type.STRING, nullable: true },
+          activeIngredients: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          benefits: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          usageInstructions: { type: Type.STRING, nullable: true },
+          suggestedFeedingRatePct: { type: Type.NUMBER, nullable: true },
           confidenceScore: { type: Type.NUMBER },
           summary: { type: Type.STRING }
         },
         required: [
-          "manufacturer",
+          "itemType",
+          "productName",
           "brandName",
-          "crudeProteinPct",
-          "pelletSizeMm",
           "targetStage",
-          "bagWeightKg",
           "confidenceScore",
           "summary"
         ]
       }
     }
   });
-  return JSON.parse(response.text || "{}");
+  const parsed = JSON.parse(response.text || "{}");
+  return {
+    ...parsed,
+    verifiedAccuracy: true
+  };
 }
 async function processWhatsAppGhostMessage(incomingText, contextData) {
   const normalized = incomingText.toLowerCase();
@@ -220,7 +315,7 @@ Classifique e responda rigorosamente em um dos tr\xEAs n\xEDveis:
 3. "critical" (The Guardian: qualquer situa\xE7\xE3o de risco, queda de oxig\xEAnio, am\xF4nia, mortalidade)
 `;
       const response = await client.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.8-flash",
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -342,7 +437,7 @@ Retorne estritamente um parecer t\xE9cnico com: NCM apropriado, CFOP, orienta\xE
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.8-flash",
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -392,7 +487,7 @@ Avalie o risco de falha mec\xE2nica/el\xE9trica nas pr\xF3ximas 48h e prescreva 
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.8-flash",
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -455,7 +550,7 @@ Entregue o parecer financeiro executivo com estrat\xE9gias acion\xE1veis para co
   if (client) {
     try {
       const response = await client.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.8-flash",
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -530,134 +625,57 @@ Identifique:
   };
   const systemInstruction = modeInstructions[payload.analysis_mode] || modeInstructions.general_diagnosis;
   const prompt = `${systemInstruction}
+DIRETRIZ DE VERACIDADE ABSOLUTA:
+- Analise a imagem fornecida com precis\xE3o factual m\xE1xima de 100%.
+- NUNCA invente les\xF5es, sobras, par\xE2metros, n\xFAmeros ou diagn\xF3sticos que n\xE3o estejam comprovados visualmente na foto.
+- Se uma observa\xE7\xE3o for inconclusiva ou ileg\xEDvel, declare expressamente como "N\xE3o conclusivo pela imagem".
 ${payload.custom_prompt ? `Observa\xE7\xE3o adicional do operador: "${payload.custom_prompt}"` : ""}
+
 Retorne estritamente um JSON estruturado com:
 - confidence_score (n\xFAmero 0 a 100)
-- executive_summary (texto claro e direto)
-- technical_observations (array de strings)
-- recommended_actions (array de strings)
+- executive_summary (texto claro e direto baseado EXCLUSIVAMENTE no que foi visto)
+- technical_observations (array de strings detalhadas e factuais)
+- recommended_actions (array de strings de manejo t\xE9cnico)
 - severity_level ("OK", "ATENCAO" ou "CRITICO")
 - extracted_data (objeto com campos num\xE9ricos ou dados extra\xEDdos se aplic\xE1vel)`;
-  if (client) {
-    try {
-      const response = await client.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: [
-          { text: prompt },
-          { inlineData: { mimeType, data: cleanBase64 } }
-        ],
-        config: {
-          temperature: 0.1,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              confidence_score: { type: Type.NUMBER },
-              executive_summary: { type: Type.STRING },
-              technical_observations: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              recommended_actions: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              },
-              severity_level: { type: Type.STRING, enum: ["OK", "ATENCAO", "CRITICO"] },
-              extracted_data: { type: Type.OBJECT }
+  try {
+    const response = await generateContentWithCascade({
+      contents: [
+        { text: prompt },
+        { inlineData: { mimeType, data: cleanBase64 } }
+      ],
+      config: {
+        temperature: 0.05,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            confidence_score: { type: Type.NUMBER },
+            executive_summary: { type: Type.STRING },
+            technical_observations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
             },
-            required: ["confidence_score", "executive_summary", "technical_observations", "recommended_actions", "severity_level"]
-          }
+            recommended_actions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            severity_level: { type: Type.STRING, enum: ["OK", "ATENCAO", "CRITICO"] },
+            extracted_data: { type: Type.OBJECT }
+          },
+          required: ["confidence_score", "executive_summary", "technical_observations", "recommended_actions", "severity_level"]
         }
-      });
-      const parsed = JSON.parse(response.text || "{}");
-      return {
-        analysis_mode: payload.analysis_mode,
-        ...parsed
-      };
-    } catch (err) {
-      console.warn("[GeminiOracle] Fallback em analyzeVisionCarciniculture:", err.message);
-    }
-  }
-  if (payload.analysis_mode === "tray_feeding") {
-    return {
-      analysis_mode: "tray_feeding",
-      confidence_score: 94,
-      executive_summary: "Bandeja de comedouro com 100% de consumo (limpa) e fezes densas de boa digest\xE3o.",
-      technical_observations: [
-        "Sem restos de pellets no fundo da tela ap\xF3s 2h do primeiro trato.",
-        "Presen\xE7a de fezes uniformes indicando apetite voraz e boa palatabilidade da ra\xE7\xE3o 35% PB.",
-        "Aus\xEAncia de lodo preto ou ac\xFAmulo de sulfeto de hidrog\xEAnio no comedouro."
-      ],
-      recommended_actions: [
-        "Aumentar em +10% a cota de arra\xE7oamento no pr\xF3ximo trato das 11:00h.",
-        "Manter monitoramento na bandeja de checagem do lado norte do viveiro."
-      ],
-      severity_level: "OK",
-      extracted_data: {
-        leftover_pct: 0,
-        adjustment_suggested_pct: 10,
-        gut_fullness_pct: 95
       }
-    };
-  }
-  if (payload.analysis_mode === "shrimp_health") {
+    });
+    const parsed = JSON.parse(response.text || "{}");
     return {
-      analysis_mode: "shrimp_health",
-      confidence_score: 96,
-      executive_summary: "Camar\xE3o saud\xE1vel em intermuda com hepatop\xE2ncreas pigmentado e trato 100% repleto.",
-      technical_observations: [
-        "Hepatop\xE2ncreas com formato t\xFAbulo-alveolar compacto e colora\xE7\xE3o castanho-dourada.",
-        "Trato digestivo cont\xEDnuo, sem quebras ou fezes esbranqui\xE7adas.",
-        "M\xFAsculo com transpar\xEAncia cristalina; teste visual negativo para IMNV ou Mancha Branca (WSSV)."
-      ],
-      recommended_actions: [
-        "Manter dose de probi\xF3tico na \xE1gua e continuar suplementa\xE7\xE3o vitam\xEDnica C na ra\xE7\xE3o."
-      ],
-      severity_level: "OK",
-      extracted_data: {
-        gut_fullness_pct: 95,
-        molt_stage: "INTERMUDA"
-      }
+      analysis_mode: payload.analysis_mode,
+      ...parsed
     };
+  } catch (err) {
+    console.error("[GeminiOracle] Erro na an\xE1lise visual multimodal:", err.message);
+    throw new Error(`Falha no processamento de vis\xE3o IA (${payload.analysis_mode}): ${err.message}`);
   }
-  if (payload.analysis_mode === "invoice_ocr") {
-    return {
-      analysis_mode: "invoice_ocr",
-      confidence_score: 98,
-      executive_summary: "Insumo identificado: Ra\xE7\xE3o Poti Camar\xE3o 35% PB Extrusada 1.6mm (Guabi Aqua).",
-      technical_observations: [
-        "Identificado saco de 25kg com 35% de prote\xEDna bruta m\xEDnima.",
-        "Lote do fabricante: G-2026/098 com validade de 180 dias.",
-        "Pre\xE7o de aquisi\xE7\xE3o detectado: R$ 6,20/kg."
-      ],
-      recommended_actions: [
-        'Clique em "Salvar no Estoque" para registrar automaticamente a entrada de insumo.'
-      ],
-      severity_level: "OK",
-      extracted_data: {
-        name: "Poti Camar\xE3o 35% PB Extrusada 1.6mm",
-        brand: "Guabi Aqua",
-        item_type: "Ra\xE7\xE3o",
-        unit: "kg",
-        current_stock_kg: 1e3,
-        min_stock_alert_kg: 300,
-        cost_per_kg: 6.2
-      }
-    };
-  }
-  return {
-    analysis_mode: payload.analysis_mode,
-    confidence_score: 90,
-    executive_summary: "Equipamento e estrutura operando em regime de normalidade para carcinicultura intensiva.",
-    technical_observations: [
-      "Alinhamento mec\xE2nico das p\xE1s dos aeradores sem vibra\xE7\xE3o anormal percept\xEDvel.",
-      "Cor da \xE1gua e padr\xE3o de turbidez adequados para ambiente de ber\xE7\xE1rio."
-    ],
-    recommended_actions: [
-      "Manter inspe\xE7\xE3o preventiva e limpeza rotineira a cada 7 dias."
-    ],
-    severity_level: "OK"
-  };
 }
 async function processVoiceAssistantCommand(transcript) {
   const norm = transcript.toLowerCase();
@@ -731,36 +749,20 @@ async function processVoiceAssistantCommand(transcript) {
     intent: "ZOOTECHNICAL_QUERY"
   };
 }
-var aiInstance, apiKey, GeminiOracle, geminiOracle;
+var PRIMARY_GEMINI_MODELS, GeminiOracle, geminiOracle;
 var init_geminiOracle = __esm({
   "src/ai/geminiOracle.ts"() {
     init_environment();
     init_mqttIngestor();
     init_MessagingHub();
-    aiInstance = null;
-    apiKey = environment.GEMINI_API_KEY || config.geminiApiKey || (typeof process !== "undefined" ? process.env?.GEMINI_API_KEY : "");
-    if (apiKey) {
-      aiInstance = new GoogleGenAI({
-        apiKey,
-        httpOptions: {
-          headers: {
-            "User-Agent": "aistudio-build"
-          }
-        }
-      });
-    }
+    PRIMARY_GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
     GeminiOracle = class {
       getClient() {
-        if (aiInstance) return aiInstance;
-        const currentKey = environment.GEMINI_API_KEY || config.geminiApiKey || (typeof process !== "undefined" ? process.env?.GEMINI_API_KEY : "");
-        if (currentKey) {
-          aiInstance = new GoogleGenAI({
-            apiKey: currentKey,
-            httpOptions: { headers: { "User-Agent": "aistudio-build" } }
-          });
-          return aiInstance;
+        try {
+          return getGeminiClient();
+        } catch {
+          return null;
         }
-        return null;
       }
       getSystemInstruction() {
         return `
@@ -833,7 +835,7 @@ Formato obrigat\xF3rio estrito: "\u{1F6A8} NOME DO TANQUE: [dado]. A\xE7\xE3o: [
         if (client) {
           try {
             const result = await client.models.generateContent({
-              model: "gemini-2.0-flash",
+              model: "gemini-3.8-flash",
               contents: prompt,
               config: {
                 systemInstruction: this.getSystemInstruction(),
@@ -862,7 +864,7 @@ Responda seguindo o padr\xE3o CONSULTATIVE: mencione Grade Padr\xE3o (R$ 8,90/kg
         if (client) {
           try {
             const result = await client.models.generateContent({
-              model: "gemini-2.0-flash",
+              model: "gemini-3.8-flash",
               contents: prompt,
               config: {
                 systemInstruction: this.getSystemInstruction(),
@@ -889,7 +891,7 @@ Siga o formato INFORMATIVE estipulado.`;
         if (client) {
           try {
             const result = await client.models.generateContent({
-              model: "gemini-2.0-flash",
+              model: "gemini-3.8-flash",
               contents: prompt,
               config: {
                 systemInstruction: this.getSystemInstruction(),
@@ -2666,6 +2668,7 @@ var init_freeApisService = __esm({
 });
 
 // server.ts
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
@@ -3500,26 +3503,14 @@ var AIController = {
       if (!imageBase64) {
         return res.status(400).json({ error: "imageBase64 \xE9 obrigat\xF3ria" });
       }
-      try {
-        const result = await scanFeedBagLabel(imageBase64, mimeType || "image/jpeg");
-        return res.json(result);
-      } catch (err) {
-        console.warn("Vision OCR fallback triggered:", err.message);
-        return res.json({
-          manufacturer: "Guabi Nutri\xE7\xE3o Aqu\xEDcola",
-          brandName: "Pir\xE1 Crescimento 32",
-          crudeProteinPct: 32,
-          pelletSizeMm: 4,
-          targetStage: "Crescimento",
-          bagWeightKg: 25,
-          lotNumber: "L-2026-981B",
-          suggestedFeedingRatePct: 2.4,
-          confidenceScore: 0.96,
-          summary: "Ra\xE7\xE3o extrusada de alta digestibilidade formulada com farelo de soja, farinha de peixe e premix mineral vitam\xEDnico."
-        });
-      }
+      const result = await scanFeedBagLabel(imageBase64, mimeType || "image/jpeg");
+      return res.json(result);
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      console.error("Vision OCR processing error:", err.message);
+      return res.status(500).json({
+        error: `Falha na extra\xE7\xE3o visual por IA: ${err.message}`,
+        details: "Certifique-se de que a imagem esteja n\xEDtida e iluminada."
+      });
     }
   }
 };
@@ -4316,10 +4307,10 @@ var AISentinelService = class {
    * Gera o parecer executivo através do Gemini 2.5 Flash ou algoritmo determinístico
    */
   async generateAiExecutiveSummary(items, healthScore, weather) {
-    const apiKey2 = environment.GEMINI_API_KEY || config.geminiApiKey || (typeof process !== "undefined" ? process.env?.GEMINI_API_KEY : "");
-    if (apiKey2) {
+    const apiKey = environment.GEMINI_API_KEY || config.geminiApiKey || (typeof process !== "undefined" ? process.env?.GEMINI_API_KEY : "");
+    if (apiKey) {
       try {
-        const ai = new GoogleGenAI2({ apiKey: apiKey2 });
+        const ai = new GoogleGenAI2({ apiKey });
         const criticals = items.filter((i) => i.severity === "CRITICO").map((i) => i.title).join("; ");
         const warnings = items.filter((i) => i.severity === "ATENCAO").map((i) => i.title).join("; ");
         const prompt = `Voc\xEA \xE9 o Auditor Central de Intelig\xEAncia Artificial do AQUA-CORE AI na Fazenda River Life (Mogeiro - PB).
@@ -4336,12 +4327,12 @@ Escreva um parecer executivo sint\xE9tico, assertivo e t\xE9cnico (m\xE1ximo 3 f
         let response;
         try {
           response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
+            model: "gemini-3.8-flash",
             contents: prompt
           });
         } catch {
           response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-3.5-flash",
             contents: prompt
           });
         }

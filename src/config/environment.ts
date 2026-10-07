@@ -1,7 +1,18 @@
 export const config = {
-  port: typeof process !== 'undefined' && process.env?.PORT ? Number(process.env.PORT) : 3000,
-  geminiApiKey: typeof process !== 'undefined' && process.env?.GEMINI_API_KEY ? process.env.GEMINI_API_KEY : '',
+  get port() {
+    return typeof process !== 'undefined' && process.env?.PORT ? Number(process.env.PORT) : 3000;
+  },
+  get geminiApiKey() {
+    return (
+      (typeof process !== 'undefined' &&
+        (process.env?.GEMINI_API_KEY ||
+          process.env?.GOOGLE_API_KEY ||
+          process.env?.VITE_GEMINI_API_KEY)) ||
+      ''
+    );
+  },
   geminiModel: 'gemini-3.8-flash',
+  fallbackModels: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'],
   redis: {
     ttlSeconds: 300,
     keyPrefix: 'aquacore:telemetry:',
@@ -20,5 +31,8 @@ export const config = {
 
 export const environment = {
   ...config,
-  GEMINI_API_KEY: config.geminiApiKey,
+  get GEMINI_API_KEY() {
+    return config.geminiApiKey;
+  },
 };
+

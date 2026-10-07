@@ -100,27 +100,14 @@ export const AIController = {
         return res.status(400).json({ error: 'imageBase64 é obrigatória' });
       }
 
-      try {
-        const result = await scanFeedBagLabel(imageBase64, mimeType || 'image/jpeg');
-        return res.json(result);
-      } catch (err: any) {
-        console.warn('Vision OCR fallback triggered:', err.message);
-        // Smart mock OCR response for demonstration if Gemini key is unset
-        return res.json({
-          manufacturer: 'Guabi Nutrição Aquícola',
-          brandName: 'Pirá Crescimento 32',
-          crudeProteinPct: 32.0,
-          pelletSizeMm: 4.0,
-          targetStage: 'Crescimento',
-          bagWeightKg: 25.0,
-          lotNumber: 'L-2026-981B',
-          suggestedFeedingRatePct: 2.4,
-          confidenceScore: 0.96,
-          summary: 'Ração extrusada de alta digestibilidade formulada com farelo de soja, farinha de peixe e premix mineral vitamínico.',
-        });
-      }
+      const result = await scanFeedBagLabel(imageBase64, mimeType || 'image/jpeg');
+      return res.json(result);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      console.error('Vision OCR processing error:', err.message);
+      return res.status(500).json({
+        error: `Falha na extração visual por IA: ${err.message}`,
+        details: 'Certifique-se de que a imagem esteja nítida e iluminada.',
+      });
     }
   },
 };
