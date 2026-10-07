@@ -64,6 +64,15 @@ export const BiometryView: React.FC<BiometryViewProps> = ({ onOpenNewBiometry })
         </button>
       </div>
 
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-blue-950/30 border border-blue-500/30 rounded-xl p-3 text-xs text-blue-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          Fazer biometria é como colocar o camarão na balança do médico para ver quanto ele cresceu! A gente pega alguns camarões com a redinha, pesa na balança de precisão e descobre se eles estão gordinhos e comendo bem. Se estiverem crescendo rápido, significa que a comida e a água estão perfeitas!
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Biometry History with AI notes */}
         <div className="lg:col-span-2 space-y-4">

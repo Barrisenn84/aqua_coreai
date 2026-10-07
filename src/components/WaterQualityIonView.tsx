@@ -146,10 +146,19 @@ export const WaterQualityIonView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all self-start sm:self-auto"
+          className="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Nova Leitura Físico-Química
         </button>
+      </div>
+
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-3 text-xs text-cyan-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          A água é a piscina onde o camarão mora! O Magnésio e o Cálcio são como vitaminas que deixam a casca dele bem durinha e brilhante quando ele cresce e troca de casca. O Oxigênio é o ar fresquinho para respirar, e o pH é o equilíbrio: a água não pode ser nem azeda e nem muito salgada!
+        </div>
       </div>
 
       {/* Grid de Balanço Iônico */}

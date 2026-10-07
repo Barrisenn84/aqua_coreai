@@ -312,7 +312,7 @@ export async function getAIGuidance(
   customQuery?: string
 ): Promise<GuidanceResult> {
   const history = mqttIngestor.getRecentHistory(tankId, 10);
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
 
   if (!client) {
     throw new Error('Chave GEMINI_API_KEY não configurada no servidor');
@@ -521,7 +521,7 @@ export async function processWhatsAppGhostMessage(
   }
 ): Promise<WhatsAppGhostOutput> {
   const normalized = incomingText.toLowerCase();
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
 
   if (client) {
     try {
@@ -686,7 +686,7 @@ export async function auditInvoiceWithAI(payload: {
   sanitaryNotes: string;
   executiveSummary: string;
 }> {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
 
   const qty = Number(payload.quantityKg || 0);
   const price = Number(payload.pricePerKg || 0);
@@ -762,7 +762,7 @@ export async function auditEquipmentWithAI(payload: {
   estimatedCostCorrectiveReais: number;
   aiEngineerOpinion: string;
 }> {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
 
   const overdueDays = Number(payload.overdueDays || 0);
   const powerKw = Number(payload.powerKw || 2.2);
@@ -845,7 +845,7 @@ export async function auditDreWithAI(payload: {
   potentialMarginGainPct: number;
   cfoExecutiveSummary: string;
 }> {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
 
   const grossRevenue = Number(payload.grossRevenue || 0);
   const feedCost = Number(payload.feedCost || 0);
@@ -941,8 +941,6 @@ export async function analyzeVisionCarciniculture(payload: {
   severity_level: 'OK' | 'ATENCAO' | 'CRITICO';
   extracted_data?: any;
 }> {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
-
   const cleanBase64 = payload.image_base64.replace(/^data:image\/\w+;base64,/, '');
   const mimeType = payload.image_base64.includes('image/png') ? 'image/png' : 'image/jpeg';
 

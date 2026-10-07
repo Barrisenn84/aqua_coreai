@@ -89,6 +89,15 @@ export const MarketBridgeView: React.FC = () => {
         </div>
       </div>
 
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O Market-Bridge é como a feira livre dos camarões! Em vez de vender para atravessadores por um preço baixo, os frigoríficos e peixarias vêm aqui direto fazer ofertas de compra. Você escolhe quem paga mais caro por quilo e ganha mais dinheiro com a sua colheita!
+        </div>
+      </div>
+
       {/* Live Regional Market Watch (Polo Paraíba & Nordeste) */}
       <MarketWatch />
 

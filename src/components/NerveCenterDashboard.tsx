@@ -372,11 +372,17 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
       )}
 
-      {/* INDICADORES GERAIS (KPIS DINÂMICOS) */}
+      {/* INDICADORES GERAIS (KPIS DINÂMICOS COM DIDÁTICA FÁCIL E LINGUAGEM CLARA) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 font-mono">
         {/* KPI 1: Tanques Povoados */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
+              <span className="text-[10px] text-cyan-400" title="Piscinas com camarões nadando">🏊 Piscinas</span>
+            </div>
+            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5">Viveiros ativos</p>
+          </div>
           <div className="mt-1 flex items-baseline gap-1">
             <span className="text-2xl font-black text-cyan-400">{batches.length}</span>
             <span className="text-[10px] text-slate-500">/ {tanks.length} ({((batches.length / (tanks.length || 1)) * 100).toFixed(1)}%)</span>
@@ -387,8 +393,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 2: Custo em Cultivo */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
+              <span className="text-[10px] text-amber-400" title="Dinheiro investido no lote">💰 Gasto</span>
+            </div>
+            <p className="text-[10px] text-amber-300/80 font-sans mt-0.5">O que já investimos</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-amber-300">
               R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '3.860,50'}
@@ -398,8 +410,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
+              <span className="text-[10px] text-emerald-400" title="Previsão de vendas">💵 Vendas</span>
+            </div>
+            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5">Entrada esperada</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-emerald-400">
               R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '42,36'}
@@ -411,8 +429,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 4: Biomassa Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Biomassa Total</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Biomassa Total</span>
+              <span className="text-[10px] text-blue-400" title="Peso de todos os camarões juntos">⚖️ Peso</span>
+            </div>
+            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5">Peso total na água</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-white">
               {totalBiomassKg.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
@@ -424,8 +448,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 5: População Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">População Total</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-indigo-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">População Total</span>
+              <span className="text-[10px] text-indigo-400" title="Contagem de camarões vivos">🦐 Camarões</span>
+            </div>
+            <p className="text-[10px] text-indigo-300/80 font-sans mt-0.5">Bichinhos nadando</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-white">
               {batches.reduce((acc, b) => acc + b.currentCount, 0).toLocaleString('pt-BR')} <span className="text-xs text-slate-400">un.</span>
@@ -435,8 +465,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 6: Ração Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-orange-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
+              <span className="text-[10px] text-orange-400" title="Alimento consumido">🍽️ Comida</span>
+            </div>
+            <p className="text-[10px] text-orange-300/80 font-sans mt-0.5">Comida servida</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-white">
               {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">kg</span>
@@ -446,14 +482,20 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
+        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
+              <span className="text-[10px] text-emerald-400" title="Conversão Alimentar: quantos kg de ração viram 1 kg de camarão">🎯 Apetite</span>
+            </div>
+            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5">Nota de eficiência</p>
+          </div>
           <div className="mt-1">
             <span className="text-lg font-black text-cyan-300">
               {globalFcr > 0 ? globalFcr.toFixed(2) : '0,00'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.30</span>
+          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.30 (Ótimo)</span>
         </div>
       </div>
 

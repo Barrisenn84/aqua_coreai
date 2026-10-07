@@ -158,11 +158,20 @@ export const CashFlowView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-medium shadow-lg shadow-teal-950/40 transition-all text-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-medium shadow-lg shadow-teal-950/40 transition-all text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Novo Lançamento DFC
         </button>
+      </div>
+
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-teal-950/30 border border-teal-500/30 rounded-xl p-3 text-xs text-teal-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O fluxo de caixa é a carteira ou a conta do banco da fazenda! Mostra todo o dinheiro que entra quando a gente vende camarão e todo o dinheiro que sai para pagar as contas, a energia elétrica e os funcionários. Se entrar mais dinheiro do que sair, a fazenda fica saudável e com dinheiro de sobra!
+        </div>
       </div>
 
       {/* Cards de Métricas de Caixa */}

@@ -120,6 +120,15 @@ export const MortalityMoltView: React.FC = () => {
         </button>
       </div>
 
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-3 text-xs text-rose-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O camarão é como um cavaleiro que troca de armadura quando cresce! Isso acontece especialmente quando a Lua está Nova ou Cheia. Quando ele troca de casquinha, ele fica molinho e cansado por algumas horas. Por isso, a gente reforça o oxigênio e os minerais na água para proteger ele enquanto a casquinha nova endurece!
+        </div>
+      </div>
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center gap-4">

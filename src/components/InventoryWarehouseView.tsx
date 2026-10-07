@@ -159,11 +159,20 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
           )}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium shadow-lg shadow-amber-950/40 transition-all text-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium shadow-lg shadow-amber-950/40 transition-all text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Novo Insumo
           </button>
+        </div>
+      </div>
+
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-orange-950/30 border border-orange-500/30 rounded-xl p-3 text-xs text-orange-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O galpão é como a dispensa da cozinha de casa! Aqui ficam guardados os sacos de ração que alimentam os camarões, os adubos para a terra do viveiro e os produtos para limpar a água. O computador conta quantos sacos ainda temos e avisa quando estiver quase no fim para nunca faltar comidinha para os camarões!
         </div>
       </div>
 

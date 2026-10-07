@@ -104,7 +104,7 @@ async function generateContentWithCascade(params) {
 }
 async function getAIGuidance(tankId, currentReading, batchInfo, customQuery) {
   const history = mqttIngestor.getRecentHistory(tankId, 10);
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
   if (!client) {
     throw new Error("Chave GEMINI_API_KEY n\xE3o configurada no servidor");
   }
@@ -284,7 +284,7 @@ IDENTIFICA\xC7\xC3O DO PRODUTO:
 }
 async function processWhatsAppGhostMessage(incomingText, contextData) {
   const normalized = incomingText.toLowerCase();
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
   if (client) {
     try {
       const prompt = `
@@ -418,7 +418,7 @@ Temperatura: ${temperature.toFixed(1)}\xB0C | Risco financeiro iminente: *R$ ${f
   };
 }
 async function auditInvoiceWithAI(payload) {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
   const qty = Number(payload.quantityKg || 0);
   const price = Number(payload.pricePerKg || 0);
   const total = Number(payload.totalValue || qty * price || 0);
@@ -471,7 +471,7 @@ Retorne estritamente um parecer t\xE9cnico com: NCM apropriado, CFOP, orienta\xE
   };
 }
 async function auditEquipmentWithAI(payload) {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
   const overdueDays = Number(payload.overdueDays || 0);
   const powerKw = Number(payload.powerKw || 2.2);
   const prompt = `Voc\xEA \xE9 o Engenheiro Mec\xE2nico e Eletrot\xE9cnico Especialista em Fazendas Aqu\xEDcolas do AQUA-CORE AI.
@@ -524,7 +524,7 @@ Avalie o risco de falha mec\xE2nica/el\xE9trica nas pr\xF3ximas 48h e prescreva 
   };
 }
 async function auditDreWithAI(payload) {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
+  const client = getGeminiClient();
   const grossRevenue = Number(payload.grossRevenue || 0);
   const feedCost = Number(payload.feedCost || 0);
   const energyCost = Number(payload.energyCost || 0);
@@ -598,7 +598,6 @@ Entregue o parecer financeiro executivo com estrat\xE9gias acion\xE1veis para co
   };
 }
 async function analyzeVisionCarciniculture(payload) {
-  const client = aiInstance || (environment.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: environment.GEMINI_API_KEY }) : null);
   const cleanBase64 = payload.image_base64.replace(/^data:image\/\w+;base64,/, "");
   const mimeType = payload.image_base64.includes("image/png") ? "image/png" : "image/jpeg";
   const modeInstructions = {

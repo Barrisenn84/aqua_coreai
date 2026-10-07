@@ -135,6 +135,15 @@ export const FinancialDREView: React.FC = () => {
         </div>
       </div>
 
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-3 text-xs text-emerald-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O DRE é a continha do cofrinho da fazenda! A gente pega todo o dinheiro que vai ganhar vendendo os camarões (Receita) e tira tudo o que gastou comprando filhotinhos de camarão, ração e energia para os aeradores (Custos). O que sobra no final é o nosso Lucro Líquido guardadinho no bolso!
+        </div>
+      </div>
+
       {/* Painel Estratégico do CFO Virtual IA */}
       {cfoReport && (
         <div className="bg-gradient-to-r from-purple-950/80 via-slate-900 to-indigo-950/80 border border-purple-700/60 rounded-3xl p-6 shadow-2xl space-y-4 font-mono text-xs animate-fadeIn">

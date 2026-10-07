@@ -136,11 +136,20 @@ export const HarvestCommercialView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium shadow-lg shadow-emerald-950/40 transition-all text-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium shadow-lg shadow-emerald-950/40 transition-all text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Registrar Nova Despesca
         </button>
+      </div>
+
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-3 text-xs text-emerald-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          A despesca é o grande dia da colheita! É o momento de tirar os camarões bem gordinhos da água e colocar no gelo para vender. Aqui a gente pesa os caminhões dos compradores, confere os quilos certinhos na balança e garante que cada camarão seja vendido pelo melhor preço!
+        </div>
       </div>
 
       {/* Cards de Métricas Comerciais */}

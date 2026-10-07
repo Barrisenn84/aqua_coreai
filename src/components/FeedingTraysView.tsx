@@ -134,10 +134,19 @@ export const FeedingTraysView: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all self-start sm:self-auto"
+          className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-emerald-500 hover:from-amber-400 hover:to-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg flex items-center gap-2 transition-all self-start sm:self-auto cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Registrar Checagem de Bandeja
         </button>
+      </div>
+
+      {/* Banner Didático e Fácil de Entender */}
+      <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200 flex items-start gap-2.5">
+        <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div>
+          <span className="font-bold text-white">💡 Como funciona para qualquer um entender: </span>
+          O comedouro é como o pratinho de almoço do camarão! A gente coloca a ração e, depois de 2 horas, puxa a cordinha da bandeja para olhar. Se o pratinho estiver limpinho, o camarão comeu tudinho! Se sobrar comida demais, o sistema avisa para dar um pouquinho menos no próximo trato para não sujar a água da piscina!
+        </div>
       </div>
 
       {/* Cards de Resumo */}

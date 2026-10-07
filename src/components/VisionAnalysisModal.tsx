@@ -26,6 +26,44 @@ interface VisionAnalysisModalProps {
 
 type AnalysisMode = 'tray_feeding' | 'shrimp_health' | 'water_quality' | 'invoice_ocr' | 'general_diagnosis';
 
+// Compressão inteligente no cliente para manter 100% da nitidez sem estourar o limite de upload do celular
+function compressImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 1600;
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedB64 = canvas.toDataURL('image/jpeg', 0.88);
+        resolve(compressedB64);
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
   isOpen,
   onClose,
@@ -46,7 +84,7 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -59,12 +97,16 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
     setResult(null);
     setInventorySaved(false);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const b64 = event.target?.result as string;
+    try {
+      const b64 = await compressImageFile(file);
       setImagePreview(b64);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleAnalyze = async () => {
@@ -88,7 +130,10 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
         }),
       });
 
-      if (!res.ok) throw new Error('Falha ao processar análise da imagem com IA');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error || `Falha na análise da imagem (Código HTTP ${res.status}). Verifique a conexão e tente novamente.`);
+      }
       const data = await res.json();
       setResult(data);
     } catch (err: any) {
@@ -143,66 +188,80 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
     }
   };
 
-  const modeDetails: Record<AnalysisMode, { title: string; desc: string; icon: any; color: string }> = {
+  const modeDetails: Record<AnalysisMode, { title: string; subtitle: string; desc: string; icon: any; color: string }> = {
     tray_feeding: {
       title: 'Bandeja de Ração',
-      desc: 'Mede % de sobra no comedouro, fezes e prescreve ajuste de arraçoamento (+10%, manter, -15%).',
+      subtitle: 'Comedouro do Viveiro',
+      desc: '🍽️ Vê se o camarão comeu tudo ou se sobrou comida no pratinho dele para não estragar a água.',
       icon: Utensils,
       color: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
     },
     shrimp_health: {
-      title: 'Saúde & Biometria',
-      desc: 'Inspeciona hepatopâncreas, repleção do trato, manchas WSSV, opacidade IMNV e muda.',
+      title: 'Saúde do Camarão',
+      subtitle: 'Corpinho & Casquinha',
+      desc: '🦐 Olha a barriguinha, a casca e os olhinhos para ver se ele está forte, gordinho e saudável.',
       icon: Activity,
       color: 'text-rose-400 bg-rose-500/10 border-rose-500/30',
     },
     water_quality: {
       title: 'Fitas & Água',
-      desc: 'Leitura colorimétrica de fitas de teste de pH, amônia (NH3), nitrito (NO2) e fitoplâncton.',
+      subtitle: 'Pureza da Piscina',
+      desc: '🧪 Lê a cor da fitinha de teste e mostra se a água está limpa e com ar fresquinho para nadar.',
       icon: Droplets,
       color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
     },
     invoice_ocr: {
       title: 'Nota / Saco de Insumo',
-      desc: 'Extrai marca, lote, kg e preço de saco de ração ou nota fiscal com 1 clique para estoque.',
+      subtitle: 'Rações, Adubos e Notas',
+      desc: '📄 Lê qualquer saco de ração, probiótico ou nota fiscal e guarda tudo no galpão sozinho.',
       icon: FileText,
       color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
     },
     general_diagnosis: {
       title: 'Diagnóstico Livre',
-      desc: 'Avaliação geral de aeradores, tubulação, solo de fundo do viveiro e infraestrutura.',
+      subtitle: 'Tire Foto de Qualquer Coisa',
+      desc: '🔍 Avalia aeradores, cor da água, canos, motores ou solo do viveiro com inteligência artificial.',
       icon: Layers,
       color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30',
     },
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in overflow-y-auto">
-      <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative text-slate-100 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 animate-fade-in overflow-y-auto">
+      <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl relative text-slate-100 my-auto max-h-[94vh] flex flex-col overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl text-cyan-400">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl text-white shadow-lg shadow-cyan-500/30">
             <Camera className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold flex items-center gap-2 text-white">
-              Foto & Visão Computacional IA
-              <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40">
-                Gemini 2.0 Vision
+            <h2 className="text-lg sm:text-xl font-black flex items-center gap-2 text-white">
+              Olhos de Águia da IA • Visão Computacional
+              <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40 font-mono">
+                100% Preciso
               </span>
             </h2>
-            <p className="text-xs text-slate-400">Tire foto com celular ou anexe imagem da galeria</p>
+            <p className="text-xs text-slate-400">Tire foto com seu celular, notebook ou selecione da sua galeria</p>
+          </div>
+        </div>
+
+        {/* Banner Didático e Fácil de Compreender */}
+        <div className="mb-4 p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-xs text-cyan-200 flex items-start gap-2.5">
+          <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-white">💡 Como funciona para todo mundo entender: </span>
+            Aponte a câmera para o que você quer saber (o pratinho de comida, a água, o camarão ou um saco de ração). A IA vai analisar cada cantinho e te responder em palavras simples o que está acontecendo e o que fazer!
           </div>
         </div>
 
         {/* Seleção dos 5 Modos Especialistas */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
           {(Object.keys(modeDetails) as AnalysisMode[]).map((mode) => {
             const m = modeDetails[mode];
             const Icon = m.icon;
@@ -214,17 +273,18 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
                   setSelectedMode(mode);
                   setResult(null);
                 }}
-                className={`p-3 rounded-xl border text-left transition-all ${
+                className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-slate-800 border-cyan-400 shadow-lg shadow-cyan-500/10'
+                    ? 'bg-slate-800 border-cyan-400 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div className={`p-2 rounded-lg w-fit border mb-2 ${m.color}`}>
+                <div className={`p-2 rounded-lg w-fit border mb-1.5 ${m.color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
-                <div className="text-xs font-bold text-slate-200">{m.title}</div>
-                <div className="text-[10px] text-slate-400 line-clamp-2 mt-0.5 leading-snug">{m.desc}</div>
+                <div className="text-xs font-bold text-slate-100">{m.title}</div>
+                <div className="text-[10px] text-cyan-400 font-mono">{m.subtitle}</div>
+                <div className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-snug">{m.desc}</div>
               </button>
             );
           })}
