@@ -15,6 +15,7 @@ import {
   Activity,
   Layers,
 } from 'lucide-react';
+import { LiveCameraModal } from './LiveCameraModal';
 
 interface VisionAnalysisModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [inventorySaved, setInventorySaved] = useState<boolean>(false);
+  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState<boolean>(false);
 
   const fileInputCameraRef = useRef<HTMLInputElement>(null);
   const fileInputUploadRef = useRef<HTMLInputElement>(null);
@@ -243,11 +245,11 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
           ) : (
             <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center bg-slate-950/40 hover:border-cyan-500/50 transition-colors">
               <div className="flex justify-center gap-4 mb-4">
-                {/* Botão de Câmera (Nativo Smartphone) */}
+                {/* Botão de Câmera ao Vivo (Smartphone e Notebook) */}
                 <button
                   type="button"
-                  onClick={() => fileInputCameraRef.current?.click()}
-                  className="px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold text-xs rounded-xl shadow-lg flex items-center gap-2"
+                  onClick={() => setIsLiveCameraOpen(true)}
+                  className="px-5 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold text-xs rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                 >
                   <Camera className="w-4 h-4" /> Tirar Foto (Câmera)
                 </button>
@@ -255,7 +257,7 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputUploadRef.current?.click()}
-                  className="px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2"
+                  className="px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <Upload className="w-4 h-4" /> Galeria / Arquivo
                 </button>
@@ -398,6 +400,21 @@ export const VisionAnalysisModal: React.FC<VisionAnalysisModalProps> = ({
             )}
           </div>
         )}
+
+        {/* Modal de Câmera ao Vivo WebRTC (Notebook e Smartphone) */}
+        <LiveCameraModal
+          isOpen={isLiveCameraOpen}
+          onClose={() => setIsLiveCameraOpen(false)}
+          onCapture={(dataUrl) => {
+            setImagePreview(dataUrl);
+            setError(null);
+            setResult(null);
+            setInventorySaved(false);
+            setIsLiveCameraOpen(false);
+          }}
+          title={`Câmera ao Vivo - ${modeDetails[selectedMode].title}`}
+          subtitle="Enquadre o foco de imagem e clique no disparador para analisar com IA"
+        />
       </div>
     </div>
   );

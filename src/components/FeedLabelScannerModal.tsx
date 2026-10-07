@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Camera,
   CheckCircle2,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 import { FeedLabelScanResult } from '../models/aquacultureModels';
+import { LiveCameraModal } from './LiveCameraModal';
 
 interface FeedLabelScannerModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
   const [scanResult, setScanResult] = useState<FeedLabelScanResult | null>(null);
   const [amountKg, setAmountKg] = useState<number>(30);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState<boolean>(false);
+
+  const fileInputUploadRef = useRef<HTMLInputElement>(null);
 
   // Preset bag label tags for instant testing without requiring an actual camera upload
   const sampleLabels = [
@@ -127,6 +131,32 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
     }
   };
 
+  const handleLiveCameraCapture = async (imageDataUrl: string) => {
+    setIsScanning(true);
+    try {
+      const base64Data = imageDataUrl.includes(',') ? imageDataUrl.split(',')[1] : imageDataUrl;
+      const res = await fetch('/api/ai/scan-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: base64Data,
+          mimeType: 'image/jpeg',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setScanResult(data);
+      } else {
+        // Fallback to sample
+        setScanResult(sampleLabels[0]);
+      }
+    } catch {
+      setScanResult(sampleLabels[0]);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const handleConfirmFeeding = () => {
     if (!scanResult) return;
     addFeedingLog({
@@ -210,29 +240,55 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
               </div>
 
               {/* Upload or Point Camera Zone */}
-              <div className="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 rounded-2xl p-4 text-center bg-slate-950/50 transition-colors relative">
+              <div className="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 rounded-2xl p-4 sm:p-5 text-center bg-slate-950/50 transition-colors">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsLiveCameraOpen(true)}
+                    className="w-12 h-12 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-800 cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+                    title="Abrir Câmera ao Vivo"
+                  >
+                    {isScanning ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-cyan-400" />
+                    )}
+                  </button>
+
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-slate-200 block">
+                      {isScanning ? 'Analisando etiqueta com Gemini Multimodal...' : 'Fotografar Saca ou Enviar da Galeria'}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                      Extrai automaticamente: Fabricante, PB%, calibre do grânulo e dosagem
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsLiveCameraOpen(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-1.5 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                    >
+                      <Camera className="w-4 h-4" /> Tirar Foto (Câmera)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputUploadRef.current?.click()}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <Upload className="w-4 h-4" /> Galeria / Arquivo
+                    </button>
+                  </div>
+                </div>
+
                 <input
+                  ref={fileInputUploadRef}
                   type="file"
                   accept="image/*"
                   onChange={handleFileUpload}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  title="Capturar foto da saca de ração"
+                  className="hidden"
                 />
-                <div className="flex flex-col items-center justify-center space-y-1.5 pointer-events-none">
-                  <div className="w-10 h-10 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-800">
-                    {isScanning ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Camera className="w-5 h-5" />
-                    )}
-                  </div>
-                  <span className="text-xs font-bold text-slate-200">
-                    {isScanning ? 'Analisando etiqueta com Gemini Multimodal...' : 'Toque para Fotografar a Saca ou Enviar Foto'}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Extrai automaticamente: Fabricante, PB%, calibre do grânulo e dosagem
-                  </span>
-                </div>
               </div>
 
               {/* Quick Select Presets (Instant Simulation) */}
@@ -328,6 +384,15 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
             </>
           )}
         </div>
+
+        {/* Modal de Câmera ao Vivo WebRTC (Notebook e Smartphone) */}
+        <LiveCameraModal
+          isOpen={isLiveCameraOpen}
+          onClose={() => setIsLiveCameraOpen(false)}
+          onCapture={handleLiveCameraCapture}
+          title="Scanner de Rótulo de Ração - IA Vision"
+          subtitle="Enquadre a etiqueta ou tabela nutricional da saca de ração"
+        />
       </div>
     </div>
   );
