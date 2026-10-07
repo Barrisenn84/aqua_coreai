@@ -1030,81 +1030,188 @@ Retorne estritamente um JSON estruturado com:
 export async function processVoiceAssistantCommand(transcript: string): Promise<{
   action: 'navigate' | 'speak_advice' | 'trigger_action';
   targetTab?: string;
+  triggerType?: 'open_vision' | 'open_farm_profile' | 'trigger_reset' | 'open_biometry' | 'open_scanner';
   spokenReply: string;
   intent: string;
 }> {
-  const norm = transcript.toLowerCase();
+  const norm = transcript.toLowerCase().trim();
 
-  // Navegação rápida por voz
-  if (norm.includes('estoque') || norm.includes('armazém') || norm.includes('insumo') || norm.includes('ração')) {
+  // 1. Ações diretas de ferramentas (Câmera, Scanner, Cadastro, Reset)
+  if (norm.includes('foto') || norm.includes('câmera') || norm.includes('camera') || norm.includes('olho vivo')) {
+    return {
+      action: 'trigger_action',
+      triggerType: 'open_vision',
+      spokenReply: 'Abrindo os olhos da IA. Aponte a câmera para o comedouro, camarão ou insumo.',
+      intent: 'TRIGGER_VISION',
+    };
+  }
+  if (norm.includes('scanner') || norm.includes('escanear rótulo') || norm.includes('escanear ração')) {
+    return {
+      action: 'trigger_action',
+      triggerType: 'open_scanner',
+      spokenReply: 'Abrindo o scanner inteligente de sacas de ração.',
+      intent: 'TRIGGER_SCANNER',
+    };
+  }
+  if (norm.includes('minha fazenda') || norm.includes('licença') || norm.includes('cnpj') || norm.includes('cadastro')) {
+    return {
+      action: 'trigger_action',
+      triggerType: 'open_farm_profile',
+      spokenReply: 'Abrindo o cadastro institucional e licença ambiental da Fazenda River Life.',
+      intent: 'TRIGGER_FARM_PROFILE',
+    };
+  }
+  if (norm.includes('zerar') || norm.includes('reiniciar') || norm.includes('limpar dados')) {
+    return {
+      action: 'trigger_action',
+      triggerType: 'trigger_reset',
+      spokenReply: 'Abrindo a tela de reinicialização controlada e protegida.',
+      intent: 'TRIGGER_RESET',
+    };
+  }
+
+  // 2. Navegação instantânea para as 18 telas canônicas do sistema
+  if (norm.includes('estoque') || norm.includes('armazém') || norm.includes('galpão') || norm.includes('insumo') || norm.includes('ração') || norm.includes('saco')) {
     return {
       action: 'navigate',
-      targetTab: 'inventory',
-      spokenReply: 'Abrindo o controle de estoque e insumos da fazenda.',
+      targetTab: 'inventory-warehouse',
+      spokenReply: 'Abrindo o galpão de estoque e insumos da fazenda.',
       intent: 'NAVIGATE_INVENTORY',
     };
   }
-  if (norm.includes('viveiro') || norm.includes('tanque') || norm.includes('berçário')) {
+  if (norm.includes('viveiro') || norm.includes('tanque') || norm.includes('início') || norm.includes('painel') || norm.includes('controle')) {
     return {
       action: 'navigate',
-      targetTab: 'tanks',
-      spokenReply: 'Exibindo todos os tanques e viveiros ativos.',
-      intent: 'NAVIGATE_TANKS',
+      targetTab: 'nerve-center',
+      spokenReply: 'Abrindo o centro de controle com todos os seus tanques e clima.',
+      intent: 'NAVIGATE_NERVE_CENTER',
     };
   }
-  if (norm.includes('bandeja') || norm.includes('comedouro') || norm.includes('alimentação') || norm.includes('trato')) {
+  if (norm.includes('bandeja') || norm.includes('comedouro') || norm.includes('alimentação') || norm.includes('trato') || norm.includes('sobra')) {
     return {
       action: 'navigate',
-      targetTab: 'feeding_trays',
-      spokenReply: 'Navegando para o manejo de alimentação e checagem de bandejas.',
+      targetTab: 'feeding-trays',
+      spokenReply: 'Navegando para o manejo de comedouros e bandejas de ração.',
       intent: 'NAVIGATE_FEEDING',
     };
   }
-  if (norm.includes('água') || norm.includes('qualidade') || norm.includes('oxigênio') || norm.includes('salinidade') || norm.includes('alcalinidade')) {
+  if (norm.includes('água') || norm.includes('agua') || norm.includes('oxigênio') || norm.includes('oxigenio') || norm.includes('salinidade') || norm.includes('alcalinidade') || norm.includes('ph') || norm.includes('iônico')) {
     return {
       action: 'navigate',
-      targetTab: 'water_quality',
+      targetTab: 'water-quality',
       spokenReply: 'Abrindo o painel de qualidade da água e balanço iônico.',
       intent: 'NAVIGATE_WATER_QUALITY',
     };
   }
-  if (norm.includes('despesca') || norm.includes('colheita') || norm.includes('romaneio') || norm.includes('venda')) {
+  if (norm.includes('despesca') || norm.includes('colheita') || norm.includes('romaneio') || norm.includes('caminhão')) {
     return {
       action: 'navigate',
-      targetTab: 'harvest',
+      targetTab: 'harvest-commercial',
       spokenReply: 'Acessando o módulo de despescas e romaneios comerciais.',
       intent: 'NAVIGATE_HARVEST',
     };
   }
-  if (norm.includes('muda') || norm.includes('lua') || norm.includes('mortalidade') || norm.includes('ecdise')) {
+  if (norm.includes('muda') || norm.includes('lua') || norm.includes('mortalidade') || norm.includes('casca') || norm.includes('sanidade')) {
     return {
       action: 'navigate',
-      targetTab: 'mortality_molt',
-      spokenReply: 'Abrindo ciclo de mudas lunares e sanidade do camarão.',
+      targetTab: 'mortality-molt',
+      spokenReply: 'Abrindo o ciclo de mudas lunares e sanidade do camarão.',
       intent: 'NAVIGATE_MOLT',
     };
   }
-  if (norm.includes('fazenda') || norm.includes('propriedade') || norm.includes('licença')) {
+  if (norm.includes('dre') || norm.includes('lucro') || norm.includes('custo') || norm.includes('despesa') || norm.includes('margem')) {
     return {
       action: 'navigate',
-      targetTab: 'farm_profile',
-      spokenReply: 'Abrindo os dados cadastrais da Fazenda River Life.',
-      intent: 'NAVIGATE_FARM_PROFILE',
+      targetTab: 'dre',
+      spokenReply: 'Abrindo o DRE financeiro com apuração de custos e lucros.',
+      intent: 'NAVIGATE_DRE',
     };
   }
-  if (norm.includes('fluxo de caixa') || norm.includes('financeiro') || norm.includes('banco') || norm.includes('dre')) {
+  if (norm.includes('caixa') || norm.includes('fluxo') || norm.includes('banco') || norm.includes('pix')) {
     return {
       action: 'navigate',
-      targetTab: 'financial',
-      spokenReply: 'Abrindo o fluxo de caixa e controladoria financeira.',
-      intent: 'NAVIGATE_FINANCIAL',
+      targetTab: 'cash-flow',
+      spokenReply: 'Abrindo o fluxo de caixa diário e contas bancárias.',
+      intent: 'NAVIGATE_CASH_FLOW',
+    };
+  }
+  if (norm.includes('cotação') || norm.includes('preço') || norm.includes('mercado') || norm.includes('bolsa') || norm.includes('comprador') || norm.includes('venda')) {
+    return {
+      action: 'navigate',
+      targetTab: 'market-bridge',
+      spokenReply: 'Abrindo a bolsa Market-Bridge com as melhores cotações regionais.',
+      intent: 'NAVIGATE_MARKET',
+    };
+  }
+  if (norm.includes('biometria') || norm.includes('peso') || norm.includes('balança') || norm.includes('amostragem') || norm.includes('pesar')) {
+    return {
+      action: 'navigate',
+      targetTab: 'biometry',
+      spokenReply: 'Abrindo o histórico de biometrias e acompanhamento de peso.',
+      intent: 'NAVIGATE_BIOMETRY',
+    };
+  }
+  if (norm.includes('whatsapp') || norm.includes('zap') || norm.includes('mensagem')) {
+    return {
+      action: 'navigate',
+      targetTab: 'whatsapp-ghost',
+      spokenReply: 'Abrindo o assistente WhatsApp integrado.',
+      intent: 'NAVIGATE_WHATSAPP',
+    };
+  }
+  if (norm.includes('iot') || norm.includes('sensor') || norm.includes('caixa preta') || norm.includes('4g')) {
+    return {
+      action: 'navigate',
+      targetTab: 'blackbox-haas',
+      spokenReply: 'Abrindo a telemetria das caixas pretas IoT 4G.',
+      intent: 'NAVIGATE_IOT',
     };
   }
 
-  // Consulta zootécnica falada
+  // 3. Consulta inteligente aberta via Gemini AI com Cascata
+  try {
+    const aiPrompt = `Você é o Dr. Camarão, assistente falado da Fazenda River Life em Mogeiro - PB (produtor Collermhann).
+Cultivo: 380.000 camarões Litopenaeus vannamei em 4 viveiros povoados.
+Pergunta ou comando do produtor: "${transcript}"
+
+Responda em formato JSON:
+- spokenReply: Resposta falada de no máximo 2 frases, amigável, clara e didática (linguagem simples para entender no campo).
+- action: "navigate" (se ele quer ir para uma tela), "trigger_action" (se for foto/câmera/reset) ou "speak_advice" (se for dúvida técnica).
+- targetTab: se action for navigate, informe exatamente uma das opções: "nerve-center", "feeding-trays", "water-quality", "inventory-warehouse", "harvest-commercial", "mortality-molt", "dre", "cash-flow", "market-bridge", "biometry".
+- triggerType: se action for trigger_action, informe "open_vision", "open_farm_profile" ou "trigger_reset".
+- intent: código do comando.`;
+
+    const aiResponse = await generateContentWithCascade({
+      contents: aiPrompt,
+      config: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            spokenReply: { type: Type.STRING },
+            action: { type: Type.STRING, enum: ['navigate', 'speak_advice', 'trigger_action'] },
+            targetTab: { type: Type.STRING },
+            triggerType: { type: Type.STRING },
+            intent: { type: Type.STRING },
+          },
+          required: ['spokenReply', 'action', 'intent'],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(aiResponse.text || '{}');
+    if (parsed.spokenReply) {
+      return parsed;
+    }
+  } catch (err: any) {
+    console.warn('[GeminiOracle] Fallback em processVoiceAssistantCommand:', err.message);
+  }
+
+  // 4. Fallback amigável padrão
   return {
     action: 'speak_advice',
-    spokenReply: 'Dr. Camarão na escuta. Para Litopenaeus vannamei, mantenha o oxigênio acima de 4.0 mg/L e a alcalinidade acima de 120 para garantir a muda perfeita. Posso abrir seus viveiros ou o estoque agora?',
-    intent: 'ZOOTECHNICAL_QUERY',
+    spokenReply: 'Dr. Camarão na escuta. A água e os viveiros estão monitorados. Você pode me pedir para abrir o estoque, ver a qualidade da água ou as bandejas de comida.',
+    intent: 'ZOOTECHNICAL_ADVICE',
   };
 }

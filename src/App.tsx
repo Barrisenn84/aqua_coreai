@@ -33,28 +33,162 @@ import { VisionAnalysisModal } from './components/VisionAnalysisModal';
 import { FarmProfileModal } from './components/FarmProfileModal';
 import { ResetControlModal } from './components/ResetControlModal';
 
+export type CanonicalTabType =
+  | 'nerve-center'
+  | 'whatsapp-ghost'
+  | 'blackbox-haas'
+  | 'biomass-predictor'
+  | 'feed-optimizer'
+  | 'market-bridge'
+  | 'harvest-oracle'
+  | 'biometry'
+  | 'dre'
+  | 'terminal'
+  | 'flutter-mobile'
+  | 'architecture'
+  | 'feeding-trays'
+  | 'water-quality'
+  | 'inventory-warehouse'
+  | 'harvest-commercial'
+  | 'mortality-molt'
+  | 'cash-flow';
+
+const TAB_ALIASES: Record<string, CanonicalTabType> = {
+  // Inventory
+  inventory: 'inventory-warehouse',
+  'inventory-warehouse': 'inventory-warehouse',
+  warehouse: 'inventory-warehouse',
+  estoque: 'inventory-warehouse',
+  insumos: 'inventory-warehouse',
+  racao: 'inventory-warehouse',
+  ração: 'inventory-warehouse',
+
+  // Nerve center / Dashboard / Tanques
+  'nerve-center': 'nerve-center',
+  nerve_center: 'nerve-center',
+  dashboard: 'nerve-center',
+  tanques: 'nerve-center',
+  viveiros: 'nerve-center',
+  tanks: 'nerve-center',
+  inicio: 'nerve-center',
+  início: 'nerve-center',
+  painel: 'nerve-center',
+
+  // Feeding trays
+  'feeding-trays': 'feeding-trays',
+  feeding_trays: 'feeding-trays',
+  feeding: 'feeding-trays',
+  bandejas: 'feeding-trays',
+  comedouros: 'feeding-trays',
+  comedouro: 'feeding-trays',
+  alimentacao: 'feeding-trays',
+  alimentação: 'feeding-trays',
+
+  // Water quality
+  'water-quality': 'water-quality',
+  water_quality: 'water-quality',
+  water: 'water-quality',
+  agua: 'water-quality',
+  água: 'water-quality',
+  oxigenio: 'water-quality',
+  oxigênio: 'water-quality',
+  ionico: 'water-quality',
+  iônico: 'water-quality',
+
+  // Harvest commercial
+  'harvest-commercial': 'harvest-commercial',
+  harvest_commercial: 'harvest-commercial',
+  harvest: 'harvest-commercial',
+  despesca: 'harvest-commercial',
+  despescas: 'harvest-commercial',
+  romaneio: 'harvest-commercial',
+  romaneios: 'harvest-commercial',
+  colheita: 'harvest-commercial',
+
+  // Mortality & molt
+  'mortality-molt': 'mortality-molt',
+  mortality_molt: 'mortality-molt',
+  muda: 'mortality-molt',
+  mudas: 'mortality-molt',
+  mortalidade: 'mortality-molt',
+  sanidade: 'mortality-molt',
+
+  // Financial / DRE / Cash flow
+  dre: 'dre',
+  financeiro: 'dre',
+  lucro: 'dre',
+  lucros: 'dre',
+  custos: 'dre',
+  'cash-flow': 'cash-flow',
+  cash_flow: 'cash-flow',
+  caixa: 'cash-flow',
+  fluxo: 'cash-flow',
+
+  // Market bridge
+  'market-bridge': 'market-bridge',
+  market_bridge: 'market-bridge',
+  market: 'market-bridge',
+  mercado: 'market-bridge',
+  cotacao: 'market-bridge',
+  cotação: 'market-bridge',
+  cotacoes: 'market-bridge',
+  cotações: 'market-bridge',
+
+  // Biometry
+  biometry: 'biometry',
+  biometria: 'biometry',
+  peso: 'biometry',
+
+  // WhatsApp
+  'whatsapp-ghost': 'whatsapp-ghost',
+  whatsapp_ghost: 'whatsapp-ghost',
+  whatsapp: 'whatsapp-ghost',
+  zap: 'whatsapp-ghost',
+
+  // Blackbox IoT
+  'blackbox-haas': 'blackbox-haas',
+  blackbox_haas: 'blackbox-haas',
+  blackbox: 'blackbox-haas',
+  iot: 'blackbox-haas',
+  sensores: 'blackbox-haas',
+
+  // Predictor / Optimizer / Oracle
+  'biomass-predictor': 'biomass-predictor',
+  biomass_predictor: 'biomass-predictor',
+  biomass: 'biomass-predictor',
+  biomassa: 'biomass-predictor',
+  'feed-optimizer': 'feed-optimizer',
+  feed_optimizer: 'feed-optimizer',
+  otimizador: 'feed-optimizer',
+  'harvest-oracle': 'harvest-oracle',
+  harvest_oracle: 'harvest-oracle',
+  oracle: 'harvest-oracle',
+  oraculo: 'harvest-oracle',
+  oráculo: 'harvest-oracle',
+
+  // Terminal / Mobile / Architecture
+  terminal: 'terminal',
+  'flutter-mobile': 'flutter-mobile',
+  flutter_mobile: 'flutter-mobile',
+  mobile: 'flutter-mobile',
+  celular: 'flutter-mobile',
+  architecture: 'architecture',
+  arquitetura: 'architecture',
+};
+
+const VALID_TABS_SET = new Set(Object.values(TAB_ALIASES));
+
+function normalizeTab(rawTab?: string): CanonicalTabType {
+  if (!rawTab) return 'nerve-center';
+  const clean = rawTab.toLowerCase().trim();
+  if (TAB_ALIASES[clean]) return TAB_ALIASES[clean];
+  if (VALID_TABS_SET.has(clean as any)) return clean as CanonicalTabType;
+  return 'nerve-center';
+}
+
 function AppContent() {
-  const { setActiveTankId, isAuthModalOpen, setIsAuthModalOpen } = useAquaCore();
-  const [activeTab, setActiveTab] = useState<
-    | 'nerve-center'
-    | 'whatsapp-ghost'
-    | 'blackbox-haas'
-    | 'biomass-predictor'
-    | 'feed-optimizer'
-    | 'market-bridge'
-    | 'harvest-oracle'
-    | 'biometry'
-    | 'dre'
-    | 'terminal'
-    | 'flutter-mobile'
-    | 'architecture'
-    | 'feeding-trays'
-    | 'water-quality'
-    | 'inventory-warehouse'
-    | 'harvest-commercial'
-    | 'mortality-molt'
-    | 'cash-flow'
-  >('nerve-center');
+  const { setActiveTankId, isAuthModalOpen, setIsAuthModalOpen, setIsResetModalOpen } = useAquaCore();
+  const [activeTab, setActiveTab] = useState<CanonicalTabType>('nerve-center');
   const [isBiometryModalOpen, setIsBiometryModalOpen] = useState<boolean>(false);
   const [isScannerModalOpen, setIsScannerModalOpen] = useState<boolean>(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState<boolean>(false);
@@ -64,6 +198,11 @@ function AppContent() {
   const [isFarmProfileModalOpen, setIsFarmProfileModalOpen] = useState<boolean>(false);
   const [biometryTankTarget, setBiometryTankTarget] = useState<string>('tank-02');
   const [auditTankTarget, setAuditTankTarget] = useState<string>('tank-04');
+
+  const handleNavigateTab = (rawTab: string) => {
+    const target = normalizeTab(rawTab);
+    setActiveTab(target);
+  };
 
   const handleOpenBiometry = (tankId?: string) => {
     if (tankId) setBiometryTankTarget(tankId);
@@ -81,7 +220,7 @@ function AppContent() {
       {/* Global Mission Critical Header */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavigateTab as any}
         onOpenBiometryModal={() => handleOpenBiometry()}
         onOpenScannerModal={() => setIsScannerModalOpen(true)}
         onOpenInvoiceModal={() => setIsInvoiceModalOpen(true)}
@@ -94,7 +233,7 @@ function AppContent() {
       {/* Emergency Hypoxia / Critical Banner (Visible on all tabs when triggered) */}
       <EmergencyBanner />
 
-      {/* Main Content Viewport */}
+      {/* Main Content Viewport - Garantido contra tela preta com renderização segura */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 py-4 sm:py-6 pb-24 md:pb-6">
         {activeTab === 'nerve-center' && (
           <NerveCenterDashboard
@@ -149,6 +288,15 @@ function AppContent() {
         {activeTab === 'mortality-molt' && <MortalityMoltView />}
 
         {activeTab === 'cash-flow' && <CashFlowView />}
+
+        {/* Fallback de proteção absoluta: impede tela preta se uma aba desconhecida for passada */}
+        {!VALID_TABS_SET.has(activeTab) && (
+          <NerveCenterDashboard
+            onOpenAudit={handleOpenAudit}
+            onOpenBiometry={handleOpenBiometry}
+            onNavigateToOracle={() => setActiveTab('harvest-oracle')}
+          />
+        )}
       </main>
 
       {/* Footer System Telemetry */}
@@ -191,14 +339,30 @@ function AppContent() {
         onClose={() => setIsAuthModalOpen(false)}
       />
 
-      {/* Modal de Voz IA Bilateral (Dr. Camarão) */}
+      {/* Modal de Voz IA Bilateral (Dr. Camarão Copilot) */}
       <VoiceAssistantModal
         isOpen={isVoiceModalOpen}
         onClose={() => setIsVoiceModalOpen(false)}
-        onNavigateTab={(tab) => setActiveTab(tab as any)}
+        onNavigateTab={handleNavigateTab}
         onOpenVision={() => {
           setIsVoiceModalOpen(false);
           setIsVisionModalOpen(true);
+        }}
+        onOpenScanner={() => {
+          setIsVoiceModalOpen(false);
+          setIsScannerModalOpen(true);
+        }}
+        onOpenFarmProfile={() => {
+          setIsVoiceModalOpen(false);
+          setIsFarmProfileModalOpen(true);
+        }}
+        onOpenReset={() => {
+          setIsVoiceModalOpen(false);
+          setIsResetModalOpen(true);
+        }}
+        onOpenBiometry={() => {
+          setIsVoiceModalOpen(false);
+          handleOpenBiometry();
         }}
       />
 
