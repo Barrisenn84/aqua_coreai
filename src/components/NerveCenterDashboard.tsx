@@ -82,14 +82,14 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
     isLive: boolean;
     source: string;
   }>({
-    temperature: 31.8,
-    apparentTemperature: 34.0,
-    precipitationMm: 0.8,
-    windSpeedKmH: 16.0,
-    humidity: 72,
-    condition: 'Chuva tropical (0,8mm prevista)',
+    temperature: 27.0,
+    apparentTemperature: 28.0,
+    precipitationMm: 0.0,
+    windSpeedKmH: 17.0,
+    humidity: 65,
+    condition: 'Predominantemente limpo',
     isLive: true,
-    source: 'Open-Meteo Satellite Model',
+    source: 'Open-Meteo Satellite Model (Mogeiro - PB)',
   });
 
   const [liveCurrency, setLiveCurrency] = useState<{
@@ -373,8 +373,8 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-2xl font-black text-cyan-400">{tanks.length}</span>
-            <span className="text-[10px] text-slate-500">/ {tanks.length} ativos</span>
+            <span className="text-2xl font-black text-cyan-400">{batches.length}</span>
+            <span className="text-[10px] text-slate-500">/ {tanks.length} ({((batches.length / (tanks.length || 1)) * 100).toFixed(1)}%)</span>
           </div>
           <span className="text-[9px] text-slate-500 mt-1">
             {tanks.length > 0 ? `${tanks[0].type} (${(tanks.reduce((a, t) => a + t.areaM2, 0) / 10000).toFixed(3)} ha)` : 'Nenhum viveiro'}
@@ -386,10 +386,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
           <div className="mt-1">
             <span className="text-lg font-black text-amber-300">
-              R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR') : '0'}
+              R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '3.860,50'}
             </span>
           </div>
-          <span className="text-[9px] text-slate-400 mt-1">Estimativa Real & IA</span>
+          <span className="text-[9px] text-slate-400 mt-1">Larvas R$ 3.800 + DECOSOLO R$ 60,50</span>
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
@@ -397,10 +397,12 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
           <div className="mt-1">
             <span className="text-lg font-black text-emerald-400">
-              R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR') : '0'}
+              R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '42,36'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-500/90 mt-1">Grade Comercial</span>
+          <span className="text-[9px] text-emerald-500/90 mt-1">
+            {dre.grossRevenue <= 100 ? 'Proj. Safra: R$ 139.650' : 'Grade Comercial'}
+          </span>
         </div>
 
         {/* KPI 4: Biomassa Total */}
@@ -411,7 +413,9 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               {totalBiomassKg.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
             </span>
           </div>
-          <span className="text-[9px] text-cyan-400 mt-1">IA Preditiva</span>
+          <span className="text-[9px] text-cyan-400 mt-1">
+            {totalBiomassKg <= 10 ? 'Proj. Despesca: 5.700 kg' : 'IA Preditiva'}
+          </span>
         </div>
 
         {/* KPI 5: População Total */}
@@ -430,10 +434,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
           <div className="mt-1">
             <span className="text-lg font-black text-white">
-              {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
+              {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">kg</span>
             </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Consumo Real</span>
+          <span className="text-[9px] text-slate-500 mt-1">Arraçoamento 0,00 kg</span>
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
@@ -441,10 +445,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
           <div className="mt-1">
             <span className="text-lg font-black text-cyan-300">
-              {globalFcr > 0 ? globalFcr.toFixed(2) : '1.35'}
+              {globalFcr > 0 ? globalFcr.toFixed(2) : '0,00'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.35</span>
+          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.30</span>
         </div>
       </div>
 

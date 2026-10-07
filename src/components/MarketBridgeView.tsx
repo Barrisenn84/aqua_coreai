@@ -24,6 +24,7 @@ import { useAquaCore } from '../context/AquaCoreContext';
 import { initialBuyerBids, initialMarketListings } from '../data/marketBridgeData';
 import { MarketBuyerBid } from '../types/aquacore';
 import { MarketWatch } from './MarketWatch';
+import { MarketScenariosSimulator } from './MarketScenariosSimulator';
 
 export const MarketBridgeView: React.FC = () => {
   const { farm, batches, tanks } = useAquaCore();
@@ -34,9 +35,12 @@ export const MarketBridgeView: React.FC = () => {
   const [contractSuccess, setContractSuccess] = useState<boolean>(false);
   const [isListed, setIsListed] = useState<boolean>(false);
 
-  const targetBatch = batches.find((b) => b.tankId === 'tank-04') || batches[0];
-  const targetTank = tanks.find((t) => t.id === 'tank-04') || tanks[0];
-  const totalBiomassTons = ((targetBatch.currentCount * targetBatch.currentWeightG) / 1000000).toFixed(2);
+  const targetBatch = batches.find((b) => b.tankId === 'tank-01') || batches[0];
+  const targetTank = tanks.find((t) => t.id === 'tank-01') || tanks[0];
+  // Biomassa comercial projetada (100.000 un @ 15g = 1.50 t por tanque, ou total da fazenda 5.70 t)
+  const totalBiomassTons = (
+    (batches.reduce((acc, b) => acc + (b.currentCount || 0), 0) * 15) / 1000000
+  ).toFixed(2);
 
   const handleOpenContract = (bid: MarketBuyerBid) => {
     setSelectedBid(bid);
@@ -71,22 +75,25 @@ export const MarketBridgeView: React.FC = () => {
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Integra a prontidão zootécnica aos frigoríficos e atacadistas homologados. Quando o peixe atinge o calibre comercial, o produtor negocia a carga direto na fonte sem intermediários.
+            Integra a prontidão zootécnica aos frigoríficos e atacadistas homologados. Quando o camarão atinge o calibre comercial, o produtor negocia a carga direto na fonte sem intermediários.
           </p>
         </div>
 
         {/* Live Index Ticker */}
         <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-xs text-right space-y-1">
-          <span className="text-[10px] text-slate-400 uppercase block">Índice Médio Cepea / PeixeBR</span>
+          <span className="text-[10px] text-slate-400 uppercase block">Cotação Polo Paraíba & NE</span>
           <div className="flex items-center gap-2 justify-end">
-            <span className="text-slate-100 font-bold">Tilápia SP/MS:</span>
-            <span className="text-emerald-400 font-black">R$ 9,80/kg (+5.2%)</span>
+            <span className="text-slate-100 font-bold">Camarão Vannamei:</span>
+            <span className="text-emerald-400 font-black">R$ 24,50/kg (+6.5%)</span>
           </div>
         </div>
       </div>
 
       {/* Live Regional Market Watch (Polo Paraíba & Nordeste) */}
       <MarketWatch />
+
+      {/* MÓDULO DE CENÁRIOS DE MERCADO & SIMULAÇÃO DE LUCRO PROJETADO */}
+      <MarketScenariosSimulator />
 
       {/* DISRUPTIVE PROACTIVE ALERT BANNER */}
       <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-cyan-950/70 border-2 border-emerald-500/80 shadow-2xl relative overflow-hidden">
@@ -97,16 +104,16 @@ export const MarketBridgeView: React.FC = () => {
                 GATILHO DE VENDA ANTECIPADA
               </span>
               <span className="text-xs text-emerald-400 font-mono font-bold">
-                Lote {targetBatch.batchCode} ({targetBatch.species} • {targetBatch.currentWeightG}g)
+                Lote {targetBatch.batchCode} ({targetBatch.species} • Calibre Comercial Alvo 15g)
               </span>
             </div>
 
             <h2 className="text-base sm:text-lg font-bold text-white">
-              "Seu lote de Tilápias estará pronto em 10 dias. O preço atual de mercado está em alta (+5.2%). Deseja listar sua produção para os compradores homologados agora?"
+              "Produção ativa de 380.000 pós-larvas na Fazenda River Life (Mogeiro - PB). Cotação regional favorável (+6.5%). Deseja travar contratos futuros e listar a safra para compradores homologados?"
             </h2>
 
             <p className="text-xs text-slate-300 font-mono">
-              Biomassa disponível: <strong>{totalBiomassTons} toneladas</strong> • Janela de despesca: <strong>12 de Outubro</strong>
+              Biomassa comercial projetada: <strong>{totalBiomassTons} toneladas</strong> • Janela de despesca: <strong>Novembro/2026</strong>
             </p>
           </div>
 
@@ -120,7 +127,7 @@ export const MarketBridgeView: React.FC = () => {
               }`}
             >
               <Send className="w-4 h-4" />
-              <span>{isListed ? 'Lote Listado no Mercado ✓' : 'Listar Produção para Frigoríficos'}</span>
+              <span>{isListed ? 'Safra Listada no Mercado ✓' : 'Listar Produção para Frigoríficos'}</span>
             </button>
           </div>
         </div>

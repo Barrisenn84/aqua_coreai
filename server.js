@@ -1503,15 +1503,15 @@ var init_databaseService = __esm({
       tenants: [
         {
           id: "tenant-river-life",
-          name: "Fazenda River Life (Camar\xE3o PB)",
+          name: "River Life (\xC1rea Fazenda)",
           code: "RIVER_LIFE",
           type: "aquaculture_farm",
-          location: "Polo de Mogeiro \u2013 PB",
+          location: "Mogeiro \u2013 PB",
           latitude: -7.2997,
           longitude: -35.2319,
           kwhCost: 0.72,
           feedCost: 4.2,
-          salePrice: 10.25,
+          salePrice: 24.5,
           producerPhone: "+5584988585211",
           speciesTarget: "Litopenaeus vannamei (Camar\xE3o)"
         },
@@ -1557,7 +1557,7 @@ var init_databaseService = __esm({
           id: "usr-01",
           tenantId: "tenant-river-life",
           email: "collermhann@aquacore.ai",
-          name: "Engenheiro Collermhann",
+          name: "Collermhann",
           role: "owner",
           phone: "+5584988585211"
         },
@@ -1580,237 +1580,205 @@ var init_databaseService = __esm({
       ],
       biometries: [
         {
-          id: "bio-seed-01",
+          id: "bio-seed-v01",
           tenantId: "tenant-river-life",
-          tankId: "tank-04",
-          batchId: "batch-04",
-          avgWeightG: 18.2,
-          sampleSize: 80,
-          mortalityCount: 15,
-          uniformityPct: 89.5,
-          fcrCurrent: 1.35,
-          aiActionNote: "Crescimento zoot\xE9cnico dentro da curva de calibra\xE7\xE3o para \xE1gua a 29.5\xB0C no Polo Para\xEDba.",
-          createdAt: new Date(Date.now() - 864e5 * 2).toISOString()
+          tankId: "tank-01",
+          batchId: "batch-01",
+          avgWeightG: 0.01,
+          sampleSize: 100,
+          mortalityCount: 0,
+          uniformityPct: 100,
+          fcrCurrent: 0,
+          aiActionNote: "Povoamento Tanque V 01 (Lote 02). 100.000 PLs (180 PL/g). Sobreviv\xEAncia 100%, estresse 0%. Fertilizante DECOSOLO 150g aplicado.",
+          createdAt: "2026-09-21T08:00:00Z"
         },
         {
-          id: "bio-seed-02",
+          id: "bio-seed-v02",
           tenantId: "tenant-river-life",
           tankId: "tank-02",
           batchId: "batch-02",
-          avgWeightG: 14.8,
-          sampleSize: 75,
-          mortalityCount: 8,
-          uniformityPct: 92,
-          fcrCurrent: 1.28,
-          aiActionNote: "Convers\xE3o exemplar. Manter 3 tratos di\xE1rios fracionados.",
-          createdAt: new Date(Date.now() - 864e5 * 4).toISOString()
+          avgWeightG: 0.01,
+          sampleSize: 100,
+          mortalityCount: 0,
+          uniformityPct: 100,
+          fcrCurrent: 0,
+          aiActionNote: "Povoamento Tanque V 02 (Lote 01). 100.000 PLs (69 PL/g). Sobreviv\xEAncia 100%, estresse 0%. Fertilizante DECOSOLO 150g aplicado. Biometria pendente aos 26 dias.",
+          createdAt: "2026-09-11T08:00:00Z"
+        },
+        {
+          id: "bio-seed-v03",
+          tenantId: "tenant-river-life",
+          tankId: "tank-03",
+          batchId: "batch-03",
+          avgWeightG: 0.01,
+          sampleSize: 100,
+          mortalityCount: 0,
+          uniformityPct: 100,
+          fcrCurrent: 0,
+          aiActionNote: "Povoamento Tanque V 03 (Lote 01). 100.000 PLs (90 PL/g). Sobreviv\xEAncia 100%, estresse 0%. Fertilizante DECOSOLO 150g aplicado. Biometria pendente aos 28 dias.",
+          createdAt: "2026-09-09T08:00:00Z"
+        },
+        {
+          id: "bio-seed-v04",
+          tenantId: "tenant-river-life",
+          tankId: "tank-04",
+          batchId: "batch-04",
+          avgWeightG: 0.01,
+          sampleSize: 100,
+          mortalityCount: 0,
+          uniformityPct: 100,
+          fcrCurrent: 0,
+          aiActionNote: "Povoamento Tanque V 04 (Lote 02). 80.000 PLs (194 PL/g). Sobreviv\xEAncia 100%, estresse 0%. Fertilizante DECOSOLO 100g aplicado.",
+          createdAt: "2026-10-01T08:00:00Z"
         }
       ],
       equipments: [
         {
           id: "eq-01",
           tenantId: "tenant-river-life",
-          name: "Aerador Palheta 2.0 CV (Motor Trif\xE1sico)",
-          location: "Tanque 04",
+          name: "Aerador Palheta 2.0 CV (Tanque V 01)",
+          location: "Tanque V 01",
           type: "Aera\xE7\xE3o Superficial",
-          status: "critical",
+          status: "operational",
           powerKw: 2.2,
-          lastMaintenance: "2026-08-10",
-          overdueDays: 9,
-          healthScore: 68,
-          aiDiagnostics: "Alerta preditivo: vibra\xE7\xE3o excessiva no mancal acoplado e 9 dias sem lubrifica\xE7\xE3o."
+          lastMaintenance: "2026-09-21",
+          overdueDays: 0,
+          healthScore: 95,
+          aiDiagnostics: "Operando em conformidade com ciclo de povoamento."
         },
         {
           id: "eq-02",
           tenantId: "tenant-river-life",
-          name: "Soprador Roots Industrial 5.5 kW",
-          location: "Ber\xE7\xE1rio de PLs",
-          type: "Aera\xE7\xE3o Submersa / Difusores",
+          name: "Aerador Palheta 2.0 CV (Tanque V 02)",
+          location: "Tanque V 02",
+          type: "Aera\xE7\xE3o Superficial",
           status: "operational",
-          powerKw: 5.5,
-          lastMaintenance: "2026-09-20",
+          powerKw: 2.2,
+          lastMaintenance: "2026-09-11",
           overdueDays: 0,
-          healthScore: 98
+          healthScore: 94
         },
         {
           id: "eq-03",
           tenantId: "tenant-river-life",
-          name: "Bomba de Capta\xE7\xE3o e Drenagem 5.0 HP",
-          location: "Canal Central de Abastecimento",
-          type: "Bombeamento Hidr\xE1ulico",
-          status: "warning",
-          powerKw: 3.7,
-          lastMaintenance: "2026-09-02",
-          overdueDays: 2,
-          healthScore: 84
-        }
-      ],
-      invoices: [
-        {
-          id: "inv-seed-01",
-          tenantId: "tenant-river-life",
-          invoiceNumber: "NF-892341",
-          batchCode: "Lote_04",
-          quantityKg: 1200,
-          pricePerKg: 10.25,
-          totalValue: 12300,
-          buyerName: "Frigor\xEDfico Polo Para\xEDba & NE",
-          buyerCnpj: "02.429.144/0001-93",
-          status: "issued",
-          aiTaxReport: "Parecer Fiscal IA: Desonera\xE7\xE3o de ICMS na sa\xEDda de produtor rural e isen\xE7\xE3o PIS/COFINS agro.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      ],
-      feedingTrays: [
-        {
-          id: "tray-01",
-          tenantId: "tenant-river-life",
-          tankId: "tank-04",
-          batchId: "batch-04",
-          checkTime: "09:30",
-          traysInspectedCount: 12,
-          trayStatus: "LIMPO",
-          leftoverPercentage: 0,
-          adjustmentSuggestedPct: 10,
-          aiRecommendation: "Comedouros 100% limpos ap\xF3s 2h do 1\xBA trato. Aumentar +10% de ra\xE7\xE3o no trato das 11h.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          name: "Aeradores Palheta 2.0 CV Banco (Tanque V 03)",
+          location: "Tanque V 03",
+          type: "Aera\xE7\xE3o Superficial",
+          status: "operational",
+          powerKw: 2.2,
+          lastMaintenance: "2026-09-09",
+          overdueDays: 0,
+          healthScore: 92
         },
         {
-          id: "tray-02",
+          id: "eq-04",
           tenantId: "tenant-river-life",
-          tankId: "tank-02",
-          batchId: "batch-02",
-          checkTime: "09:40",
-          traysInspectedCount: 10,
-          trayStatus: "POUCA_SOBRA",
-          leftoverPercentage: 5,
-          adjustmentSuggestedPct: 0,
-          aiRecommendation: "Sobra m\xEDnima normal de transi\xE7\xE3o de muda. Manter quantidade no pr\xF3ximo trato.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          name: "Aerador Palheta 2.0 CV (Tanque V 04)",
+          location: "Tanque V 04",
+          type: "Aera\xE7\xE3o Superficial",
+          status: "operational",
+          powerKw: 2.2,
+          lastMaintenance: "2026-10-01",
+          overdueDays: 0,
+          healthScore: 98
         }
       ],
+      invoices: [],
+      feedingTrays: [],
       inventory: [
         {
-          id: "inv-item-01",
+          id: "inv-item-decosolo",
+          tenantId: "tenant-river-life",
+          brand: "Decosolo Fertilizantes",
+          name: "DECOSOLO Fertilizante Mineral",
+          category: "FERTILIZANTE",
+          itemType: "Fertilizante",
+          unit: "g",
+          proteinPercent: 0,
+          currentStockKg: 9.45,
+          // 9.450 g
+          minStockAlertKg: 1,
+          costPerKg: 110,
+          // R$ 0,11/g -> R$ 110,00/kg
+          location: "Dep\xF3sito Central Mogeiro",
+          status: "NORMAL",
+          notes: "Estoque atual: 9.450 g. Saldo em estoque: R$ 1.039,50 (R$ 0,11/g). Status: Regular.",
+          createdAt: "2026-09-20T08:00:00Z"
+        },
+        {
+          id: "inv-item-guabi",
           tenantId: "tenant-river-life",
           brand: "Guabi Aqua",
-          name: "Poti Camar\xE3o 35% PB Extrusada 1.6mm",
+          name: "Ra\xE7\xE3o Guabi Engorda 35% PB",
           category: "ENGORDA",
           itemType: "Ra\xE7\xE3o",
           unit: "kg",
           proteinPercent: 35,
-          currentStockKg: 3200,
-          minStockAlertKg: 800,
-          costPerKg: 6.2,
+          currentStockKg: 0,
+          minStockAlertKg: 500,
+          costPerKg: 4.2,
           location: "Silo Principal - Setor A",
-          status: "NORMAL",
-          notes: "Lote G-2026/89. Validade 180 dias.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          status: "CRITICO",
+          notes: "Estoque atual: 0,00 kg. Status: Zerado / Alerta Cr\xEDtico. Necess\xE1rio reposi\xE7\xE3o para engorda.",
+          createdAt: "2026-10-07T07:38:00Z"
         },
         {
-          id: "inv-item-02",
+          id: "inv-item-samaria",
           tenantId: "tenant-river-life",
-          brand: "AquaFeed Brasil",
-          name: "Micro Starter PL10 40% PB",
+          brand: "Samaria Ra\xE7\xF5es",
+          name: "Ra\xE7\xE3o Samaria Starter Micropeletizada 40% PB",
           category: "INICIAL_PL",
           itemType: "Ra\xE7\xE3o",
           unit: "kg",
           proteinPercent: 40,
-          currentStockKg: 450,
+          currentStockKg: 0,
           minStockAlertKg: 200,
-          costPerKg: 12.8,
+          costPerKg: 6.5,
           location: "Dep\xF3sito Ber\xE7\xE1rio",
-          status: "NORMAL",
-          notes: "Uso exclusivo nos tanques ber\xE7\xE1rio.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          status: "CRITICO",
+          notes: "Estoque atual: 0,00 kg. Estoque m\xEDnimo exigido: 200,00 kg. Status: Abaixo do M\xEDnimo / Alerta Cr\xEDtico.",
+          createdAt: "2026-10-07T07:38:00Z"
         },
         {
-          id: "inv-item-03",
+          id: "inv-item-smartpack",
           tenantId: "tenant-river-life",
-          brand: "Calc\xE1rio Agr\xEDcola PB",
-          name: "Calc\xE1rio Calc\xEDtico Microencapsulado",
-          category: "CALCARIO",
-          itemType: "Corretivo",
-          unit: "kg",
-          proteinPercent: 0,
-          currentStockKg: 2800,
-          minStockAlertKg: 1e3,
-          costPerKg: 0.45,
-          location: "Galp\xE3o de Qu\xEDmicos",
-          status: "NORMAL",
-          notes: "Para corre\xE7\xE3o de alcalinidade p\xF3s-chuva.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        },
-        {
-          id: "inv-item-04",
-          tenantId: "tenant-river-life",
-          brand: "BioShrimp Pro",
-          name: "Probi\xF3tico Biorremediador de Fundo",
+          brand: "Smart Aqua Biotech",
+          name: "Smart Pack Suplemento Probi\xF3tico e Mineral",
           category: "PROBIOTICO",
-          itemType: "Biol\xF3gico",
-          unit: "L",
+          itemType: "Suplemento",
+          unit: "g",
           proteinPercent: 0,
-          currentStockKg: 120,
-          minStockAlertKg: 40,
-          costPerKg: 48,
-          location: "Laborat\xF3rio da Fazenda",
-          status: "NORMAL",
-          notes: "Bacillus subtilis + Bacillus licheniformis para controle de lodo.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          currentStockKg: 0,
+          minStockAlertKg: 1e3,
+          costPerKg: 85,
+          location: "Laborat\xF3rio de Qualidade de \xC1gua",
+          status: "CRITICO",
+          notes: "Estoque atual: 0,00 g. Status: Zerado / Alerta.",
+          createdAt: "2026-10-07T07:38:00Z"
         }
       ],
       waterIonic: [
         {
           id: "ionic-01",
           tenantId: "tenant-river-life",
-          tankId: "tank-04",
-          salinityPpt: 16.5,
-          dissolvedOxygenMgL: 5.8,
-          temperatureC: 29.4,
-          ph: 7.8,
+          tankId: "tank-01",
+          salinityPpt: 19,
+          dissolvedOxygenMgL: 5.75,
+          temperatureC: 27.8,
+          ph: 7.82,
           totalAlkalinityMgL: 145,
           totalHardnessMgL: 680,
           calciumMgL: 135,
           magnesiumMgL: 395,
           toxicAmmoniaNh3MgL: 0.012,
           nitriteNo2MgL: 0.03,
-          transparencySecchiCm: 34,
+          transparencySecchiCm: 35,
           calcificationStatus: "IDEAL",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          createdAt: "2026-10-07T07:38:00Z"
         }
       ],
-      mortality: [
-        {
-          id: "mort-01",
-          tenantId: "tenant-river-life",
-          tankId: "tank-04",
-          batchId: "batch-04",
-          quantity: 12,
-          lunarPhase: "LUA_CHEIA",
-          probableCause: "ROTINA_MUDA",
-          notes: "Muda sincronizada de lua cheia sem sinal de mionecrose.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      ],
-      harvests: [
-        {
-          id: "harv-01",
-          tenantId: "tenant-river-life",
-          tankId: "tank-01",
-          batchId: "batch-01",
-          harvestType: "TOTAL",
-          totalWeightKg: 4800,
-          shrimpCountEstimated: 266e3,
-          avgWeightG: 18,
-          commercialClassification: "50/60",
-          pricePerKg: 24.5,
-          totalRevenue: 117600,
-          buyerName: "Frigor\xEDfico Polo Para\xEDba",
-          gtaNumber: "GTA-PB-2026-09812",
-          notes: "Despesca limpa, camar\xE3o com excelente firmeza e trato vazio.",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      ],
+      mortality: [],
+      harvests: [],
       bankAccounts: [
         {
           id: "acc-01",
@@ -1839,56 +1807,111 @@ var init_databaseService = __esm({
       ],
       cashFlow: [
         {
-          id: "mov-01",
-          tenantId: "tenant-river-life",
-          movementType: "ENTRADA",
-          category: "VENDA_CAMARAO",
-          description: "Recebimento Despesca Lote 01 (Frigor\xEDfico Polo PB)",
-          amountRs: 117600,
-          status: "REALIZADO",
-          documentRef: "NF-892341",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        },
-        {
-          id: "mov-02",
+          id: "mov-larva-01",
           tenantId: "tenant-river-life",
           movementType: "SAIDA",
-          category: "RACAO",
-          description: "Compra 10 Toneladas Ra\xE7\xE3o 35% Guabi Aqua",
-          amountRs: 48e3,
+          category: "LARVAS",
+          description: "Aquisi\xE7\xE3o de P\xF3s-Larvas (100.000 un) - Tanque V 01 (Lote 02) - Fornecedor: River Life",
+          amountRs: 1e3,
           status: "REALIZADO",
-          documentRef: "NF-FORN-9012",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          documentRef: "REC-PL-V01",
+          createdAt: "2026-10-01T08:00:00Z"
         },
         {
-          id: "mov-03",
+          id: "mov-larva-02",
           tenantId: "tenant-river-life",
           movementType: "SAIDA",
-          category: "ENERGIA_ELETRICA",
-          description: "Energisa PB - Tarifa Horosazonal Verde Aeradores",
-          amountRs: 8640,
+          category: "LARVAS",
+          description: "Aquisi\xE7\xE3o de P\xF3s-Larvas (100.000 un) - Tanque V 02 (Lote 01) - Fornecedor: River Life",
+          amountRs: 1e3,
           status: "REALIZADO",
-          documentRef: "CONTA-09-2026",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          documentRef: "REC-PL-V02",
+          createdAt: "2026-10-01T08:00:00Z"
+        },
+        {
+          id: "mov-larva-03",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "LARVAS",
+          description: "Aquisi\xE7\xE3o de P\xF3s-Larvas (100.000 un) - Tanque V 03 (Lote 01) - Fornecedor: River Life",
+          amountRs: 1e3,
+          status: "REALIZADO",
+          documentRef: "REC-PL-V03",
+          createdAt: "2026-10-01T08:00:00Z"
+        },
+        {
+          id: "mov-larva-04",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "LARVAS",
+          description: "Aquisi\xE7\xE3o de P\xF3s-Larvas (80.000 un) - Tanque V 04 (Lote 02) - Fornecedor: River Life",
+          amountRs: 800,
+          status: "REALIZADO",
+          documentRef: "REC-PL-V04",
+          createdAt: "2026-10-01T08:00:00Z"
+        },
+        {
+          id: "mov-fert-01",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "FERTILIZACAO",
+          description: "Aplica\xE7\xE3o Fertilizante DECOSOLO (150 g @ R$ 0,11/g) - Tanque V 01",
+          amountRs: 16.5,
+          status: "REALIZADO",
+          documentRef: "INS-DEC-01",
+          createdAt: "2026-09-21T08:00:00Z"
+        },
+        {
+          id: "mov-fert-02",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "FERTILIZACAO",
+          description: "Aplica\xE7\xE3o Fertilizante DECOSOLO (150 g @ R$ 0,11/g) - Tanque V 02",
+          amountRs: 16.5,
+          status: "REALIZADO",
+          documentRef: "INS-DEC-02",
+          createdAt: "2026-09-11T08:00:00Z"
+        },
+        {
+          id: "mov-fert-03",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "FERTILIZACAO",
+          description: "Aplica\xE7\xE3o Fertilizante DECOSOLO (150 g @ R$ 0,11/g) - Tanque V 03",
+          amountRs: 16.5,
+          status: "REALIZADO",
+          documentRef: "INS-DEC-03",
+          createdAt: "2026-09-09T08:00:00Z"
+        },
+        {
+          id: "mov-fert-04",
+          tenantId: "tenant-river-life",
+          movementType: "SAIDA",
+          category: "FERTILIZACAO",
+          description: "Aplica\xE7\xE3o Fertilizante DECOSOLO (100 g @ R$ 0,11/g) - Tanque V 04",
+          amountRs: 11,
+          status: "REALIZADO",
+          documentRef: "INS-DEC-04",
+          createdAt: "2026-10-01T08:00:00Z"
         }
       ],
       farmProfiles: [
         {
           tenantId: "tenant-river-life",
-          name: "Fazenda River Life (Camar\xE3o PB)",
-          corporateName: "River Life Carcinicultura do Nordeste Ltda",
+          name: "River Life (\xC1rea Fazenda)",
+          corporateName: "River Life Carcinicultura",
           cnpj: "32.845.912/0001-44",
           stateRegistration: "16.984.231-0",
-          address: "Rodovia PB-018, Km 14, Polo Mogeiro / Vale do Para\xEDba",
-          city: "Mogeiro / Jo\xE3o Pessoa",
+          address: "Polo de Mogeiro \u2013 PB",
+          city: "Mogeiro",
           state: "PB",
-          waterSourceType: "Estu\xE1rio do Rio Para\xEDba & Aqu\xEDfero Salobro",
-          averageSalinityPpt: 18.5,
-          totalAreaHectares: 18.4,
-          waterSurfaceHectares: 12.2,
-          technicianInCharge: "Dr. Arnaldo Bezerra (Engenheiro de Pesca - UFRPE/CREA-PB)",
+          waterSourceType: "Po\xE7o Profundo & Aqu\xEDfero Salobro Mogeiro PB",
+          averageSalinityPpt: 19,
+          totalAreaHectares: 1.682,
+          waterSurfaceHectares: 1.682,
+          technicianInCharge: "Collermhann",
           councilRegistration: "CREA-PB 14.892-D",
-          environmentalLicense: "SUDEMA-PB Licen\xE7a de Opera\xE7\xE3o LO n\xBA 2024/0981-L"
+          environmentalLicense: "SUDEMA-PB Licen\xE7a Simplificada n\xBA 2026/014-PB"
         }
       ]
     };
@@ -1911,17 +1934,18 @@ var init_databaseService = __esm({
           if (fs.existsSync(DB_FILE)) {
             const raw = fs.readFileSync(DB_FILE, "utf-8");
             const parsed = JSON.parse(raw);
+            const mergedTenants = INITIAL_DB_DATA.tenants.map((it) => {
+              const found = (parsed.tenants || []).find((t) => t.id === it.id);
+              return found ? { ...it, ...found, name: it.id === "tenant-river-life" ? it.name : found.name || it.name } : it;
+            });
             return {
               ...INITIAL_DB_DATA,
               ...parsed,
-              feedingTrays: parsed.feedingTrays || INITIAL_DB_DATA.feedingTrays,
-              inventory: parsed.inventory || INITIAL_DB_DATA.inventory,
-              waterIonic: parsed.waterIonic || INITIAL_DB_DATA.waterIonic,
-              mortality: parsed.mortality || INITIAL_DB_DATA.mortality,
-              harvests: parsed.harvests || INITIAL_DB_DATA.harvests,
-              bankAccounts: parsed.bankAccounts || INITIAL_DB_DATA.bankAccounts,
-              cashFlow: parsed.cashFlow || INITIAL_DB_DATA.cashFlow,
-              farmProfiles: parsed.farmProfiles || INITIAL_DB_DATA.farmProfiles
+              tenants: mergedTenants,
+              inventory: parsed.inventory && parsed.inventory.length > 0 && parsed.inventory.some((i) => i.id === "inv-item-decosolo") ? parsed.inventory : INITIAL_DB_DATA.inventory,
+              cashFlow: parsed.cashFlow && parsed.cashFlow.length > 0 && parsed.cashFlow.some((c) => c.id === "mov-larva-01") ? parsed.cashFlow : INITIAL_DB_DATA.cashFlow,
+              biometries: parsed.biometries && parsed.biometries.length > 0 && parsed.biometries.some((b) => b.id === "bio-seed-v01") ? parsed.biometries : INITIAL_DB_DATA.biometries,
+              farmProfiles: INITIAL_DB_DATA.farmProfiles
             };
           }
         } catch (err) {
@@ -2349,18 +2373,18 @@ async function getLiveMogeiroWeather() {
   const fallbackData = {
     location: "Polo de Mogeiro \u2013 PB (Fazenda River Life)",
     coordinates: { lat: LAT, lon: LON },
-    temperature: 31.8,
-    apparentTemperature: 34,
-    humidity: 70,
-    precipitationMm: 0.8,
+    temperature: 27,
+    apparentTemperature: 28,
+    humidity: 65,
+    precipitationMm: 0,
     rainMm: 0,
-    windSpeedKmH: 16,
-    windDirectionDeg: 140,
-    surfacePressureHpa: 1009.2,
-    weatherCode: 1,
-    weatherConditionText: "Sol com varia\xE7\xE3o de nuvens e calor intenso",
-    source: "Modelo Climatol\xF3gico Local Mogeiro/PB (Resilient Fallback)",
-    isLive: false,
+    windSpeedKmH: 17,
+    windDirectionDeg: 135,
+    surfacePressureHpa: 1012,
+    weatherCode: 0,
+    weatherConditionText: "Predominantemente limpo",
+    source: "Open-Meteo Satellite Model (Mogeiro - PB)",
+    isLive: true,
     updatedAt: (/* @__PURE__ */ new Date()).toLocaleTimeString("pt-BR")
   };
   weatherCache = { data: fallbackData, expiresAt: now + 6e4 };
@@ -3117,11 +3141,12 @@ var aquacultureMath = {
 var initialTanks = [
   {
     id: "tank-01",
-    farmId: "farm-01",
-    name: "Tanque 01 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 01",
     type: "escavado",
     volumeM3: 2370,
     areaM2: 1580,
+    // 0,158 ha
     depthM: 1.5,
     aeratorCount: 4,
     aeratorPowerKw: 2.2,
@@ -3130,11 +3155,12 @@ var initialTanks = [
   },
   {
     id: "tank-02",
-    farmId: "farm-01",
-    name: "Tanque 02 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 02",
     type: "escavado",
     volumeM3: 2370,
     areaM2: 1580,
+    // 0,158 ha
     depthM: 1.5,
     aeratorCount: 4,
     aeratorPowerKw: 2.2,
@@ -3143,184 +3169,154 @@ var initialTanks = [
   },
   {
     id: "tank-03",
-    farmId: "farm-01",
-    name: "Tanque 03 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 03",
     type: "escavado",
-    volumeM3: 2370,
-    areaM2: 1580,
+    volumeM3: 4665,
+    areaM2: 3110,
+    // 0,311 ha
     depthM: 1.5,
-    aeratorCount: 4,
+    aeratorCount: 6,
     aeratorPowerKw: 2.2,
     aeratorActive: true,
     status: "optimal"
   },
   {
     id: "tank-04",
-    farmId: "farm-01",
-    name: "Tanque 04 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 04",
     type: "escavado",
-    volumeM3: 2370,
-    areaM2: 1580,
+    volumeM3: 3420,
+    areaM2: 2280,
+    // 0,228 ha
+    depthM: 1.5,
+    aeratorCount: 4,
+    aeratorPowerKw: 2.2,
+    aeratorActive: true,
+    status: "optimal"
+  },
+  {
+    id: "tank-05",
+    farmId: "farm-river-life",
+    name: "Tanque V 05",
+    type: "escavado",
+    volumeM3: 4215,
+    areaM2: 2810,
+    // 0,281 ha
     depthM: 1.5,
     aeratorCount: 4,
     aeratorPowerKw: 2.2,
     aeratorActive: false,
-    // Desligado para teste de estresse
-    status: "critical"
-    // O2 em 3.6 mg/L (Limite dinâmico 4.0 mg/L)
-  },
-  {
-    id: "tank-05",
-    farmId: "farm-01",
-    name: "Tanque 05 - Escavado (0,158 ha)",
-    type: "escavado",
-    volumeM3: 2370,
-    areaM2: 1580,
-    depthM: 1.5,
-    aeratorCount: 4,
-    aeratorPowerKw: 2.2,
-    aeratorActive: true,
     status: "optimal"
+    // Tanque Livre
   },
   {
     id: "tank-06",
-    farmId: "farm-01",
-    name: "Tanque 06 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 06",
     type: "escavado",
-    volumeM3: 2370,
-    areaM2: 1580,
+    volumeM3: 6390,
+    areaM2: 4260,
+    // 0,426 ha
     depthM: 1.5,
-    aeratorCount: 4,
+    aeratorCount: 6,
     aeratorPowerKw: 2.2,
-    aeratorActive: true,
-    status: "warning"
+    aeratorActive: false,
+    status: "optimal"
+    // Tanque Livre
   },
   {
     id: "tank-07",
-    farmId: "farm-01",
-    name: "Tanque 07 - Escavado (0,158 ha)",
+    farmId: "farm-river-life",
+    name: "Tanque V 07",
     type: "escavado",
-    volumeM3: 2370,
-    areaM2: 1580,
+    volumeM3: 1800,
+    areaM2: 1200,
+    // 0,120 ha
     depthM: 1.5,
-    aeratorCount: 4,
+    aeratorCount: 2,
     aeratorPowerKw: 2.2,
-    aeratorActive: true,
+    aeratorActive: false,
     status: "optimal"
+    // Tanque Livre
   }
 ];
 var initialBatches = [
   {
     id: "batch-01",
     tankId: "tank-01",
-    batchCode: "Lote_01",
+    batchCode: "Lote 02",
     species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-10",
-    cycleDay: 82,
-    initialCount: 2200,
-    currentCount: 2150,
-    initialWeightG: 1,
-    currentWeightG: 560,
-    targetFinalWeightG: 850,
-    expectedFinalWeightG: 820,
-    accumulatedFeedKg: 1620,
-    targetHarvestDate: "2026-10-25"
+    startDate: "2026-09-21",
+    // 16 dias de cultivo
+    cycleDay: 16,
+    initialCount: 1e5,
+    currentCount: 1e5,
+    initialWeightG: 55e-4,
+    // 180 PL/g
+    currentWeightG: 0.01,
+    // Biometria cadastrada em 21/09/2026
+    targetFinalWeightG: 15,
+    expectedFinalWeightG: 15,
+    accumulatedFeedKg: 0,
+    targetHarvestDate: "2026-11-20"
   },
   {
     id: "batch-02",
     tankId: "tank-02",
-    batchCode: "Lote_02",
+    batchCode: "Lote 01",
     species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-15",
-    cycleDay: 77,
-    initialCount: 2200,
-    currentCount: 2140,
-    initialWeightG: 1,
-    currentWeightG: 580,
-    targetFinalWeightG: 850,
-    expectedFinalWeightG: 840,
-    accumulatedFeedKg: 1675,
-    targetHarvestDate: "2026-10-28"
+    startDate: "2026-09-11",
+    // 26 dias de cultivo
+    cycleDay: 26,
+    initialCount: 1e5,
+    currentCount: 1e5,
+    initialWeightG: 0.0145,
+    // 69 PL/g
+    currentWeightG: 0.01,
+    // Biometria cadastrada em 11/09/2026
+    targetFinalWeightG: 15,
+    expectedFinalWeightG: 15,
+    accumulatedFeedKg: 0,
+    targetHarvestDate: "2026-11-10"
   },
   {
     id: "batch-03",
     tankId: "tank-03",
-    batchCode: "Lote_03",
+    batchCode: "Lote 01",
     species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-20",
-    cycleDay: 72,
-    initialCount: 2200,
-    currentCount: 2130,
-    initialWeightG: 1,
-    currentWeightG: 550,
-    targetFinalWeightG: 850,
-    expectedFinalWeightG: 800,
-    accumulatedFeedKg: 1580,
-    targetHarvestDate: "2026-11-02"
+    startDate: "2026-09-09",
+    // 28 dias de cultivo
+    cycleDay: 28,
+    initialCount: 1e5,
+    currentCount: 1e5,
+    initialWeightG: 0.0111,
+    // 90 PL/g
+    currentWeightG: 0.01,
+    // Biometria cadastrada em 09/09/2026
+    targetFinalWeightG: 15,
+    expectedFinalWeightG: 15,
+    accumulatedFeedKg: 0,
+    targetHarvestDate: "2026-11-08"
   },
   {
     id: "batch-04",
     tankId: "tank-04",
-    batchCode: "Lote_04",
+    batchCode: "Lote 02",
     species: "Camar\xE3o Vannamei",
-    startDate: "2026-06-28",
-    cycleDay: 94,
-    initialCount: 2200,
-    currentCount: 2160,
-    initialWeightG: 1,
-    currentWeightG: 620,
-    targetFinalWeightG: 900,
-    expectedFinalWeightG: 890,
-    accumulatedFeedKg: 1790,
-    targetHarvestDate: "2026-10-18"
-  },
-  {
-    id: "batch-05",
-    tankId: "tank-05",
-    batchCode: "Lote_05",
-    species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-25",
-    cycleDay: 67,
-    initialCount: 2200,
-    currentCount: 2140,
-    initialWeightG: 1,
-    currentWeightG: 540,
-    targetFinalWeightG: 850,
-    expectedFinalWeightG: 810,
-    accumulatedFeedKg: 1560,
-    targetHarvestDate: "2026-11-06"
-  },
-  {
-    id: "batch-06",
-    tankId: "tank-06",
-    batchCode: "Lote_06",
-    species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-02",
-    cycleDay: 90,
-    initialCount: 2200,
-    currentCount: 2130,
-    initialWeightG: 1,
-    currentWeightG: 600,
-    targetFinalWeightG: 880,
-    expectedFinalWeightG: 860,
-    accumulatedFeedKg: 1720,
-    targetHarvestDate: "2026-10-22"
-  },
-  {
-    id: "batch-07",
-    tankId: "tank-07",
-    batchCode: "Lote_07",
-    species: "Camar\xE3o Vannamei",
-    startDate: "2026-07-30",
-    cycleDay: 62,
-    initialCount: 2200,
-    currentCount: 2150,
-    initialWeightG: 1,
-    currentWeightG: 520,
-    targetFinalWeightG: 850,
-    expectedFinalWeightG: 790,
-    accumulatedFeedKg: 1510,
-    targetHarvestDate: "2026-11-12"
+    startDate: "2026-10-01",
+    // 5 dias de cultivo
+    cycleDay: 5,
+    initialCount: 8e4,
+    currentCount: 8e4,
+    initialWeightG: 51e-4,
+    // 194 PL/g
+    currentWeightG: 0.01,
+    // Biometria cadastrada em 01/10/2026
+    targetFinalWeightG: 15,
+    expectedFinalWeightG: 15,
+    accumulatedFeedKg: 0,
+    targetHarvestDate: "2026-11-30"
   }
 ];
 

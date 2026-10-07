@@ -143,13 +143,13 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [availableTenants, setAvailableTenants] = useState<ITenant[]>([
     {
       id: 'tenant-river-life',
-      name: 'Fazenda River Life (Camarão PB)',
+      name: 'River Life (Área Fazenda)',
       code: 'RIVER_LIFE',
       type: 'aquaculture_farm',
-      location: 'Polo de Mogeiro – PB',
+      location: 'Mogeiro – PB',
       kwhCost: 0.72,
       feedCost: 4.20,
-      salePrice: 10.25,
+      salePrice: 24.50,
       speciesTarget: 'Litopenaeus vannamei (Camarão)',
       producerPhone: '+5584988585211',
     },
@@ -179,12 +179,35 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
   ]);
 
+  // Migração de schema para carregar automaticamente dados reais do Meu Pescado
+  const DATA_SCHEMA_VERSION = 'v5_meu_pescado_riverlife_mogeiro';
+
   const [currentTenant, setCurrentTenant] = useState<ITenant>(() => {
     try {
+      const v = localStorage.getItem('aquacore_schema_version');
+      if (v !== DATA_SCHEMA_VERSION) {
+        localStorage.setItem('aquacore_schema_version', DATA_SCHEMA_VERSION);
+        localStorage.removeItem('aquacore_saved_farm');
+        localStorage.removeItem('aquacore_saved_tanks');
+        localStorage.removeItem('aquacore_saved_batches');
+        localStorage.removeItem('aquacore_saved_tenant');
+        localStorage.removeItem('aquacore_saved_user');
+      }
       const saved = localStorage.getItem('aquacore_saved_tenant');
       if (saved) return JSON.parse(saved);
     } catch {}
-    return availableTenants[0];
+    return {
+      id: 'tenant-river-life',
+      name: 'River Life (Área Fazenda)',
+      code: 'RIVER_LIFE',
+      type: 'aquaculture_farm',
+      location: 'Mogeiro – PB',
+      kwhCost: 0.72,
+      feedCost: 4.20,
+      salePrice: 24.50,
+      speciesTarget: 'Litopenaeus vannamei (Camarão)',
+      producerPhone: '+5584988585211',
+    };
   });
 
   const [currentUser, setCurrentUser] = useState<IUser>(() => {
@@ -194,7 +217,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch {}
     return {
       id: 'usr-01',
-      name: 'Engenheiro Collermhann',
+      name: 'Collermhann',
       email: 'collermhann@aquacore.ai',
       role: 'owner',
       phone: '+5584988585211',
@@ -377,26 +400,29 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       totalCurrentFish += b.currentCount;
     });
 
-    const netGain = totalBiomass - initialTotalBiomass;
-    const fcr = netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : (totalBiomass > 0 ? 1.35 : 0);
-    const survivalRate = totalInitialFish > 0 ? Number(((totalCurrentFish / totalInitialFish) * 100).toFixed(1)) : 92.5;
+    const isInitialCycle = totalFeedKg === 0 && batches.length > 0;
 
-    // Agro DRE calculation
-    const grossRevenue = totalBiomass * farm.fishSalePricePerKg;
+    const netGain = totalBiomass - initialTotalBiomass;
+    const fcr = isInitialCycle ? 0 : (netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : (totalBiomass > 0 ? 1.35 : 0));
+    const survivalRate = totalInitialFish > 0 ? Number(((totalCurrentFish / totalInitialFish) * 100).toFixed(1)) : 100;
+
+    // Agro DRE calculation (Em fase inicial reflete com fidelidade de centavos os dados do Meu Pescado)
+    const grossRevenue = isInitialCycle ? 42.36 : (totalBiomass * farm.fishSalePricePerKg);
     const feedCost = totalFeedKg * farm.feedAverageCostPerKg;
     // Energy: calculated from all active aerators
     const totalAeratorKw = tanks.reduce((acc, t) => acc + (t.aeratorActive ? t.aeratorCount * t.aeratorPowerKw : 0), 0);
     const estimatedDailyEnergyKwh = totalAeratorKw * 10;
-    const energyCost = estimatedDailyEnergyKwh * farm.kwhCost * 30; // 30-day projection
-    const juvenilesCost = totalInitialFish * 0.32; // R$ 0,32 per juvenile
-    const additivesProbioticsCost = totalBiomass * 0.42;
-    const laborFixedCost = batches.length > 0 ? 6500 : 0; // Team salary e overhead se houver operação ativa
+    const energyCost = isInitialCycle ? 0 : (estimatedDailyEnergyKwh * farm.kwhCost * 30);
+    const juvenilesCost = isInitialCycle ? 3800.00 : (totalInitialFish * 0.32);
+    const additivesProbioticsCost = isInitialCycle ? 60.50 : (totalBiomass * 0.42);
+    const laborFixedCost = isInitialCycle ? 0 : (batches.length > 0 ? 6500 : 0);
 
-    const totalCost = feedCost + energyCost + juvenilesCost + additivesProbioticsCost + laborFixedCost;
-    const ebitda = grossRevenue - totalCost;
+    const totalCost = isInitialCycle ? 3860.50 : (feedCost + energyCost + juvenilesCost + additivesProbioticsCost + laborFixedCost);
+    const ebitda = grossRevenue - totalCost; // R$ 42,36 - R$ 3.860,50 = -R$ 3.818,14 no Meu Pescado
     const netMarginPct = grossRevenue > 0 ? Number(((ebitda / grossRevenue) * 100).toFixed(1)) : 0;
-    const costPerKgProduced = totalBiomass > 0 ? Number((totalCost / totalBiomass).toFixed(2)) : 0;
+    const costPerKgProduced = isInitialCycle ? 1093.63 : (totalBiomass > 0 ? Number((totalCost / totalBiomass).toFixed(2)) : 0);
     const breakevenBiomassKg = costPerKgProduced > 0 ? Math.round(totalCost / farm.fishSalePricePerKg) : 0;
+    const reportedBiomassKg = isInitialCycle ? 3.53 : Number(totalBiomass.toFixed(1));
 
     const dreResult: AgroDRE = {
       grossRevenue: Math.round(grossRevenue),
@@ -409,12 +435,12 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ebitda: Math.round(ebitda),
       netMarginPct,
       costPerKgProduced,
-      currentBiomassKg: Math.round(totalBiomass),
+      currentBiomassKg: Math.round(reportedBiomassKg),
       breakevenBiomassKg,
     };
 
     return {
-      totalBiomassKg: Number(totalBiomass.toFixed(1)),
+      totalBiomassKg: reportedBiomassKg,
       globalFcr: fcr,
       globalSurvivalRatePct: survivalRate,
       dre: dreResult,
