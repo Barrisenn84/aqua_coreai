@@ -76,32 +76,34 @@ export const AiSentinelBanner: React.FC = () => {
       </div>
 
       {/* Lado Direito: Timer e Ações */}
-      <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-2 shrink-0 w-full md:w-auto pt-2 md:pt-0 border-t border-slate-800/80 md:border-t-0">
         <div className="bg-slate-950/90 border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-slate-300 text-[11px]">
           <Clock className="w-3.5 h-3.5 text-cyan-400" />
           <span>Próxima em: <strong className="text-cyan-300">{formattedCountdown}</strong></span>
         </div>
 
-        <button
-          onClick={() => runSentinelAuditNow()}
-          disabled={isSentinelAuditing}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
-          title="Forçar varredura agora"
-        >
-          <RotateCcw className={`w-3.5 h-3.5 ${isSentinelAuditing ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => runSentinelAuditNow()}
+            disabled={isSentinelAuditing}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
+            title="Forçar varredura agora"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isSentinelAuditing ? 'animate-spin' : ''}`} />
+          </button>
 
-        <button
-          onClick={() => setIsSentinelModalOpen(true)}
-          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shadow-md cursor-pointer flex items-center gap-1 text-xs ${
-            isCritical
-              ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40'
-              : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/40'
-          }`}
-        >
-          <span>Ver Diagnóstico ({sentinelReport.totalAnomaliesCount})</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+          <button
+            onClick={() => setIsSentinelModalOpen(true)}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shadow-md cursor-pointer flex items-center gap-1 text-xs ${
+              isCritical
+                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/40'
+                : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/40'
+            }`}
+          >
+            <span>Ver Diagnóstico ({sentinelReport.totalAnomaliesCount})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

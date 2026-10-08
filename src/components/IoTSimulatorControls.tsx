@@ -20,10 +20,10 @@ export const IoTSimulatorControls: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 font-mono">
+    <div className="fixed bottom-20 md:bottom-4 right-3 sm:right-4 z-40 font-mono">
       {/* Expanded Controls Card */}
       {isOpen && (
-        <div className="bg-slate-900/95 border border-slate-700/80 p-4 rounded-2xl shadow-2xl backdrop-blur-md mb-2 w-80 sm:w-96 text-xs animate-fade-in space-y-3">
+        <div className="bg-slate-900/95 border border-slate-700/80 p-4 rounded-2xl shadow-2xl backdrop-blur-md mb-2 w-[calc(100vw-24px)] sm:w-96 max-w-sm text-xs animate-fade-in space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2 text-cyan-400 font-bold uppercase">
               <Radio className="w-4 h-4 animate-pulse" />

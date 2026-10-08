@@ -120,7 +120,7 @@ export const EmergencyBanner: React.FC = () => {
 
             <button
               onClick={() => handleActivate(primaryAlert.tankId)}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-red-600 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/40 hover:shadow-red-600/60 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 cursor-pointer border border-red-400/40"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-red-600 text-white font-black text-sm uppercase tracking-wider shadow-xl shadow-red-600/40 hover:shadow-red-600/60 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer border border-red-400/40 w-full sm:w-auto"
             >
               <Zap className="w-5 h-5 fill-yellow-300 text-yellow-300 animate-pulse" />
               <span>⚡ LIGAR AERADORES AGORA</span>

@@ -216,7 +216,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 overflow-x-hidden w-full max-w-full">
       {/* Global Mission Critical Header */}
       <Header
         activeTab={activeTab}
@@ -234,7 +234,7 @@ function AppContent() {
       <EmergencyBanner />
 
       {/* Main Content Viewport - Garantido contra tela preta com renderização segura */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 py-4 sm:py-6 pb-24 md:pb-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 py-4 sm:py-6 pb-24 md:pb-6 overflow-x-hidden">
         {activeTab === 'nerve-center' && (
           <NerveCenterDashboard
             onOpenAudit={handleOpenAudit}

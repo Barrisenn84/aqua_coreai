@@ -188,132 +188,124 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="glass-panel sticky top-0 z-40 border-b-0 border-b-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
-      {/* Topmost Telemetry Status Bar */}
-      <div className="border-b border-slate-800/80 px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-3 text-slate-400">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 font-mono text-cyan-400 font-semibold">
-            <span className="relative flex h-2 w-2">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isSimulating ? 'bg-cyan-400' : 'bg-slate-500'}`}></span>
-              <span className={`relative inline-flex rounded-full h-2 w-2 ${isSimulating ? 'bg-cyan-500' : 'bg-slate-600'}`}></span>
-            </span>
-            <span>IOT LIVE TELEMETRY</span>
-          </div>
-          <span className="text-slate-600">|</span>
-
-          {/* Botão de Organização / Tenant & Usuário */}
-          <button
-            onClick={() => setIsAuthModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all font-bold cursor-pointer"
-            title="Clique para alternar de organização ou usuário"
-          >
-            {isConstruction ? (
-              <HardHat className="w-3.5 h-3.5 text-amber-400" />
-            ) : (
-              <Building2 className="w-3.5 h-3.5 text-cyan-400" />
-            )}
-            <span className="text-white">{currentTenant.name}</span>
-            <span className="text-slate-500">•</span>
-            {currentUser.email === 'nuncaparedelutar1988@gmail.com' ? (
-              <span className="text-amber-300 font-mono text-[11px] flex items-center gap-1 font-black bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-600/60">
-                <Crown className="w-3 h-3 text-amber-400" />
-                <span>Proprietário Master</span>
+    <>
+      <header className="glass-panel sticky top-0 z-40 border-b-0 border-b-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+        {/* Topmost Telemetry Status Bar */}
+        <div className="border-b border-slate-800/80 px-3 sm:px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-slate-400">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-full">
+            <div className="flex items-center gap-1.5 font-mono text-cyan-400 font-semibold shrink-0">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isSimulating ? 'bg-cyan-400' : 'bg-slate-500'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isSimulating ? 'bg-cyan-500' : 'bg-slate-600'}`}></span>
               </span>
-            ) : (
-              <span className="text-cyan-300 font-mono text-[11px]">{currentUser.name}</span>
-            )}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Ciclo Solar da Sunrise-Sunset API */}
-          {solarData && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/40 border border-amber-800/40 text-amber-300 font-mono text-[11px]">
-              <Sun className="w-3 h-3 text-amber-400" />
-              <span>☀️ {solarData.sunrise}</span>
-              <span className="text-slate-600">/</span>
-              <Sunset className="w-3 h-3 text-orange-400" />
-              <span>🌇 {solarData.sunset}</span>
+              <span className="text-[10px] sm:text-xs">IOT LIVE TELEMETRY</span>
             </div>
-          )}
+            <span className="text-slate-600 hidden sm:inline">|</span>
 
-          {activeScenarioName && (
-            <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 font-mono text-[11px]">
-              <Radio className="w-3 h-3 animate-pulse text-cyan-400" />
-              <span>{activeScenarioName}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-1.5 bg-slate-800/80 px-2 py-0.5 rounded text-[11px] font-mono">
-            <span className="text-slate-400">ENERGIA:</span>
-            <span className="text-slate-200 font-bold">R$ {currentTenant.kwhCost.toFixed(2)}/kWh</span>
-          </div>
-
-          <div className="flex items-center gap-2 bg-slate-800/80 px-2.5 py-0.5 rounded text-[11px] font-mono">
-            <span className="text-slate-400">REFERÊNCIA:</span>
-            <span className="text-emerald-400 font-bold">R$ {currentTenant.salePrice.toFixed(2)}/kg</span>
-          </div>
-
-          <button
-            onClick={toggleSimulation}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors flex items-center gap-1 cursor-pointer ${
-              isSimulating
-                ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 hover:bg-emerald-900/60'
-                : 'bg-amber-950/80 text-amber-400 border border-amber-800/60 hover:bg-amber-900/60'
-            }`}
-            title="Pausar / Retomar fluxo de telemetria IoT"
-          >
-            <Activity className="w-3 h-3" />
-            <span>{isSimulating ? 'STREAMING ATIVO' : 'PAUSADO'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
-        {/* Brand identity & Mobile Trigger */}
-        <div className="flex items-center justify-between w-full lg:w-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-300/50 shrink-0 transform transition hover:scale-110 hover:rotate-3">
-              <Droplets className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-wider text-white">
-                  AQUA<span className="premium-gradient-text text-glow-cyan">-CORE</span>
-                </span>
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
-                  AI ENGINE
-                </span>
-              </div>
-              <p className="text-[11px] text-cyan-300/80 font-medium truncate max-w-[200px] sm:max-w-md">
-                {farm.name} • {farm.location}
-              </p>
-            </div>
-          </div>
-
-          {/* Botões rápidos visíveis apenas no celular/tablet */}
-          <div className="flex items-center gap-2 lg:hidden">
-            {onOpenVisionModal && (
-              <button
-                onClick={onOpenVisionModal}
-                className="px-2.5 py-1.5 rounded-lg bg-teal-950 border border-teal-600/50 text-teal-300 text-xs font-bold flex items-center gap-1 shadow-sm"
-                title="Tirar foto com IA"
-              >
-                <Camera className="w-4 h-4 text-teal-400" />
-                <span className="text-[11px]">Foto IA</span>
-              </button>
-            )}
+            {/* Botão de Organização / Tenant & Usuário */}
             <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 shadow-md flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-transform active:scale-95"
-              aria-label="Abrir menu de navegação"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all font-bold cursor-pointer max-w-[170px] sm:max-w-xs md:max-w-none min-w-0"
+              title="Clique para alternar de organização ou usuário"
             >
-              <Menu className="w-5 h-5 text-cyan-400" />
-              <span className="text-xs font-bold text-slate-200">Menu</span>
+              {isConstruction ? (
+                <HardHat className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              ) : (
+                <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              )}
+              <span className="text-white truncate">{currentTenant.name}</span>
+              <span className="text-slate-500 shrink-0">•</span>
+              {currentUser.email === 'nuncaparedelutar1988@gmail.com' ? (
+                <span className="text-amber-300 font-mono text-[10px] sm:text-[11px] flex items-center gap-1 font-black bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-600/60 shrink-0">
+                  <Crown className="w-3 h-3 text-amber-400" />
+                  <span className="hidden sm:inline">Proprietário Master</span>
+                  <span className="sm:hidden">Master</span>
+                </span>
+              ) : (
+                <span className="text-cyan-300 font-mono text-[10px] sm:text-[11px] truncate">{currentUser.name}</span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* Ciclo Solar da Sunrise-Sunset API */}
+            {solarData && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/40 border border-amber-800/40 text-amber-300 font-mono text-[11px]">
+                <Sun className="w-3 h-3 text-amber-400" />
+                <span>☀️ {solarData.sunrise}</span>
+                <span className="text-slate-600">/</span>
+                <Sunset className="w-3 h-3 text-orange-400" />
+                <span>🌇 {solarData.sunset}</span>
+              </div>
+            )}
+
+            {activeScenarioName && (
+              <div className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 font-mono text-[11px]">
+                <Radio className="w-3 h-3 animate-pulse text-cyan-400" />
+                <span>{activeScenarioName}</span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 bg-slate-800/80 px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-mono">
+              <span className="text-slate-400 hidden xs:inline">ENERGIA:</span>
+              <span className="text-slate-200 font-bold">R$ {currentTenant.kwhCost.toFixed(2)}/kWh</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-800/80 px-2 sm:px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-mono">
+              <span className="text-slate-400 hidden xs:inline">REF:</span>
+              <span className="text-emerald-400 font-bold">R$ {currentTenant.salePrice.toFixed(2)}/kg</span>
+            </div>
+
+            <button
+              onClick={toggleSimulation}
+              className={`px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-mono transition-colors flex items-center gap-1 cursor-pointer shrink-0 ${
+                isSimulating
+                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 hover:bg-emerald-900/60'
+                  : 'bg-amber-950/80 text-amber-400 border border-amber-800/60 hover:bg-amber-900/60'
+              }`}
+              title="Pausar / Retomar fluxo de telemetria IoT"
+            >
+              <Activity className="w-3 h-3" />
+              <span>{isSimulating ? 'STREAMING ATIVO' : 'PAUSADO'}</span>
             </button>
           </div>
         </div>
+
+        {/* Main Navigation Bar */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-4">
+          {/* Brand identity & Mobile Trigger */}
+          <div className="flex items-center justify-between w-full lg:w-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-300/50 shrink-0 transform transition hover:scale-110 hover:rotate-3">
+                <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-base sm:text-lg font-black tracking-wider text-white whitespace-nowrap">
+                    AQUA<span className="premium-gradient-text text-glow-cyan">-CORE</span>
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] sm:text-[10px] font-extrabold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono shrink-0">
+                    AI ENGINE
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-[11px] text-cyan-300/80 font-medium truncate max-w-[160px] sm:max-w-xs md:max-w-md">
+                  {farm.name} • {farm.location}
+                </p>
+              </div>
+            </div>
+
+            {/* Botão rápido de Menu para celular/tablet */}
+            <div className="flex items-center gap-2 lg:hidden shrink-0">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 shadow-md flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-transform active:scale-95"
+                aria-label="Abrir menu de navegação"
+              >
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+                <span className="text-xs font-bold text-slate-200">Menu</span>
+              </button>
+            </div>
+          </div>
 
         {/* Navigation Tabs (Desktop e Tablet Grande) */}
         <nav className="hidden lg:flex items-center gap-1.5 overflow-x-auto py-1 max-w-full">
@@ -501,182 +493,183 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+    </header>
 
-      {/* 📱 MODAL / DRAWER COMPLETO COM TODAS AS 18 TELAS EM LINGUAGEM DIDÁTICA INFANTIL E RESPONSIVA */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-fade-in overflow-y-auto">
-          <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl relative text-slate-100 my-auto max-h-[92vh] flex flex-col overflow-y-auto">
-            {/* Cabeçalho do Drawer */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg">
-                  <Menu className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Menu Completo da Fazenda</h3>
-                  <p className="text-xs text-cyan-300/80">Linguagem Simples & Acesso a Todas as Telas</p>
-                </div>
+    {/* 📱 MODAL / DRAWER COMPLETO COM TODAS AS 18 TELAS EM LINGUAGEM DIDÁTICA INFANTIL E RESPONSIVA */}
+    {isMobileMenuOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-fade-in overflow-y-auto">
+        <div className="bg-slate-900 border border-cyan-500/40 rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl relative text-slate-100 my-auto max-h-[92vh] flex flex-col overflow-y-auto">
+          {/* Cabeçalho do Drawer */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg">
+                <Menu className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <h3 className="text-base font-black text-white">Menu Completo da Fazenda</h3>
+                <p className="text-xs text-cyan-300/80">Linguagem Simples & Acesso a Todas as Telas</p>
+              </div>
             </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Ações Rápidas no Topo do Menu */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              {onOpenVisionModal && (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onOpenVisionModal();
-                  }}
-                  className="p-2.5 rounded-xl bg-teal-950/60 border border-teal-600/50 hover:bg-teal-900/60 text-teal-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
-                >
-                  <Camera className="w-5 h-5 text-teal-400" />
-                  <span>📷 Foto com IA</span>
-                  <span className="text-[10px] text-teal-400/80 font-normal">Tirar foto de tudo</span>
-                </button>
-              )}
-
-              {onOpenVoiceModal && (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onOpenVoiceModal();
-                  }}
-                  className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-600/50 hover:bg-purple-900/60 text-purple-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
-                >
-                  <Mic className="w-5 h-5 text-purple-400" />
-                  <span>🎤 Falar com a IA</span>
-                  <span className="text-[10px] text-purple-400/80 font-normal">Conversar por voz</span>
-                </button>
-              )}
-
+          {/* Ações Rápidas no Topo do Menu */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+            {onOpenVisionModal && (
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  setIsResetModalOpen(true);
+                  onOpenVisionModal();
                 }}
-                className="p-2.5 rounded-xl bg-amber-950/60 border border-amber-600/50 hover:bg-amber-900/60 text-amber-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer font-mono"
+                className="p-2.5 rounded-xl bg-teal-950/60 border border-teal-600/50 hover:bg-teal-900/60 text-teal-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
               >
-                <RotateCcw className="w-5 h-5 text-amber-400" />
-                <span>🔄 Zerar / Reiniciar</span>
-                <span className="text-[10px] text-amber-400/80 font-normal">Com confirmação</span>
+                <Camera className="w-5 h-5 text-teal-400" />
+                <span>📷 Foto com IA</span>
+                <span className="text-[10px] text-teal-400/80 font-normal">Tirar foto de tudo</span>
               </button>
+            )}
 
-              {onOpenFarmProfileModal && (
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onOpenFarmProfileModal();
-                  }}
-                  className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-600/50 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
-                >
-                  <Home className="w-5 h-5 text-cyan-400" />
-                  <span>🏡 Minha Fazenda</span>
-                  <span className="text-[10px] text-cyan-400/80 font-normal">Dados & Licença</span>
-                </button>
-              )}
-            </div>
+            {onOpenVoiceModal && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenVoiceModal();
+                }}
+                className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-600/50 hover:bg-purple-900/60 text-purple-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
+              >
+                <Mic className="w-5 h-5 text-purple-400" />
+                <span>🎤 Falar com a IA</span>
+                <span className="text-[10px] text-purple-400/80 font-normal">Conversar por voz</span>
+              </button>
+            )}
 
-            {/* Seções de Navegação Categorizadas e Didáticas */}
-            <div className="space-y-4">
-              {navigationSections.map((sec, idx) => (
-                <div key={idx} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
-                  <div className="mb-2">
-                    <h4 className="text-xs font-black text-cyan-300 uppercase tracking-wider">{sec.category}</h4>
-                    <p className="text-[11px] text-slate-400">{sec.description}</p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {sec.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            setActiveTab(item.id as any);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
-                            isActive
-                              ? 'bg-cyan-500/20 border-cyan-400 shadow-md ring-1 ring-cyan-400/50'
-                              : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
-                          }`}
-                        >
-                          <div className={`p-1.5 rounded-md bg-slate-800 border border-slate-700 shrink-0 ${item.color}`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-slate-200 truncate">{item.label}</div>
-                            <div className="text-[10px] text-slate-400 truncate">{item.subtitle}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsResetModalOpen(true);
+              }}
+              className="p-2.5 rounded-xl bg-amber-950/60 border border-amber-600/50 hover:bg-amber-900/60 text-amber-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer font-mono"
+            >
+              <RotateCcw className="w-5 h-5 text-amber-400" />
+              <span>🔄 Zerar / Reiniciar</span>
+              <span className="text-[10px] text-amber-400/80 font-normal">Com confirmação</span>
+            </button>
+
+            {onOpenFarmProfileModal && (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenFarmProfileModal();
+                }}
+                className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-600/50 hover:bg-cyan-900/60 text-cyan-300 text-xs font-bold flex flex-col items-center gap-1 text-center cursor-pointer"
+              >
+                <Home className="w-5 h-5 text-cyan-400" />
+                <span>🏡 Minha Fazenda</span>
+                <span className="text-[10px] text-cyan-400/80 font-normal">Dados & Licença</span>
+              </button>
+            )}
+          </div>
+
+          {/* Seções de Navegação Categorizadas e Didáticas */}
+          <div className="space-y-4">
+            {navigationSections.map((sec, idx) => (
+              <div key={idx} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                <div className="mb-2">
+                  <h4 className="text-xs font-black text-cyan-300 uppercase tracking-wider">{sec.category}</h4>
+                  <p className="text-[11px] text-slate-400">{sec.description}</p>
                 </div>
-              ))}
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {sec.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id as any);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`p-2.5 rounded-lg border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-cyan-500/20 border-cyan-400 shadow-md ring-1 ring-cyan-400/50'
+                            : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className={`p-1.5 rounded-md bg-slate-800 border border-slate-700 shrink-0 ${item.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-bold text-slate-200 truncate">{item.label}</div>
+                          <div className="text-[10px] text-slate-400 truncate">{item.subtitle}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
+    )}
+
+    {/* 📱 BARRA DE NAVEGAÇÃO INFERIOR FIXA PARA SMARTPHONES (BOTTOM NAV) */}
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-cyan-500/20 flex items-center justify-around py-2 px-1 sm:px-2 md:hidden rounded-t-2xl shadow-[0_-4px_30px_rgba(0,0,0,0.6)]">
+      <button
+        onClick={() => setActiveTab('nerve-center')}
+        className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+          activeTab === 'nerve-center' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <Layers className="w-5 h-5" />
+        <span className="text-[10px]">Início</span>
+      </button>
+
+      <button
+        onClick={() => setActiveTab('feeding-trays')}
+        className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+          activeTab === 'feeding-trays' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <Utensils className="w-5 h-5" />
+        <span className="text-[10px]">Ração</span>
+      </button>
+
+      <button
+        onClick={() => setActiveTab('water-quality')}
+        className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-colors cursor-pointer ${
+          activeTab === 'water-quality' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <Droplets className="w-5 h-5" />
+        <span className="text-[10px]">Água</span>
+      </button>
+
+      {onOpenVisionModal && (
+        <button
+          onClick={onOpenVisionModal}
+          className="flex flex-col items-center gap-0.5 py-1 px-2.5 text-teal-400 font-bold cursor-pointer"
+        >
+          <div className="p-1 rounded-full bg-teal-500/20 border border-teal-500/40 shadow-sm shadow-teal-500/30">
+            <Camera className="w-5 h-5 text-teal-300" />
+          </div>
+          <span className="text-[10px]">Foto IA</span>
+        </button>
       )}
 
-      {/* 📱 BARRA DE NAVEGAÇÃO INFERIOR FIXA PARA SMARTPHONES (BOTTOM NAV) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-t-cyan-500/20 flex items-center justify-around py-3 px-2 md:hidden rounded-t-2xl shadow-[0_-4px_30px_rgba(0,0,0,0.2)] pb-safe">
-        <button
-          onClick={() => setActiveTab('nerve-center')}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer ${
-            activeTab === 'nerve-center' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Layers className="w-5 h-5" />
-          <span className="text-[10px]">Início</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('feeding-trays')}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer ${
-            activeTab === 'feeding-trays' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Utensils className="w-5 h-5" />
-          <span className="text-[10px]">Ração</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('water-quality')}
-          className={`flex flex-col items-center gap-0.5 cursor-pointer ${
-            activeTab === 'water-quality' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Droplets className="w-5 h-5" />
-          <span className="text-[10px]">Água</span>
-        </button>
-
-        {onOpenVisionModal && (
-          <button
-            onClick={onOpenVisionModal}
-            className="flex flex-col items-center gap-0.5 text-teal-400 font-bold cursor-pointer"
-          >
-            <div className="p-1 rounded-full bg-teal-500/20 border border-teal-500/40">
-              <Camera className="w-5 h-5 text-teal-300" />
-            </div>
-            <span className="text-[10px]">Foto IA</span>
-          </button>
-        )}
-
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-200 cursor-pointer"
-        >
-          <Menu className="w-5 h-5" />
-          <span className="text-[10px]">Mais</span>
-        </button>
-      </div>
-    </header>
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-400 hover:text-slate-200 cursor-pointer"
+      >
+        <Menu className="w-5 h-5" />
+        <span className="text-[10px]">Mais</span>
+      </button>
+    </nav>
+  </>
   );
 };

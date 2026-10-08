@@ -293,11 +293,11 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* CLIMA & CENTRO DE LEITURA: POLO DE MOGEIRO – PB & FAZENDA RIVER LIFE */}
-      <div className="glass-panel p-5 rounded-2xl font-mono text-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-slide-up">
-        <div className="space-y-2">
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl font-mono text-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-slide-up overflow-hidden">
+        <div className="space-y-3 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-bold text-white text-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+            <span className="font-bold text-white text-xs sm:text-sm truncate">
               {farm.name} • {farm.location} (Centro de Leitura)
             </span>
             <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-[10px] font-bold">
@@ -309,38 +309,44 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-slate-300 text-[11px]">
-            <span className="flex items-center gap-1 text-amber-400 font-bold" title="Sensação térmica calculada via satélite Open-Meteo">
-              <ThermometerSun className="w-3.5 h-3.5" /> {liveWeather.apparentTemperature}°C sensação ({liveWeather.temperature}°C ar)
+          {/* Badges de Clima e Mercado formatados em pills compactas e responsivas */}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px]">
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-amber-300 font-bold flex items-center gap-1" title="Sensação térmica calculada via satélite Open-Meteo">
+              <ThermometerSun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>{liveWeather.apparentTemperature}°C sensação ({liveWeather.temperature}°C ar)</span>
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 text-blue-400 font-bold">
-              <CloudRain className="w-3.5 h-3.5" /> Chuva: {liveWeather.precipitationMm}mm
+
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-blue-300 font-bold flex items-center gap-1">
+              <CloudRain className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span>Chuva: {liveWeather.precipitationMm}mm</span>
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 text-slate-300 font-bold">
-              <Wind className="w-3.5 h-3.5 text-cyan-400" /> Vento: {liveWeather.windSpeedKmH} km/h
+
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-300 font-bold flex items-center gap-1">
+              <Wind className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>Vento: {liveWeather.windSpeedKmH} km/h</span>
             </span>
-            <span>•</span>
-            <span className="text-cyan-300 font-medium">
-              Umidade: {liveWeather.humidity}% ({liveWeather.condition})
+
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-cyan-300 font-medium">
+              <span>Umidade: {liveWeather.humidity}% ({liveWeather.condition})</span>
             </span>
-            <span>•</span>
-            <span className="text-emerald-400 font-bold" title="Cotação oficial de câmbio para balanço de ração e exportação">
-              💵 Câmbio: R$ {liveCurrency.usdBrl} (US$ {liveCurrency.shrimpDollarParityUsd}/kg)
+
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-emerald-300 font-bold flex items-center gap-1" title="Cotação oficial de câmbio para balanço de ração e exportação">
+              <span>💵 Câmbio: R$ {liveCurrency.usdBrl} (US$ {liveCurrency.shrimpDollarParityUsd}/kg)</span>
             </span>
-            <span>•</span>
-            <span className="flex items-center gap-1 text-amber-300 font-bold" title="Ciclo Fotossintético via Sunrise-Sunset API">
-              <Sun className="w-3.5 h-3.5 text-amber-400" /> Sol: {liveSolar.sunrise} às {liveSolar.sunset} ({liveSolar.oxygenDepletionRisk === 'critical_pre_dawn' ? '🚨 Risco Hipóxia Noturna' : 'Fotossíntese Ativa'})
+
+            <span className="px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-amber-300 font-bold flex items-center gap-1" title="Ciclo Fotossintético via Sunrise-Sunset API">
+              <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>Sol: {liveSolar.sunrise} às {liveSolar.sunset} ({liveSolar.oxygenDepletionRisk === 'critical_pre_dawn' ? '🚨 Hipóxia Noturna' : 'Fotossíntese Ativa'})</span>
             </span>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        {/* Ações Rápidas */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full lg:w-auto pt-2 lg:pt-0 border-t border-slate-800/80 lg:border-t-0">
           <button
             onClick={handleRunFullAiAudit}
             disabled={isAiAuditing}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-purple-900/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-purple-900/40 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
             title="Acionar o AQUA-CORE AI (Gemini 2.5 Flash) com Cadeia de Pensamento completa e cálculo financeiro"
           >
             <Sparkles className={`w-3.5 h-3.5 text-yellow-300 ${isAiAuditing ? 'animate-spin' : ''}`} />
@@ -350,7 +356,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           <button
             onClick={handleOfflineSync}
             disabled={isSyncing}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center gap-2 cursor-pointer shadow-lg shadow-cyan-900/30 transition-all"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-900/30 transition-all w-full sm:w-auto"
             title="Sincronizar dados armazenados offline (Nutrição, Biometria, Mortalidade, Calagem, Arraçoamento, Água)"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -373,129 +379,129 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
       )}
 
       {/* INDICADORES GERAIS (KPIS DINÂMICOS COM DIDÁTICA FÁCIL E LINGUAGEM CLARA) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 font-mono">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 sm:gap-3 font-mono">
         {/* KPI 1: Tanques Povoados */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '0ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '0ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
-              <span className="text-[10px] text-cyan-400" title="Piscinas com camarões nadando">🏊 Piscinas</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">Tanques Povoados</span>
+              <span className="text-[10px] text-cyan-400 shrink-0" title="Piscinas com camarões nadando">🏊 Piscinas</span>
             </div>
-            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5">Viveiros ativos</p>
+            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5 truncate">Viveiros ativos</p>
           </div>
           <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-2xl font-black text-cyan-400">{batches.length}</span>
-            <span className="text-[10px] text-slate-500">/ {tanks.length} ({((batches.length / (tanks.length || 1)) * 100).toFixed(1)}%)</span>
+            <span className="text-xl sm:text-2xl font-black text-cyan-400">{batches.length}</span>
+            <span className="text-[10px] text-slate-500 truncate">/ {tanks.length} ({((batches.length / (tanks.length || 1)) * 100).toFixed(1)}%)</span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">
+          <span className="text-[9px] text-slate-500 mt-1 truncate">
             {tanks.length > 0 ? `${tanks[0].type} (${(tanks.reduce((a, t) => a + t.areaM2, 0) / 10000).toFixed(3)} ha)` : 'Nenhum viveiro'}
           </span>
         </div>
 
         {/* KPI 2: Custo em Cultivo */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '50ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '50ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
-              <span className="text-[10px] text-amber-400" title="Dinheiro investido no lote">💰 Gasto</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">Custo Cultivo</span>
+              <span className="text-[10px] text-amber-400 shrink-0" title="Dinheiro investido no lote">💰 Gasto</span>
             </div>
-            <p className="text-[10px] text-amber-300/80 font-sans mt-0.5">O que já investimos</p>
+            <p className="text-[10px] text-amber-300/80 font-sans mt-0.5 truncate">O que já investimos</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-amber-300">
+            <span className="text-base sm:text-lg font-black text-amber-300 truncate block">
               R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '3.860,50'}
             </span>
           </div>
-          <span className="text-[9px] text-slate-400 mt-1">Larvas R$ 3.800 + DECOSOLO R$ 60,50</span>
+          <span className="text-[9px] text-slate-400 mt-1 truncate block">Larvas R$ 3.800 + DECOSOLO</span>
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '100ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '100ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
-              <span className="text-[10px] text-emerald-400" title="Previsão de vendas">💵 Vendas</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">Fat. Esperado</span>
+              <span className="text-[10px] text-emerald-400 shrink-0" title="Previsão de vendas">💵 Vendas</span>
             </div>
-            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5">Entrada esperada</p>
+            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5 truncate">Entrada esperada</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-emerald-400">
+            <span className="text-base sm:text-lg font-black text-emerald-400 truncate block">
               R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '42,36'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-500/90 mt-1">
+          <span className="text-[9px] text-emerald-500/90 mt-1 truncate block">
             {dre.grossRevenue <= 100 ? 'Proj. Safra: R$ 139.650' : 'Grade Comercial'}
           </span>
         </div>
 
         {/* KPI 4: Biomassa Total */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '150ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '150ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Biomassa Total</span>
-              <span className="text-[10px] text-blue-400" title="Peso de todos os camarões juntos">⚖️ Peso</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">Biomassa Total</span>
+              <span className="text-[10px] text-blue-400 shrink-0" title="Peso de todos os camarões juntos">⚖️ Peso</span>
             </div>
-            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5">Peso total na água</p>
+            <p className="text-[10px] text-cyan-300/80 font-sans mt-0.5 truncate">Peso total na água</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">
+            <span className="text-base sm:text-lg font-black text-white truncate block">
               {totalBiomassKg.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span>
             </span>
           </div>
-          <span className="text-[9px] text-cyan-400 mt-1">
+          <span className="text-[9px] text-cyan-400 mt-1 truncate block">
             {totalBiomassKg <= 10 ? 'Proj. Despesca: 5.700 kg' : 'IA Preditiva'}
           </span>
         </div>
 
         {/* KPI 5: População Total */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '200ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">População Total</span>
-              <span className="text-[10px] text-indigo-400" title="Contagem de camarões vivos">🦐 Camarões</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">População Total</span>
+              <span className="text-[10px] text-indigo-400 shrink-0" title="Contagem de camarões vivos">🦐 Camarões</span>
             </div>
-            <p className="text-[10px] text-indigo-300/80 font-sans mt-0.5">Bichinhos nadando</p>
+            <p className="text-[10px] text-indigo-300/80 font-sans mt-0.5 truncate">Bichinhos nadando</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">
+            <span className="text-base sm:text-lg font-black text-white truncate block">
               {batches.reduce((acc, b) => acc + b.currentCount, 0).toLocaleString('pt-BR')} <span className="text-xs text-slate-400">un.</span>
             </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Sobrevivência {globalSurvivalRatePct}%</span>
+          <span className="text-[9px] text-slate-500 mt-1 truncate block">Sobrevivência {globalSurvivalRatePct}%</span>
         </div>
 
         {/* KPI 6: Ração Total */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '250ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden" style={{ animationDelay: '250ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
-              <span className="text-[10px] text-orange-400" title="Alimento consumido">🍽️ Comida</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">Ração Total</span>
+              <span className="text-[10px] text-orange-400 shrink-0" title="Alimento consumido">🍽️ Comida</span>
             </div>
-            <p className="text-[10px] text-orange-300/80 font-sans mt-0.5">Comida servida</p>
+            <p className="text-[10px] text-orange-300/80 font-sans mt-0.5 truncate">Comida servida</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-white">
+            <span className="text-base sm:text-lg font-black text-white truncate block">
               {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">kg</span>
             </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1">Arraçoamento 0,00 kg</span>
+          <span className="text-[9px] text-slate-500 mt-1 truncate block">Arraçoamento 0,00 kg</span>
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
-        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '300ms' }}>
+        <div className="glass-card p-3 sm:p-3.5 rounded-xl flex flex-col justify-between animate-slide-up min-w-0 overflow-hidden col-span-2 sm:col-span-1" style={{ animationDelay: '300ms' }}>
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
-              <span className="text-[10px] text-emerald-400" title="Conversão Alimentar: quantos kg de ração viram 1 kg de camarão">🎯 Apetite</span>
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold truncate">FCA Médio</span>
+              <span className="text-[10px] text-emerald-400 shrink-0" title="Conversão Alimentar">🎯 Apetite</span>
             </div>
-            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5">Nota de eficiência</p>
+            <p className="text-[10px] text-emerald-300/80 font-sans mt-0.5 truncate">Nota de eficiência</p>
           </div>
           <div className="mt-1">
-            <span className="text-lg font-black text-cyan-300">
+            <span className="text-base sm:text-lg font-black text-cyan-300 truncate block">
               {globalFcr > 0 ? globalFcr.toFixed(2) : '0,00'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold mt-1">Meta: 1.30 (Ótimo)</span>
+          <span className="text-[9px] text-emerald-400 font-bold mt-1 truncate block">Meta: 1.30 (Ótimo)</span>
         </div>
       </div>
 
