@@ -11,6 +11,7 @@ import {
   HeartPulse,
   Compass
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface MortalityRecord {
   id: string;
@@ -25,6 +26,7 @@ interface MortalityRecord {
 }
 
 export const MortalityMoltView: React.FC = () => {
+  const { recordMortality } = useAquaCore();
   const [logs, setLogs] = useState<MortalityRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -59,28 +61,19 @@ export const MortalityMoltView: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = {
-        tenantId: 'tenant-river-life',
+      // 🔄 Cruza e integra em tempo real com todo o sistema AQUA-CORE
+      await recordMortality({
         tankId,
         batchId,
         quantity: Number(quantity),
         lunarPhase,
         probableCause,
         notes: notes || undefined,
-        createdAt: new Date().toISOString()
-      };
-
-      const res = await fetch('/api/db/mortality', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        setNotes('');
-        await fetchMortality();
-      }
+      setIsModalOpen(false);
+      setNotes('');
+      await fetchMortality();
     } catch (err) {
       console.error('Erro ao salvar mortalidade:', err);
     }

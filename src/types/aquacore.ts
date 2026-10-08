@@ -248,3 +248,66 @@ export interface SentinelAuditReport {
   items: SentinelAuditItem[];
   nextRunInSeconds: number;
 }
+
+export interface LiveSystemSnapshot {
+  tenantId?: string;
+  farm?: Farm;
+  tanks?: Tank[];
+  batches?: Batch[];
+  sensorReadings?: Record<string, SensorReading>;
+  inventory?: Array<{
+    id: string;
+    brand: string;
+    name: string;
+    category: string;
+    itemType: string;
+    unit: string;
+    proteinPercent: number;
+    currentStockKg: number;
+    minStockAlertKg: number;
+    costPerKg: number;
+    location?: string;
+    status: 'NORMAL' | 'ABAIXO_MINIMO' | 'ESGOTADO';
+    notes?: string;
+  }>;
+  cashFlow?: Array<{
+    id: string;
+    movementType: 'ENTRADA' | 'SAIDA';
+    category: string;
+    description: string;
+    amountRs: number;
+    status: 'REALIZADO' | 'PREVISTO';
+    documentRef?: string;
+    createdAt?: string;
+  }>;
+  biometries?: Biometry[];
+  feedingLogs?: FeedingLog[];
+  mortalityLogs?: Array<{
+    id: string;
+    tankId: string;
+    batchId: string;
+    quantity: number;
+    lunarPhase: string;
+    probableCause: string;
+    notes?: string;
+    createdAt?: string;
+  }>;
+  harvestLogs?: Array<{
+    id: string;
+    tankId: string;
+    batchId: string;
+    harvestType: 'TOTAL' | 'DESBASTE_PARCIAL';
+    totalWeightKg: number;
+    shrimpCountEstimated: number;
+    avgWeightG: number;
+    pricePerKg: number;
+    totalRevenue: number;
+    buyerName: string;
+    gtaNumber?: string;
+    createdAt?: string;
+  }>;
+  dre?: AgroDRE;
+  weather?: any;
+  solarCycle?: any;
+  currencies?: any;
+}

@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Clock
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface HarvestRecord {
   id: string;
@@ -32,6 +33,7 @@ interface HarvestRecord {
 }
 
 export const HarvestCommercialView: React.FC = () => {
+  const { recordHarvest } = useAquaCore();
   const [harvests, setHarvests] = useState<HarvestRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -76,36 +78,23 @@ export const HarvestCommercialView: React.FC = () => {
       const weight = Number(totalWeightKg);
       const price = Number(pricePerKg);
       const avgW = Number(avgWeightG);
-      const count = Math.round((weight * 1000) / avgW);
-      const revenue = weight * price;
 
-      const payload = {
-        tenantId: 'tenant-river-life',
+      // 🔄 Cruza e integra em tempo real com todo o sistema AQUA-CORE
+      await recordHarvest({
         tankId,
         batchId,
         harvestType,
         totalWeightKg: weight,
-        shrimpCountEstimated: count,
         avgWeightG: avgW,
-        commercialClassification,
         pricePerKg: price,
-        totalRevenue: revenue,
         buyerName,
+        commercialClassification,
         gtaNumber: gtaNumber || undefined,
         notes: notes || undefined,
-        createdAt: new Date().toISOString()
-      };
-
-      const res = await fetch('/api/db/harvests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        await fetchHarvests();
-      }
+      setIsModalOpen(false);
+      await fetchHarvests();
     } catch (err) {
       console.error('Erro ao salvar despesca:', err);
     }

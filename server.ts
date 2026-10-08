@@ -151,6 +151,7 @@ app.get('/api/brasilapi/cnpj/:cnpj', BrasilApiController.getCnpj);
 app.get('/api/brasilapi/cep/:cep', BrasilApiController.getCep);
 app.get('/api/brasilapi/feriados', BrasilApiController.getFeriados);
 app.get('/api/agro/credit-benchmark', AgroCreditController.getBenchmark);
+app.get('/api/agro-credit/benchmark', AgroCreditController.getBenchmark);
 
 // 📷 VISÃO COMPUTACIONAL MULTIMODAL IA (5 Modos Especialistas)
 app.post('/api/vision/analyze', VisionController.analyzeImage);
@@ -172,9 +173,21 @@ app.get('/api/sentinel/logs', (_req, res) => {
   res.json({ logs: aiSentinelService.getHistory() });
 });
 
-app.post('/api/sentinel/run', async (_req, res) => {
+app.post('/api/sentinel/snapshot', (req, res) => {
   try {
-    const report = await aiSentinelService.runFullSystemAudit('manual_forced');
+    if (req.body) {
+      aiSentinelService.updateCachedSnapshot(req.body);
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sentinel/run', async (req, res) => {
+  try {
+    const liveSnapshot = req.body?.liveSnapshot || req.body;
+    const report = await aiSentinelService.runFullSystemAudit('manual_forced', liveSnapshot);
     res.json({ success: true, report });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

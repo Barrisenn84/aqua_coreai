@@ -10,6 +10,7 @@ import {
   Eye,
   CheckCircle2,
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface WaterIonicLog {
   id: string;
@@ -30,6 +31,7 @@ interface WaterIonicLog {
 }
 
 export const WaterQualityIonView: React.FC = () => {
+  const { recordWaterMeasurement } = useAquaCore();
   const [logs, setLogs] = useState<WaterIonicLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -79,31 +81,18 @@ export const WaterQualityIonView: React.FC = () => {
     }
 
     try {
-      const res = await fetch('/api/db/water-ionic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId: 'tenant-river-life',
-          tankId,
-          salinityPpt,
-          dissolvedOxygenMgL,
-          temperatureC,
-          ph,
-          totalAlkalinityMgL,
-          totalHardnessMgL,
-          calciumMgL,
-          magnesiumMgL,
-          toxicAmmoniaNh3MgL,
-          nitriteNo2MgL,
-          transparencySecchiCm,
-          calcificationStatus: calcStatus,
-        }),
+      // 🔄 Cruza e integra em tempo real com todo o sistema AQUA-CORE
+      await recordWaterMeasurement({
+        tankId,
+        dissolvedOxygen: Number(dissolvedOxygenMgL),
+        temperature: Number(temperatureC),
+        ph: Number(ph),
+        ammoniaToxic: Number(toxicAmmoniaNh3MgL),
+        salinity: Number(salinityPpt),
       });
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        fetchLogs();
-      }
+      setIsModalOpen(false);
+      fetchLogs();
     } catch (err) {
       console.error(err);
     }

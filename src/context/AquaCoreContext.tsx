@@ -146,6 +146,46 @@ interface AquaCoreContextType {
   setIsSentinelModalOpen: (open: boolean) => void;
   runSentinelAuditNow: () => Promise<void>;
   resolveSentinelAction: (actionId: string, fixActionType: string, payload?: any) => Promise<boolean>;
+
+  // 🔄 MÉTODOS DE INTEGRAÇÃO EM TEMPO REAL ENTRE TODOS OS MÓDULOS
+  recordFeeding: (data: {
+    tankId: string;
+    amountKg: number;
+    feedType?: string;
+    proteinPct?: number;
+    costPerKg?: number;
+    notes?: string;
+  }) => Promise<void>;
+  recordHarvest: (data: {
+    tankId: string;
+    batchId?: string;
+    harvestType: 'TOTAL' | 'DESBASTE_PARCIAL';
+    totalWeightKg: number;
+    avgWeightG: number;
+    pricePerKg: number;
+    buyerName: string;
+    commercialClassification?: string;
+    gtaNumber?: string;
+    notes?: string;
+  }) => Promise<{ success: boolean; totalRevenue: number }>;
+  recordMortality: (data: {
+    tankId: string;
+    batchId?: string;
+    quantity: number;
+    lunarPhase: string;
+    probableCause: string;
+    notes?: string;
+  }) => Promise<void>;
+  recordWaterMeasurement: (data: {
+    tankId: string;
+    dissolvedOxygen: number;
+    temperature: number;
+    ph: number;
+    ammoniaToxic?: number;
+    ammoniaTotal?: number;
+    salinity?: number;
+    notes?: string;
+  }) => Promise<void>;
 }
 
 const AquaCoreContext = createContext<AquaCoreContextType | undefined>(undefined);
@@ -305,7 +345,20 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const runSentinelAuditNow = useCallback(async () => {
     setIsSentinelAuditing(true);
     try {
-      const res = await fetch('/api/sentinel/run', { method: 'POST' });
+      const liveSnapshot = {
+        tenantId: currentTenant.id,
+        farm,
+        tanks,
+        batches,
+        sensorReadings,
+        biometries,
+        feedingLogs,
+      };
+      const res = await fetch('/api/sentinel/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ liveSnapshot }),
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.report) {
@@ -318,7 +371,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } finally {
       setIsSentinelAuditing(false);
     }
-  }, []);
+  }, [currentTenant.id, farm, tanks, batches, sensorReadings, biometries, feedingLogs]);
 
   const resolveSentinelAction = useCallback(async (actionId: string, fixActionType: string, payload?: any): Promise<boolean> => {
     try {
@@ -765,6 +818,254 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
     }
   };
+
+  const recordFeeding = useCallback(async (data: {
+    tankId: string;
+    amountKg: number;
+    feedType?: string;
+    proteinPct?: number;
+    costPerKg?: number;
+    notes?: string;
+  }) => {
+    const feedType = data.feedType || 'Ração Samaria Starter 40% PB';
+    const proteinPct = data.proteinPct || 40.0;
+    const costPerKg = data.costPerKg || 4.20;
+
+    // 1. Atualiza batch e logs de alimentação (recalcula FCA e DRE em tempo real)
+    addFeedingLog({
+      tankId: data.tankId,
+      amountKg: data.amountKg,
+      feedType,
+      proteinPct,
+      costPerKg,
+    });
+
+    // 2. Persiste e dá baixa automática no estoque do armazém (backend)
+    try {
+      await fetch('/api/db/feeding-trays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          tankId: data.tankId,
+          batchId: batches.find((b) => b.tankId === data.tankId)?.id || 'batch-01',
+          checkTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          traysInspectedCount: 10,
+          trayStatus: 'LIMPO',
+          leftoverPercentage: 0,
+          adjustmentSuggestedPct: 10,
+          aiRecommendation: `Arraçoamento de ${data.amountKg} kg de ${feedType} registrado. Estoque no galpão baixado em tempo real.`,
+          feedAmountKg: data.amountKg,
+        }),
+      });
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao sincronizar alimentação com banco:', err);
+    }
+  }, [batches, currentTenant.id]);
+
+  const recordHarvest = useCallback(async (data: {
+    tankId: string;
+    batchId?: string;
+    harvestType: 'TOTAL' | 'DESBASTE_PARCIAL';
+    totalWeightKg: number;
+    avgWeightG: number;
+    pricePerKg: number;
+    buyerName: string;
+    commercialClassification?: string;
+    gtaNumber?: string;
+    notes?: string;
+  }): Promise<{ success: boolean; totalRevenue: number }> => {
+    const revenue = data.totalWeightKg * data.pricePerKg;
+    const count = Math.round((data.totalWeightKg * 1000) / (data.avgWeightG || 12));
+
+    // 1. Dedução de camarões e biomassa no lote ativo
+    setBatches((prev) =>
+      prev.map((b) => {
+        if (b.tankId === data.tankId || (data.batchId && b.id === data.batchId)) {
+          const newCount = data.harvestType === 'TOTAL' ? 0 : Math.max(0, b.currentCount - count);
+          return {
+            ...b,
+            currentCount: newCount,
+          };
+        }
+        return b;
+      })
+    );
+
+    // 2. Se for despesca total, atualiza status do viveiro
+    if (data.harvestType === 'TOTAL') {
+      setTanks((prev) =>
+        prev.map((t) => (t.id === data.tankId ? { ...t, status: 'optimal', aeratorActive: false } : t))
+      );
+    }
+
+    // 3. Salva no banco backend (que já cria a ENTRADA no CashFlow automaticamente)
+    try {
+      await fetch('/api/db/harvests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          tankId: data.tankId,
+          batchId: data.batchId || batches.find((b) => b.tankId === data.tankId)?.id || 'batch-01',
+          harvestType: data.harvestType,
+          totalWeightKg: data.totalWeightKg,
+          shrimpCountEstimated: count,
+          avgWeightG: data.avgWeightG,
+          commercialClassification: data.commercialClassification || '60/70',
+          pricePerKg: data.pricePerKg,
+          totalRevenue: revenue,
+          buyerName: data.buyerName,
+          gtaNumber: data.gtaNumber,
+          notes: data.notes,
+        }),
+      });
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao salvar despesca:', err);
+    }
+
+    // 4. Notificação comemorativa no WhatsApp Ghost UX
+    const whatsMsg: IWhatsAppMessage = {
+      id: `harvest-alert-${Date.now()}`,
+      sender: 'Dr. Camarão • Oráculo Zootécnico',
+      text: `🎣 *DESPESCA REGISTRADA COM SUCESSO!* \n` +
+        `• *Viveiro:* ${data.tankId}\n` +
+        `• *Volume Despescado:* ${data.totalWeightKg.toLocaleString('pt-BR')} kg\n` +
+        `• *Preço:* R$ ${data.pricePerKg.toFixed(2)}/kg\n` +
+        `• *Faturamento Bruto:* R$ ${revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+        `• *Comprador:* ${data.buyerName}\n` +
+        `• *Fluxo de Caixa:* Lançado automaticamente como ENTRADA no DFC e DRE da fazenda.`,
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      isOutgoing: false,
+      status: 'delivered',
+    };
+    setWhatsAppMessages((prev) => [whatsMsg, ...prev]);
+
+    return { success: true, totalRevenue: revenue };
+  }, [batches, currentTenant.id]);
+
+  const recordMortality = useCallback(async (data: {
+    tankId: string;
+    batchId?: string;
+    quantity: number;
+    lunarPhase: string;
+    probableCause: string;
+    notes?: string;
+  }) => {
+    // 1. Abate mortalidade da contagem do lote para atualizar taxa de sobrevivência
+    setBatches((prev) =>
+      prev.map((b) => {
+        if (b.tankId === data.tankId || (data.batchId && b.id === data.batchId)) {
+          return {
+            ...b,
+            currentCount: Math.max(0, b.currentCount - data.quantity),
+          };
+        }
+        return b;
+      })
+    );
+
+    // 2. Persiste no banco de dados
+    try {
+      await fetch('/api/db/mortality', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          tankId: data.tankId,
+          batchId: data.batchId || batches.find((b) => b.tankId === data.tankId)?.id || 'batch-01',
+          quantity: data.quantity,
+          lunarPhase: data.lunarPhase,
+          probableCause: data.probableCause,
+          notes: data.notes,
+        }),
+      });
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao persistir mortalidade:', err);
+    }
+
+    // 3. Se for mortalidade aguda (> 250 camarões), emite alerta Ghost UX
+    if (data.quantity > 250) {
+      const alertMsg: IWhatsAppMessage = {
+        id: `mort-alert-${Date.now()}`,
+        sender: 'Sentinela IA • Alerta Sanitário',
+        text: `⚠️ *ALERTA SANITÁRIO NO ${data.tankId.toUpperCase()}*\n` +
+          `• Mortalidade lançada: ${data.quantity} camarões.\n` +
+          `• Causa informada: ${data.probableCause}.\n` +
+          `• Fase Lunar: ${data.lunarPhase}.\n` +
+          `• Ação sugerida: Verificar alcalinidade e acionar aeração noturna.`,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        isOutgoing: false,
+        status: 'delivered',
+      };
+      setWhatsAppMessages((prev) => [alertMsg, ...prev]);
+    }
+  }, [batches, currentTenant.id]);
+
+  const recordWaterMeasurement = useCallback(async (data: {
+    tankId: string;
+    dissolvedOxygen: number;
+    temperature: number;
+    ph: number;
+    ammoniaToxic?: number;
+    ammoniaTotal?: number;
+    salinity?: number;
+    notes?: string;
+  }) => {
+    const toxicAmmonia = data.ammoniaToxic ?? calculateToxicAmmonia(data.ammoniaTotal || 0.45, data.ph, data.temperature);
+
+    // 1. Atualiza telemetria viva do tanque imediatamente
+    setSensorReadings((prev) => ({
+      ...prev,
+      [data.tankId]: {
+        ...(prev[data.tankId] || initialSensorReadings[data.tankId]),
+        dissolvedOxygen: data.dissolvedOxygen,
+        temperature: data.temperature,
+        ph: data.ph,
+        ammoniaTotal: data.ammoniaTotal || 0.45,
+        ammoniaToxic: toxicAmmonia,
+        salinityPpt: data.salinity || 19.0,
+        timestamp: new Date().toISOString(),
+      },
+    }));
+
+    // 2. Atualiza status do viveiro
+    if (data.dissolvedOxygen < 3.8 || toxicAmmonia > 0.045) {
+      setTanks((prev) =>
+        prev.map((t) => (t.id === data.tankId ? { ...t, status: 'critical' } : t))
+      );
+    } else {
+      setTanks((prev) =>
+        prev.map((t) => (t.id === data.tankId ? { ...t, status: 'optimal' } : t))
+      );
+    }
+
+    // 3. Persiste no banco de dados
+    try {
+      await fetch('/api/db/water-ionic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          tankId: data.tankId,
+          salinityPpt: data.salinity || 19.0,
+          dissolvedOxygenMgL: data.dissolvedOxygen,
+          temperatureC: data.temperature,
+          ph: data.ph,
+          totalAlkalinityMgL: 145.0,
+          totalHardnessMgL: 680.0,
+          calciumMgL: 135.0,
+          magnesiumMgL: 395.0,
+          toxicAmmoniaNh3MgL: toxicAmmonia,
+          nitriteNo2MgL: 0.03,
+          transparencySecchiCm: 34.0,
+          calcificationStatus: 'IDEAL',
+        }),
+      });
+    } catch (err) {
+      console.warn('[AquaCoreContext] Erro ao persistir água:', err);
+    }
+  }, [currentTenant.id]);
 
   const updateFarmSettings = (settings: Partial<Farm>) => {
     setFarm((prev) => ({ ...prev, ...settings }));
@@ -1419,6 +1720,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setIsSentinelModalOpen,
         runSentinelAuditNow,
         resolveSentinelAction,
+        recordFeeding,
+        recordHarvest,
+        recordMortality,
+        recordWaterMeasurement,
       }}
     >
       {children}

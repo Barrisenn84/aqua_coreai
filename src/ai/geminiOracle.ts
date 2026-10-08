@@ -7,7 +7,7 @@ import { MessageLevel } from '../services/MessagingHub';
 
 export { MessageLevel };
 
-export const PRIMARY_GEMINI_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+export const PRIMARY_GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
 
 export function getGeminiClient(): GoogleGenAI {
   const key =

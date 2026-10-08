@@ -382,6 +382,14 @@ export const DatabaseController = {
     try {
       const { db } = await import('../db/databaseService');
       const record = db.addFeedingTray(req.body);
+      const feedKg = Number(req.body.feedAmountKg || req.body.amountKg || 0);
+      if (feedKg > 0) {
+        const inv = db.getInventory(req.body.tenantId || 'tenant-river-life');
+        const feedItem = inv.find((i) => i.id === 'inv-item-samaria' || i.name.toLowerCase().includes('samaria') || i.category.toLowerCase().includes('ração'));
+        if (feedItem) {
+          db.updateInventoryStock(feedItem.id, Math.max(0, feedItem.currentStockKg - feedKg));
+        }
+      }
       return res.json({ success: true, record });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -478,6 +486,18 @@ export const DatabaseController = {
     try {
       const { db } = await import('../db/databaseService');
       const record = db.addHarvest(req.body);
+      const revenue = Number(record.totalRevenue || (record.totalWeightKg * record.pricePerKg));
+      if (revenue > 0) {
+        db.addCashFlow({
+          tenantId: record.tenantId || 'tenant-river-life',
+          movementType: 'ENTRADA',
+          category: 'Receita de Despesca / Venda',
+          description: `Despesca ${record.harvestType === 'TOTAL' ? 'Total' : 'Parcial'} (${record.totalWeightKg} kg a R$ ${record.pricePerKg.toFixed(2)}/kg) - ${record.buyerName}`,
+          amountRs: revenue,
+          status: 'REALIZADO',
+          documentRef: record.gtaNumber || `ROMANEIO-${record.id}`,
+        });
+      }
       return res.json({ success: true, record });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

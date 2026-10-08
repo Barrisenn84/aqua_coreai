@@ -11,6 +11,7 @@ import {
   Camera,
   Coins
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface InventoryItem {
   id: string;
@@ -35,6 +36,7 @@ interface InventoryWarehouseViewProps {
 }
 
 export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ onOpenScanner }) => {
+  const { totalBiomassKg, batches } = useAquaCore();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -75,6 +77,17 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
   const totalStockKg = items.reduce((acc, it) => acc + it.currentStockKg, 0);
   const totalStockValue = items.reduce((acc, it) => acc + it.currentStockKg * it.costPerKg, 0);
   const alertItemsCount = items.filter((it) => it.status !== 'NORMAL').length;
+
+  // 🔄 Cálculo Zootécnico em Tempo Real cruzando Estoque x Biomassa Ativa
+  const dailyFeedNeededKg = Math.max(12, Math.round((totalBiomassKg || 380) * 0.035 * 10) / 10);
+  const feedItems = items.filter((it) => {
+    const c = (it.category || '').toLowerCase();
+    const t = (it.itemType || '').toLowerCase();
+    const n = (it.name || '').toLowerCase();
+    return c.includes('ração') || t.includes('ração') || n.includes('samaria') || n.includes('guabi') || n.includes('starter');
+  });
+  const totalFeedStockKg = feedItems.reduce((acc, it) => acc + it.currentStockKg, 0);
+  const feedAutonomyDays = dailyFeedNeededKg > 0 ? Number((totalFeedStockKg / dailyFeedNeededKg).toFixed(1)) : 999;
 
   const filteredItems = items.filter(
     (it) =>
@@ -203,13 +216,18 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center gap-4">
-          <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400">
+          <div className={`p-3 rounded-lg ${feedAutonomyDays < 3 ? 'bg-rose-500/10 text-rose-400' : feedAutonomyDays < 7 ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'}`}>
             <Warehouse className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs text-slate-400">Autonomia Prevista de Ração</div>
-            <div className="text-2xl font-bold text-blue-300">
-              18 <span className="text-xs font-normal text-slate-400">dias de trato</span>
+            <div className="text-xs text-slate-400 flex items-center gap-1.5">
+              <span>Autonomia Real de Ração</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${feedAutonomyDays < 7 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                {feedAutonomyDays < 7 ? 'Reposição' : 'Seguro'}
+              </span>
+            </div>
+            <div className={`text-2xl font-bold ${feedAutonomyDays < 3 ? 'text-rose-400' : feedAutonomyDays < 7 ? 'text-amber-400' : 'text-blue-300'}`}>
+              {feedAutonomyDays} <span className="text-xs font-normal text-slate-400">dias ({dailyFeedNeededKg} kg/dia)</span>
             </div>
           </div>
         </div>

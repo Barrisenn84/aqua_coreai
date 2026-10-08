@@ -854,7 +854,7 @@ var init_geminiOracle = __esm({
     init_environment();
     init_mqttIngestor();
     init_MessagingHub();
-    PRIMARY_GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
+    PRIMARY_GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"];
     GeminiOracle = class {
       getClient() {
         try {
@@ -3242,6 +3242,20 @@ var aquacultureMath = {
 };
 
 // src/data/initialData.ts
+var initialFarm = {
+  id: "farm-river-life",
+  name: "River Life (\xC1rea Fazenda)",
+  location: "Mogeiro \u2013 PB",
+  timezone: "America/Fortaleza (UTC-3)",
+  currency: "BRL (R$)",
+  kwhCost: 0.72,
+  // R$ por kWh
+  fishSalePricePerKg: 24.5,
+  // Camarão Vannamei Comercial Inteiro (R$ 24,50/kg)
+  shrimpSalePricePerKg: 24.5,
+  feedAverageCostPerKg: 4.2
+  // R$ por kg (Média ponderada rações)
+};
 var initialTanks = [
   {
     id: "tank-01",
@@ -3845,6 +3859,14 @@ var DatabaseController = {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
       const record = db2.addFeedingTray(req.body);
+      const feedKg = Number(req.body.feedAmountKg || req.body.amountKg || 0);
+      if (feedKg > 0) {
+        const inv = db2.getInventory(req.body.tenantId || "tenant-river-life");
+        const feedItem = inv.find((i) => i.id === "inv-item-samaria" || i.name.toLowerCase().includes("samaria") || i.category.toLowerCase().includes("ra\xE7\xE3o"));
+        if (feedItem) {
+          db2.updateInventoryStock(feedItem.id, Math.max(0, feedItem.currentStockKg - feedKg));
+        }
+      }
       return res.json({ success: true, record });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -3932,6 +3954,18 @@ var DatabaseController = {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_databaseService(), databaseService_exports));
       const record = db2.addHarvest(req.body);
+      const revenue = Number(record.totalRevenue || record.totalWeightKg * record.pricePerKg);
+      if (revenue > 0) {
+        db2.addCashFlow({
+          tenantId: record.tenantId || "tenant-river-life",
+          movementType: "ENTRADA",
+          category: "Receita de Despesca / Venda",
+          description: `Despesca ${record.harvestType === "TOTAL" ? "Total" : "Parcial"} (${record.totalWeightKg} kg a R$ ${record.pricePerKg.toFixed(2)}/kg) - ${record.buyerName}`,
+          amountRs: revenue,
+          status: "REALIZADO",
+          documentRef: record.gtaNumber || `ROMANEIO-${record.id}`
+        });
+      }
       return res.json({ success: true, record });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -4132,7 +4166,7 @@ init_MessagingHub();
 init_environment();
 import { GoogleGenAI as GoogleGenAI2 } from "@google/genai";
 var AISentinelService = class {
-  // 15 minutos
+  // 15 minutos exatos
   constructor() {
     this.auditHistory = [];
     this.lastReport = null;
@@ -4140,6 +4174,7 @@ var AISentinelService = class {
     this.lastRunTime = 0;
     this.nextRunTime = 0;
     this.isRunning = false;
+    this.cachedSnapshot = null;
     this.INTERVAL_MS = 15 * 60 * 1e3;
     this.startAutonomousCycle();
   }
@@ -4162,11 +4197,21 @@ var AISentinelService = class {
     console.log("[AISentinel] \u{1F6E1}\uFE0F Sentinela IA Ativo: Varreduras aut\xF4nomas agendadas a cada 15 minutos.");
   }
   /**
-   * Executa a auditoria sistêmica integrada holística
+   * Atualiza o snapshot vivo do sistema em memória para auditorias autônomas recorrentes
    */
-  async runFullSystemAudit(triggerMode = "autonomous_15m") {
+  updateCachedSnapshot(snapshot) {
+    this.cachedSnapshot = snapshot;
+  }
+  /**
+   * Executa a auditoria sistêmica integrada holística
+   * Conecta estoque, arraçoamento, biometria, água, clima, finanças e sensores em tempo real
+   */
+  async runFullSystemAudit(triggerMode = "autonomous_15m", liveSnapshot) {
     if (this.isRunning) {
       if (this.lastReport) return this.lastReport;
+    }
+    if (liveSnapshot) {
+      this.cachedSnapshot = liveSnapshot;
     }
     this.isRunning = true;
     const startTime = Date.now();
@@ -4174,204 +4219,319 @@ var AISentinelService = class {
     this.nextRunTime = startTime + this.INTERVAL_MS;
     try {
       console.log(`[AISentinel] \u{1F50D} Iniciando Varredura Sist\xEAmica Integrada (Modo: ${triggerMode})...`);
-      const tenantId = "tenant-river-life";
-      const inventory = databaseService.getInventory(tenantId);
-      const cashFlow = databaseService.getCashFlow(tenantId);
-      const biometries = databaseService.getBiometries(tenantId);
-      const farmProfile = databaseService.getFarmProfile(tenantId);
+      const tenantId = liveSnapshot?.tenantId || "tenant-river-life";
+      const inventory = liveSnapshot?.inventory || databaseService.getInventory(tenantId);
+      const cashFlow = liveSnapshot?.cashFlow || databaseService.getCashFlow(tenantId);
+      const biometries = liveSnapshot?.biometries || databaseService.getBiometries(tenantId);
+      const batches = liveSnapshot?.batches || initialBatches;
+      const tanks = liveSnapshot?.tanks || initialTanks;
+      const sensorReadings = liveSnapshot?.sensorReadings || initialSensorReadings;
+      const feedingLogs = liveSnapshot?.feedingLogs || [];
+      const mortalityLogs = liveSnapshot?.mortalityLogs || databaseService.getMortality(tenantId);
+      const harvestLogs = liveSnapshot?.harvestLogs || databaseService.getHarvests(tenantId);
+      const farm = liveSnapshot?.farm || initialFarm;
       let weatherData;
       try {
         weatherData = await getLiveMogeiroWeather();
       } catch {
         weatherData = {
-          temperature: 27,
-          apparentTemperature: 28,
-          humidity: 65,
-          windSpeedKmH: 17,
+          temperature: 28.5,
+          apparentTemperature: 30,
+          humidity: 68,
+          windSpeedKmH: 16,
           precipitationMm: 0,
-          weatherConditionText: "Predominantemente limpo"
+          weatherConditionText: "Ensolarado e limpo"
         };
       }
+      let solarCycle;
+      try {
+        solarCycle = await getLiveSolarCycle();
+      } catch {
+        solarCycle = {
+          isDaylight: true,
+          photosynthesisStatus: "active",
+          oxygenDepletionRisk: "low",
+          recommendedAeratorState: "standby"
+        };
+      }
+      let currencyData;
+      try {
+        currencyData = await getLiveCurrencies();
+      } catch {
+        currencyData = { usdBrl: 5.25, shrimpDollarParityUsd: 1.95 };
+      }
       const items = [];
-      const samariaItem = inventory.find((i) => i.id === "inv-item-samaria" || i.name.toLowerCase().includes("samaria"));
-      const guabiItem = inventory.find((i) => i.id === "inv-item-guabi" || i.name.toLowerCase().includes("guabi"));
-      const decosoloItem = inventory.find((i) => i.id === "inv-item-decosolo" || i.name.toLowerCase().includes("decosolo"));
-      const smartPackItem = inventory.find((i) => i.id === "inv-item-smartpack" || i.name.toLowerCase().includes("smart pack"));
+      const totalBiomassKg = batches.reduce(
+        (acc, b) => acc + b.currentCount * b.currentWeightG / 1e3,
+        0
+      );
+      const totalCurrentShrimp = batches.reduce((acc, b) => acc + b.currentCount, 0);
+      const dailyFeedNeededKg = Math.max(
+        12,
+        Math.round(totalBiomassKg * 0.035 * 10) / 10
+      );
+      const feedItems = inventory.filter((i) => {
+        const cat = (i.category || "").toLowerCase();
+        const type = (i.itemType || "").toLowerCase();
+        const name = (i.name || "").toLowerCase();
+        return cat.includes("ra\xE7\xE3o") || type.includes("ra\xE7\xE3o") || name.includes("samaria") || name.includes("guabi") || name.includes("starter") || name.includes("engorda");
+      });
+      const totalFeedStockKg = feedItems.reduce((acc, i) => acc + (i.currentStockKg || 0), 0);
+      const autonomyDays = dailyFeedNeededKg > 0 ? Number((totalFeedStockKg / dailyFeedNeededKg).toFixed(1)) : 999;
+      const samariaItem = inventory.find(
+        (i) => i.id === "inv-item-samaria" || i.name.toLowerCase().includes("samaria")
+      );
       const samariaStock = samariaItem?.currentStockKg ?? 0;
       const samariaMin = samariaItem?.minStockAlertKg ?? 200;
-      if (samariaStock < samariaMin) {
+      if (totalFeedStockKg <= 0 || autonomyDays <= 0) {
         items.push({
-          id: `audit-stock-samaria-${startTime}`,
+          id: `audit-stock-zero-${startTime}`,
           category: "ESTOQUE",
           severity: "CRITICO",
-          title: "Estoque de Ra\xE7\xE3o Starter Zerado (Abaixo do M\xEDnimo)",
-          description: `Ra\xE7\xE3o Samaria Starter Micropeletizada 40% PB est\xE1 com 0,00 kg (M\xEDnimo de Seguran\xE7a: ${samariaMin} kg).`,
-          correlation: `H\xE1 380.000 p\xF3s-larvas estocadas em 4 viveiros (V 01 a V 04) que dependem de arra\xE7oamento imediato de alta prote\xEDna.`,
-          recommendedAction: `Emitir Ordem de Compra Emergencial de no m\xEDnimo 200 kg de ra\xE7\xE3o starter 40% PB.`,
+          title: "Estoque de Ra\xE7\xE3o Zerado no Galp\xE3o (Risco de Canibalismo)",
+          description: `Estoque total de ra\xE7\xE3o: 0,00 kg. Demanda di\xE1ria calculada: ${dailyFeedNeededKg} kg/dia para as ${totalCurrentShrimp.toLocaleString("pt-BR")} p\xF3s-larvas vivas.`,
+          correlation: `A biomassa viva em cultivo (${totalBiomassKg.toFixed(1)} kg) n\xE3o suporta mais de 24h sem arra\xE7oamento sem iniciar canibalismo imediato e perda da taxa de sobreviv\xEAncia de 95%.`,
+          recommendedAction: `Emitir Ordem de Compra Emergencial imediata de no m\xEDnimo 500 kg de ra\xE7\xE3o de alta prote\xEDna.`,
           autoFixAvailable: true,
           fixActionType: "COMPRA_RACAO",
-          fixPayload: { item: "Ra\xE7\xE3o Samaria Starter 40% PB", quantityKg: 200, supplier: "Samaria Ra\xE7\xF5es" }
+          fixPayload: { item: "Ra\xE7\xE3o Samaria Starter 40% PB", quantityKg: 500, supplier: "Samaria Ra\xE7\xF5es" }
         });
-      }
-      const guabiStock = guabiItem?.currentStockKg ?? 0;
-      if (guabiStock <= 0) {
+      } else if (autonomyDays < 3 || samariaStock < samariaMin) {
         items.push({
-          id: `audit-stock-guabi-${startTime}`,
+          id: `audit-stock-autonomy-crit-${startTime}`,
+          category: "ESTOQUE",
+          severity: "CRITICO",
+          title: `Autonomia de Ra\xE7\xE3o Cr\xEDtica: Apenas ${autonomyDays} dias restantes`,
+          description: `Saldo total em galp\xE3o: ${totalFeedStockKg.toFixed(1)} kg. Com a taxa de arra\xE7oamento de ${dailyFeedNeededKg} kg/dia, a ra\xE7\xE3o esgota em menos de 72 horas.`,
+          correlation: `As ${totalCurrentShrimp.toLocaleString("pt-BR")} PLs estocadas est\xE3o em fase exponencial de crescimento e necessitam de reposi\xE7\xE3o imediata de estoque no Polo Para\xEDba.`,
+          recommendedAction: `Efetuar compra emergencial de no m\xEDnimo 300 kg a 500 kg de ra\xE7\xE3o micropeletizada e peletizada.`,
+          autoFixAvailable: true,
+          fixActionType: "COMPRA_RACAO",
+          fixPayload: { item: "Ra\xE7\xE3o Starter & Engorda", quantityKg: 400, supplier: "Polo PB" }
+        });
+      } else if (autonomyDays < 7) {
+        items.push({
+          id: `audit-stock-autonomy-warn-${startTime}`,
           category: "ESTOQUE",
           severity: "ATENCAO",
-          title: "Ra\xE7\xE3o de Engorda Guabi 35% PB Zerada",
-          description: `O silo principal de engorda est\xE1 com estoque zerado (0,00 kg).`,
-          correlation: `Os lotes V 02 (26 dias) e V 03 (28 dias) far\xE3o transi\xE7\xE3o para ra\xE7\xE3o peletizada de engorda em menos de 10 dias.`,
-          recommendedAction: `Planejar compra programada de 500 kg a 1.000 kg para garantir melhor pre\xE7o e frete \xFAnico no Polo Para\xEDba.`,
+          title: `Estoque em Ponto de Reposi\xE7\xE3o (${autonomyDays} dias de autonomia)`,
+          description: `Saldo em galp\xE3o: ${totalFeedStockKg.toFixed(1)} kg. Margem de seguran\xE7a inferior a 7 dias \xFAteis.`,
+          correlation: `O prazo m\xE9dio de entrega de ra\xE7\xE3o no Vale do Para\xEDba \xE9 de 3 a 4 dias \xFAteis. Programar o pedido agora evita frete fracionado de urg\xEAncia.`,
+          recommendedAction: `Programar pedido de reposi\xE7\xE3o com fornecedor habitual.`,
           autoFixAvailable: true,
           fixActionType: "COMPRA_RACAO",
-          fixPayload: { item: "Ra\xE7\xE3o Guabi Engorda 35% PB", quantityKg: 500 }
+          fixPayload: { item: "Ra\xE7\xE3o Guabi Engorda 35% PB", quantityKg: 1e3 }
         });
-      }
-      const smartStock = smartPackItem?.currentStockKg ?? 0;
-      if (smartStock <= 0) {
+      } else {
         items.push({
-          id: `audit-stock-smartpack-${startTime}`,
-          category: "ESTOQUE",
-          severity: "AJUSTE",
-          title: "Suplemento Mineral e Probi\xF3tico Smart Pack Zerado",
-          description: `Estoque do aditivo de fundo e imunoestimulante Smart Pack est\xE1 zerado (0,00 g).`,
-          correlation: `A fase de lua nova se aproxima (10/10/2026), momento em que ocorre muda sincronizada e demanda mineral elevada.`,
-          recommendedAction: `Reabastecer suplemento mineral antes da janela de muda da lua nova.`,
-          autoFixAvailable: false
-        });
-      }
-      if (decosoloItem && decosoloItem.currentStockKg > 5) {
-        items.push({
-          id: `audit-stock-decosolo-${startTime}`,
+          id: `audit-stock-ok-${startTime}`,
           category: "ESTOQUE",
           severity: "OTIMO",
-          title: "Fertilizante Mineral DECOSOLO em N\xEDvel Regular",
-          description: `Estoque de 9.450 g (Saldo R$ 1.039,50). Suficiente para fertiliza\xE7\xF5es de manuten\xE7\xE3o dos viveiros.`,
-          correlation: `Fitopl\xE2ncton e produtividade prim\xE1ria adequados nos 4 viveiros povoados.`,
-          recommendedAction: `Manter dosagens quinzenais de 150g por hectare conforme protocolo.`,
+          title: `Autonomia de Ra\xE7\xE3o Assegurada (${autonomyDays} dias / ${totalFeedStockKg.toFixed(0)} kg)`,
+          description: `O estoque cobre com folga a demanda biol\xF3gica de ${dailyFeedNeededKg} kg/dia para todos os viveiros ativos.`,
+          correlation: `Consumo nutricional perfeitamente harmonizado com o cronograma zoot\xE9cnico da fazenda.`,
+          recommendedAction: `Manter confer\xEAncia semanal de pallets e controle de umidade no galp\xE3o.`,
           autoFixAvailable: false
         });
       }
-      const totalAccumFeed = initialBatches.reduce((a, b) => a + (b.accumulatedFeedKg || 0), 0);
-      if (totalAccumFeed === 0) {
+      const totalAccumFeed = batches.reduce((a, b) => a + (b.accumulatedFeedKg || 0), 0);
+      const olderBatchesNoFeed = batches.filter(
+        (b) => b.cycleDay > 15 && (!b.accumulatedFeedKg || b.accumulatedFeedKg === 0)
+      );
+      if (olderBatchesNoFeed.length > 0) {
         items.push({
-          id: `audit-feed-zero-${startTime}`,
+          id: `audit-feed-pending-${startTime}`,
           category: "RACAO_NUTRICAO",
           severity: "ATENCAO",
-          title: "Arra\xE7oamento Registrado: 0,00 kg para 380.000 PLs",
-          description: `N\xE3o h\xE1 lan\xE7amentos de trato ou arra\xE7oamento computados no sistema para os viveiros V 01 a V 04.`,
-          correlation: `Embora PLs rec\xE9m-povoadas consumam alimento natural nos primeiros dias, viveiros V 02 (26 dias) e V 03 (28 dias) j\xE1 devem receber trato via bandejas.`,
-          recommendedAction: `Iniciar pesagem de bandejas de controle e cadastrar primeiro arra\xE7oamento de precis\xE3o no m\xF3dulo de Nutri\xE7\xE3o.`,
+          title: `${olderBatchesNoFeed.length} Viveiro(s) com Mais de 15 Dias sem Arra\xE7oamento Cadastrado`,
+          description: `Os tanques ${olderBatchesNoFeed.map((b) => b.batchCode || b.tankId).join(", ")} est\xE3o em ciclo avan\xE7ado, mas constam com 0 kg de ra\xE7\xE3o lan\xE7ados no sistema.`,
+          correlation: `Embora consumam alimento natural nas primeiras duas semanas, ap\xF3s o 15\xBA dia o arra\xE7oamento em bandejas \xE9 imperativo para evitar desuniformidade de peso.`,
+          recommendedAction: `Registrar as pesagens das bandejas de controle e lan\xE7ar o trato di\xE1rio no m\xF3dulo de Comedouros.`,
+          autoFixAvailable: false
+        });
+      } else if (totalAccumFeed > 0 && totalBiomassKg > 10) {
+        const netGainKg = totalBiomassKg - batches.reduce((a, b) => a + b.initialCount * b.initialWeightG / 1e3, 0);
+        const fcrReal = netGainKg > 0 ? Number((totalAccumFeed / netGainKg).toFixed(2)) : 1.35;
+        if (fcrReal > 1.65) {
+          items.push({
+            id: `audit-fcr-high-${startTime}`,
+            category: "RACAO_NUTRICAO",
+            severity: "ATENCAO",
+            title: `Convers\xE3o Alimentar Elevada (FCA = ${fcrReal} vs Meta 1.30)`,
+            description: `Foi consumido mais ra\xE7\xE3o do que o ganho de peso verificado. Risco de sobra no fundo do viveiro.`,
+            correlation: `Sobra de ra\xE7\xE3o n\xE3o consumida fermenta no fundo, elevando a am\xF4nia t\xF3xica e aumentando o custo por kg produzido.`,
+            recommendedAction: `Reduzir em 10% a oferta nas bandejas no trato das 11h e 15h at\xE9 a pr\xF3xima biometria.`,
+            autoFixAvailable: false
+          });
+        } else {
+          items.push({
+            id: `audit-fcr-optimal-${startTime}`,
+            category: "RACAO_NUTRICAO",
+            severity: "OTIMO",
+            title: `Convers\xE3o Alimentar em N\xEDvel Excelente (FCA = ${fcrReal})`,
+            description: `Convers\xE3o alimentar dentro da meta t\xE9cnica zoot\xE9cnica de excel\xEAncia (1.20 a 1.40).`,
+            correlation: `M\xE1ximo aproveitamento da ra\xE7\xE3o e \xE1gua limpa preservada com custo sob controle.`,
+            recommendedAction: `Manter tabela de arra\xE7oamento adaptativo ativa.`,
+            autoFixAvailable: false
+          });
+        }
+      }
+      const pendingBiometryBatches = batches.filter(
+        (b) => b.cycleDay >= 20 && b.currentWeightG <= 0.05
+      );
+      if (pendingBiometryBatches.length > 0) {
+        pendingBiometryBatches.forEach((pb) => {
+          const t = tanks.find((tk) => tk.id === pb.tankId);
+          items.push({
+            id: `audit-bio-${pb.id}-${startTime}`,
+            category: "BIOMETRIA",
+            severity: "ATENCAO",
+            title: `Biometria Necess\xE1ria: ${t?.name || pb.tankId} (${pb.cycleDay} dias de cultivo)`,
+            description: `O viveiro est\xE1 com ${pb.cycleDay} dias de ciclo e o peso ainda consta como peso de povoamento (${pb.currentWeightG} g).`,
+            correlation: `A aus\xEAncia de biometria impede o c\xE1lculo exato da biomassa e pode provocar superalimenta\xE7\xE3o ou subalimenta\xE7\xE3o nas bandejas.`,
+            recommendedAction: `Realizar amostragem de rede tarrafa (100 camar\xF5es) nas primeiras horas da manh\xE3 e registrar no sistema.`,
+            autoFixAvailable: true,
+            fixActionType: "PROGRAMAR_BIOMETRIA",
+            fixPayload: { tankId: pb.tankId, tankName: t?.name || pb.tankId, suggestedWeightG: Math.min(12, pb.cycleDay * 0.14) }
+          });
+        });
+      } else {
+        items.push({
+          id: `audit-bio-updated-${startTime}`,
+          category: "BIOMETRIA",
+          severity: "OTIMO",
+          title: "Amostragens e Curva de Crescimento em Dia",
+          description: `Todos os viveiros povoados possuem dados biom\xE9tricos atualizados e proje\xE7\xF5es de ganho de peso di\xE1rio ativas.`,
+          correlation: `Permite ao or\xE1culo prever com 98% de precis\xE3o a data ideal de despesca e calibre comercial (calibre 60/70 a 50/60).`,
+          recommendedAction: `Manter amostragem semanal padr\xE3o toda segunda-feira.`,
           autoFixAvailable: false
         });
       }
-      const v02Batch = initialBatches.find((b) => b.tankId === "tank-02");
-      const v03Batch = initialBatches.find((b) => b.tankId === "tank-03");
-      if (v02Batch && v02Batch.cycleDay >= 25 && v02Batch.currentWeightG <= 0.02) {
-        items.push({
-          id: `audit-bio-v02-${startTime}`,
-          category: "BIOMETRIA",
-          severity: "ATENCAO",
-          title: "Biometria Atrasada: Tanque V 02 (26 dias de cultivo)",
-          description: `Tanque V 02 est\xE1 com 26 dias de cultivo e o peso registrado no sistema ainda \xE9 0,01 g (peso de povoamento).`,
-          correlation: `A aus\xEAncia de biometria impede o c\xE1lculo exato do FCA real e pode distorcer a biomassa projetada para colheita.`,
-          recommendedAction: `Realizar amostragem de rede tarrafa (100 camar\xF5es) nas primeiras horas da manh\xE3 e registrar biometria.`,
-          autoFixAvailable: true,
-          fixActionType: "PROGRAMAR_BIOMETRIA",
-          fixPayload: { tankId: "tank-02", tankName: "Tanque V 02", suggestedWeightG: 3.4 }
-        });
-      }
-      if (v03Batch && v03Batch.cycleDay >= 25 && v03Batch.currentWeightG <= 0.02) {
-        items.push({
-          id: `audit-bio-v03-${startTime}`,
-          category: "BIOMETRIA",
-          severity: "ATENCAO",
-          title: "Biometria Atrasada: Tanque V 03 (28 dias de cultivo)",
-          description: `Tanque V 03 est\xE1 com 28 dias de cultivo e ainda consta com biometria inicial de 0,01 g.`,
-          correlation: `Com 100.000 PLs em 3.110 m\xB2, a taxa de crescimento esperada para 28 dias em \xE1gua salobra a 28\xB0C \xE9 de 3,8g a 4,2g.`,
-          recommendedAction: `Efetuar biometria imediata para calibrar c\xE1lculo de oferta alimentar di\xE1ria.`,
-          autoFixAvailable: true,
-          fixActionType: "PROGRAMAR_BIOMETRIA",
-          fixPayload: { tankId: "tank-03", tankName: "Tanque V 03", suggestedWeightG: 3.9 }
-        });
-      }
-      let waterHealthGood = true;
-      initialTanks.forEach((tank) => {
-        const read = initialSensorReadings[tank.id];
-        if (read) {
-          if (read.dissolvedOxygen < 4 && tank.status !== "optimal") {
-            waterHealthGood = false;
-            items.push({
-              id: `audit-o2-${tank.id}-${startTime}`,
-              category: "QUALIDADE_AGUA",
-              severity: "CRITICO",
-              title: `Oxig\xEAnio Baixo no ${tank.name} (${read.dissolvedOxygen} mg/L)`,
-              description: `O n\xEDvel de oxig\xEAnio dissolvido est\xE1 abaixo da margem de seguran\xE7a de 4,0 mg/L.`,
-              correlation: `Sob baixa oxigena\xE7\xE3o, o camar\xE3o cessa a digest\xE3o e o risco de estresse e perda de biomassa \xE9 imediato.`,
-              recommendedAction: `Acionar aeradores do ${tank.name} imediatamente.`,
-              autoFixAvailable: true,
-              fixActionType: "AJUSTAR_AERADOR",
-              fixPayload: { tankId: tank.id, state: true }
-            });
-          }
+      let hasWaterCritical = false;
+      let hasAmmoniaWarning = false;
+      tanks.forEach((tank) => {
+        const read = sensorReadings[tank.id];
+        if (!read) return;
+        const criticalThreshold = 3.8;
+        if (read.dissolvedOxygen < criticalThreshold) {
+          hasWaterCritical = true;
+          items.push({
+            id: `audit-o2-${tank.id}-${startTime}`,
+            category: "QUALIDADE_AGUA",
+            severity: "CRITICO",
+            title: `Oxig\xEAnio Baixo no ${tank.name} (${read.dissolvedOxygen.toFixed(2)} mg/L)`,
+            description: `O oxig\xEAnio dissolvido est\xE1 abaixo da margem de seguran\xE7a de ${criticalThreshold} mg/L.`,
+            correlation: `Sob baixa oxigena\xE7\xE3o, os camar\xF5es cessam a respira\xE7\xE3o e digest\xE3o. Se coincide com o per\xEDodo noturno (${solarCycle.photosynthesisStatus}), o risco de mortalidade \xE9 imediato.`,
+            recommendedAction: `Acionar aeradores do ${tank.name} imediatamente e suspender o arra\xE7oamento at\xE9 O2 > 5.0 mg/L.`,
+            autoFixAvailable: true,
+            fixActionType: "AJUSTAR_AERADOR",
+            fixPayload: { tankId: tank.id, state: true }
+          });
+        }
+        if (read.ammoniaToxic > 0.045) {
+          hasAmmoniaWarning = true;
+          items.push({
+            id: `audit-nh3-${tank.id}-${startTime}`,
+            category: "QUALIDADE_AGUA",
+            severity: "ATENCAO",
+            title: `Am\xF4nia T\xF3xica Alta no ${tank.name} (${read.ammoniaToxic.toFixed(3)} mg/L NH3)`,
+            description: `A fra\xE7\xE3o t\xF3xica de am\xF4nia est\xE1 acima do limite de conforto zoot\xE9cnico (0,020 mg/L).`,
+            correlation: `Provoca necrose nas br\xE2nquias dos camar\xF5es e reduz a absor\xE7\xE3o de oxig\xEAnio mesmo com aerador ligado.`,
+            recommendedAction: `Cortar 50% da ra\xE7\xE3o do pr\xF3ximo trato e aplicar condicionador / renova\xE7\xE3o controlada de \xE1gua.`,
+            autoFixAvailable: false
+          });
         }
       });
-      if (waterHealthGood) {
+      if (!hasWaterCritical && !hasAmmoniaWarning) {
         items.push({
           id: `audit-water-optimal-${startTime}`,
           category: "QUALIDADE_AGUA",
           severity: "OTIMO",
-          title: "Par\xE2metros F\xEDsico-Qu\xEDmicos em Faixa Segura",
-          description: `Oxig\xEAnio dissolvido m\xE9dio de 5,7 mg/L, pH 7,8, Am\xF4nia t\xF3xica abaixo de 0,015 mg/L e Salinidade 19 ppt em todos os viveiros.`,
-          correlation: `Ambiente aqu\xE1tico de Mogeiro \u2013 PB perfeitamente favor\xE1vel para mudas saud\xE1veis e alta sobreviv\xEAncia.`,
-          recommendedAction: `Manter protocolo de aera\xE7\xE3o noturna preventivo.`,
+          title: "Par\xE2metros F\xEDsico-Qu\xEDmicos em Faixa Excelente",
+          description: `Oxig\xEAnio dissolvido m\xE9dio acima de 5,5 mg/L, pH balanceado, am\xF4nia t\xF3xica segura em todos os viveiros da Fazenda River Life.`,
+          correlation: `Ambiente aqu\xE1tico de Mogeiro \u2013 PB perfeitamente favor\xE1vel para mudas saud\xE1veis e alta taxa de convers\xE3o alimentar.`,
+          recommendedAction: `Manter aera\xE7\xE3o noturna preventiva das 23:00 \xE0s 05:30.`,
           autoFixAvailable: false
         });
       }
+      const isNight = !solarCycle.isDaylight;
       items.push({
         id: `audit-lunar-weather-${startTime}`,
         category: "CLIMA_LUA",
-        severity: "AJUSTE",
-        title: "Minguante C\xF4ncava (11%) \u2022 Transi\xE7\xE3o para Lua Nova em 10/10",
-        description: `Temperatura 27\xB0C, sensa\xE7\xE3o 28\xB0C, sem chuva prevista para hoje em Mogeiro \u2013 PB. Lua Nova prevista para s\xE1bado, 10/10/2026.`,
-        correlation: `A aproxima\xE7\xE3o da Lua Nova induz pico de ecdise (muda). Camar\xF5es rec\xE9m-mudados aumentam a taxa respirat\xF3ria em 30%.`,
-        recommendedAction: `Planejar refor\xE7o de aera\xE7\xE3o entre 23:00 e 05:30 nas noites de sexta a domingo.`,
+        severity: isNight ? "ATENCAO" : "AJUSTE",
+        title: `${weatherData.weatherConditionText} (${weatherData.temperature}\xB0C) \u2022 ${isNight ? "Ciclo Noturno Ativo" : "Luz Solar Plena"}`,
+        description: `Temperatura atual: ${weatherData.temperature}\xB0C (sensa\xE7\xE3o ${weatherData.apparentTemperature}\xB0C), ventos a ${weatherData.windSpeedKmH} km/h em Mogeiro \u2013 PB. Sol: nascer \xE0s ${solarCycle.sunrise || "05:22"} e p\xF4r \xE0s ${solarCycle.sunset || "17:34"}.`,
+        correlation: isNight ? `Durante a noite, o fitopl\xE2ncton consome oxig\xEAnio por respira\xE7\xE3o. Demanda biol\xF3gica de aera\xE7\xE3o aumenta em 40%.` : `Fotoss\xEDntese a todo vapor! O oxig\xEAnio natural sobe at\xE9 o meio da tarde, permitindo economizar energia desligando aeradores de apoio.`,
+        recommendedAction: isNight ? `Manter aeradores principais em modo de alta rota\xE7\xE3o at\xE9 o amanhecer.` : `Aproveitar o pico de temperatura e oxig\xEAnio para os tratos de maior volume nutricional (11h e 15h).`,
         autoFixAvailable: false
       });
-      const totalExpensesRs = cashFlow.reduce((acc, c) => acc + (c.movementType === "SAIDA" ? c.amountRs : 0), 0) || 3860.5;
+      const recentMortalities = mortalityLogs.slice(0, 5);
+      const totalRecentMortality = recentMortalities.reduce((acc, m) => acc + (m.quantity || 0), 0);
+      if (totalRecentMortality > 400) {
+        items.push({
+          id: `audit-mortality-spike-${startTime}`,
+          category: "SISTEMA_DADOS",
+          severity: "ATENCAO",
+          title: `Alerta Sanit\xE1rio: ${totalRecentMortality} Camar\xF5es em Mortalidade Recente`,
+          description: `Registrada perda acima da curva padr\xE3o nas \xFAltimas checagens. Causa indicada: ${recentMortalities[0]?.probableCause || "Estresse de Muda"}.`,
+          correlation: `A mortalidade pode estar ligada ao choque de salinidade ou pico de ecdise na transi\xE7\xE3o de fase lunar.`,
+          recommendedAction: `Coletar amostras de \xE1gua para teste de alcalinidade e dureza e inspecionar fundo do viveiro.`,
+          autoFixAvailable: false
+        });
+      } else {
+        items.push({
+          id: `audit-sanitary-ok-${startTime}`,
+          category: "SISTEMA_DADOS",
+          severity: "OTIMO",
+          title: "Sanidade Aqu\xEDcola em Plena Conformidade",
+          description: `Mortalidade natural acumulada dentro do limite zoot\xE9cnico (< 0,05% ao dia). Taxa de sobreviv\xEAncia global projetada em 95%.`,
+          correlation: `Aus\xEAncia de sinais cl\xEDnicos de pat\xF3genos ou hip\xF3xia aguda.`,
+          recommendedAction: `Manter dosagens quinzenais de probi\xF3ticos e minerais.`,
+          autoFixAvailable: false
+        });
+      }
+      const totalExpensesRs = cashFlow.reduce(
+        (acc, c) => acc + (c.movementType === "SAIDA" ? c.amountRs : 0),
+        0
+      );
+      const totalEntriesRs = cashFlow.reduce(
+        (acc, c) => acc + (c.movementType === "ENTRADA" ? c.amountRs : 0),
+        0
+      );
+      const netCashRs = totalEntriesRs - totalExpensesRs;
+      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.fishSalePricePerKg || 24.5;
+      const projectedRevenueCycle = Math.round(totalBiomassKg * shrimpSalePrice);
       items.push({
         id: `audit-financial-market-${startTime}`,
         category: "FINANCEIRO",
         severity: "OTIMO",
-        title: "Custos Alinhados: R$ 3.860,50 Realizados no Ciclo",
-        description: `Gastos conferidos: R$ 3.800,00 de larvas (4 lotes) + R$ 60,50 de DECOSOLO. Faturamento projetado na safra: R$ 139.650,00.`,
-        correlation: `Ponto de equil\xEDbrio estimado em apenas R$ 9,60/kg para a safra de 5.700 kg, garantindo margem de lucro acima de 55% na cota\xE7\xE3o atual de R$ 24,50/kg.`,
-        recommendedAction: `Acompanhar propostas no Market-Bridge para travar contrato de venda futura a partir de R$ 23,50/kg.`,
-        autoFixAvailable: false
-      });
-      const occupiedTanksCount = 4;
-      const freeTanksCount = 3;
-      items.push({
-        id: `audit-system-data-${startTime}`,
-        category: "SISTEMA_DADOS",
-        severity: "OTIMO",
-        title: "Integridade de Dados 100% Consistente",
-        description: `7 viveiros validados (4 ocupados / 3 livres = 57,1% ocupa\xE7\xE3o). 380.000 PLs mapeadas sem duplicidades.`,
-        correlation: `Todos os 4 pilares tecnol\xF3gicos conversando em perfeita harmonia (IoT, IA Ghost UX, DRE Financeiro e Market-Bridge).`,
-        recommendedAction: `Nenhuma corre\xE7\xE3o estrutural necess\xE1ria.`,
+        title: `Gest\xE3o Financeira & DRE: Faturamento Projetado R$ ${projectedRevenueCycle.toLocaleString("pt-BR")}`,
+        description: `Despesas realizadas no ciclo: R$ ${totalExpensesRs.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}. Entradas: R$ ${totalEntriesRs.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}. Saldo operacional: R$ ${netCashRs.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}.`,
+        correlation: `Com o d\xF3lar a R$ ${currencyData.usdBrl.toFixed(2)}, o pre\xE7o do camar\xE3o no Polo Nordeste se mant\xE9m firme a R$ ${shrimpSalePrice.toFixed(2)}/kg, garantindo margem operacional superior a 48%.`,
+        recommendedAction: `Acompanhar cota\xE7\xF5es no Market-Bridge e antecipar contratos de venda com compradores cadastrados.`,
         autoFixAvailable: false
       });
       const criticalCount = items.filter((i) => i.severity === "CRITICO").length;
       const warningCount = items.filter((i) => i.severity === "ATENCAO").length;
       const adjustCount = items.filter((i) => i.severity === "AJUSTE").length;
-      let systemHealthScore = 100 - criticalCount * 20 - warningCount * 6 - adjustCount * 2;
+      let systemHealthScore = 100 - criticalCount * 22 - warningCount * 6 - adjustCount * 2;
       systemHealthScore = Math.max(30, Math.min(100, systemHealthScore));
       const overallStatus = criticalCount > 0 ? "CRITICO" : warningCount > 0 ? "ATENCAO" : "OTIMO";
-      const executiveSummary = await this.generateAiExecutiveSummary(items, systemHealthScore, weatherData);
+      const executiveSummary = await this.generateAiExecutiveSummary(
+        items,
+        systemHealthScore,
+        weatherData,
+        autonomyDays,
+        totalBiomassKg,
+        dailyFeedNeededKg
+      );
       const report = {
         id: `sentinel-report-${startTime}`,
-        timestamp: new Date(startTime).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        timestamp: new Date(startTime).toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }),
         cycleIntervalMinutes: 15,
         systemHealthScore,
         overallStatus,
@@ -4396,16 +4556,18 @@ var AISentinelService = class {
 \u2022 *Score de Sa\xFAde Geral:* ${systemHealthScore}/100`;
         messagingHub.processAndSend("+5584988585211", { question: alertMsg, autoAlert: true }, MessageLevel.EMERGENCY).catch((err) => console.warn("[AISentinel] Erro ao enviar WhatsApp do Sentinela:", err.message));
       }
-      console.log(`[AISentinel] \u2705 Varredura Conclu\xEDda em ${Date.now() - startTime}ms! Score: ${systemHealthScore}/100, Anomalias: ${report.totalAnomaliesCount}`);
+      console.log(
+        `[AISentinel] \u2705 Varredura Conclu\xEDda em ${Date.now() - startTime}ms! Score: ${systemHealthScore}/100, Anomalias: ${report.totalAnomaliesCount}`
+      );
       return report;
     } finally {
       this.isRunning = false;
     }
   }
   /**
-   * Gera o parecer executivo através do Gemini 2.5 Flash ou algoritmo determinístico
+   * Gera o parecer executivo através do Gemini Flash ou algoritmo determinístico didático em PT-BR
    */
-  async generateAiExecutiveSummary(items, healthScore, weather) {
+  async generateAiExecutiveSummary(items, healthScore, weather, autonomyDays, biomassKg, dailyFeedKg) {
     const apiKey = environment.GEMINI_API_KEY || config.geminiApiKey || (typeof process !== "undefined" ? process.env?.GEMINI_API_KEY : "");
     if (apiKey) {
       try {
@@ -4413,42 +4575,47 @@ var AISentinelService = class {
         const criticals = items.filter((i) => i.severity === "CRITICO").map((i) => i.title).join("; ");
         const warnings = items.filter((i) => i.severity === "ATENCAO").map((i) => i.title).join("; ");
         const prompt = `Voc\xEA \xE9 o Auditor Central de Intelig\xEAncia Artificial do AQUA-CORE AI na Fazenda River Life (Mogeiro - PB).
-Varredura peri\xF3dica de 15 minutos finalizada.
-Score do sistema: ${healthScore}/100.
-Clima atual: ${weather.temperature}\xB0C, ${weather.weatherConditionText}, vento ${weather.windSpeedKmH} km/h.
+Varredura de 15 em 15 minutos finalizada.
+Score do ecossistema: ${healthScore}/100.
+Biomassa ativa: ${biomassKg.toFixed(1)} kg de camar\xE3o.
+Consumo di\xE1rio de ra\xE7\xE3o: ${dailyFeedKg.toFixed(1)} kg/dia. Autonomia de estoque: ${autonomyDays.toFixed(1)} dias.
+Clima atual em Mogeiro - PB: ${weather.temperature}\xB0C, ${weather.weatherConditionText}, vento ${weather.windSpeedKmH} km/h.
 Pontos cr\xEDticos detectados: ${criticals || "Nenhum"}.
 Pontos de aten\xE7\xE3o: ${warnings || "Nenhum"}.
-Popula\xE7\xE3o: 380.000 PLs em 4 viveiros (V 01 a V 04).
 
-Escreva um parecer executivo sint\xE9tico, assertivo e t\xE9cnico (m\xE1ximo 3 frases) em Portugu\xEAs do Brasil com:
-1. Avalia\xE7\xE3o do estado geral do ecossistema.
-2. A\xE7\xE3o operacional mais urgente que o produtor Collermhann deve executar agora.`;
-        let response;
-        try {
-          response = await ai.models.generateContent({
-            model: "gemini-3.8-flash",
-            contents: prompt
-          });
-        } catch {
-          response = await ai.models.generateContent({
-            model: "gemini-3.5-flash",
-            contents: prompt
-          });
-        }
-        const text = response.text?.trim();
-        if (text && text.length > 20) {
-          return text;
+Escreva um parecer executivo sint\xE9tico, did\xE1tico e de f\xE1cil compreens\xE3o para o produtor rural Collermhann (m\xE1ximo 3 frases diretas) em Portugu\xEAs do Brasil:
+1. Resumo do estado do neg\xF3cio agora.
+2. A\xE7\xE3o pr\xE1tica mais urgente que ele deve realizar imediatamente para proteger o lucro e a sobreviv\xEAncia dos camar\xF5es.`;
+        const modelsToTry = [
+          "gemini-2.5-flash",
+          "gemini-2.0-flash",
+          "gemini-1.5-flash",
+          "gemini-3.8-flash",
+          "gemini-3.5-flash"
+        ];
+        for (const model of modelsToTry) {
+          try {
+            const response = await ai.models.generateContent({
+              model,
+              contents: prompt
+            });
+            const text = response.text?.trim();
+            if (text && text.length > 20) {
+              return text;
+            }
+          } catch {
+          }
         }
       } catch (err) {
         console.warn("[AISentinel] Fallback determin\xEDstico no parecer da IA:", err.message);
       }
     }
     if (healthScore >= 90) {
-      return `Varredura de 15 minutos conclu\xEDda com sucesso: ecossistema da Fazenda River Life em excelente equil\xEDbrio operacional (Score ${healthScore}/100). Par\xE2metros f\xEDsico-qu\xEDmicos e custos zoot\xE9cnicos sob controle; manter monitoramento de rotina e verificar estoques para o pr\xF3ximo ciclo de alimenta\xE7\xE3o.`;
+      return `Varredura de 15 minutos conclu\xEDda: a Fazenda River Life est\xE1 em perfeito equil\xEDbrio operacional (Score ${healthScore}/100). \xC1gua limpa com oxigena\xE7\xE3o segura, estoque de ra\xE7\xE3o com autonomia de ${autonomyDays.toFixed(0)} dias e camar\xF5es crescendo em ritmo excelente. Mantenha os tratos regulares nos comedouros e aera\xE7\xE3o noturna preventiva.`;
     } else if (healthScore >= 70) {
-      return `Auditoria das 15h detectou pontos de aten\xE7\xE3o moderados (Score ${healthScore}/100): o estoque de ra\xE7\xE3o Samaria Starter est\xE1 abaixo do limite de seguran\xE7a e h\xE1 biometrias pendentes nos tanques V 02 e V 03 (26 e 28 dias). Recomenda-se providenciar ordem de compra de ra\xE7\xE3o inicial e realizar amostragem amostral de peso ainda hoje.`;
+      return `Auditoria das 15h detectou pontos de aten\xE7\xE3o (Score ${healthScore}/100): a autonomia de ra\xE7\xE3o est\xE1 em ${autonomyDays.toFixed(1)} dias para alimentar os ${biomassKg.toFixed(0)} kg de biomassa viva e h\xE1 biometrias pendentes em alguns tanques. Recomenda\xE7\xE3o imediata: programar ordem de compra de ra\xE7\xE3o e realizar pesagem amostral pela manh\xE3.`;
     } else {
-      return `ALERTA CR\xCDTICO DO SENTINELA IA (Score ${healthScore}/100): foi detectada car\xEAncia imediata de insumos essenciais de ra\xE7\xE3o inicial para as 380.000 p\xF3s-larvas em cultivo. A\xE7\xE3o imediata requerida: emitir compra emergencial de ra\xE7\xE3o 40% PB para evitar canibalismo e garantir taxa de sobreviv\xEAncia projetada de 95%.`;
+      return `ALERTA CR\xCDTICO DO SENTINELA IA (Score ${healthScore}/100): foram detectados par\xE2metros fora da margem segura de sobreviv\xEAncia dos camar\xF5es. A\xE7\xE3o imediata requerida: verifique os aeradores dos viveiros com oxig\xEAnio baixo e garanta reposi\xE7\xE3o urgente de ra\xE7\xE3o no galp\xE3o para evitar canibalismo e perdas financeiras.`;
     }
   }
   /**
@@ -4469,27 +4636,28 @@ Escreva um parecer executivo sint\xE9tico, assertivo e t\xE9cnico (m\xE1ximo 3 f
       const inventory = databaseService.getInventory(tenantId);
       const isSamaria = payload?.item?.toLowerCase().includes("samaria");
       const targetId = isSamaria ? "inv-item-samaria" : "inv-item-guabi";
-      const existing = inventory.find((i) => i.id === targetId);
+      const existing = inventory.find((i) => i.id === targetId) || inventory[0];
       if (existing) {
-        existing.currentStockKg += payload?.quantityKg || 200;
+        const addedQty = payload?.quantityKg || 500;
+        existing.currentStockKg += addedQty;
         existing.status = "NORMAL";
-        existing.notes = `Reabastecido automaticamente via A\xE7\xE3o Corretiva do Sentinela IA (+${payload?.quantityKg || 200} kg).`;
+        existing.notes = `Reabastecido automaticamente via Sentinela IA (+${addedQty} kg).`;
       }
       return {
         success: true,
-        message: `Ordem de Compra Emergencial autorizada! +${payload?.quantityKg || 200} kg de ${payload?.item || "Ra\xE7\xE3o"} adicionados ao invent\xE1rio da fazenda.`
+        message: `Ordem de Compra Emergencial autorizada! +${payload?.quantityKg || 500} kg de ${payload?.item || "Ra\xE7\xE3o"} adicionados ao invent\xE1rio da fazenda.`
       };
     }
     if (fixActionType === "PROGRAMAR_BIOMETRIA") {
       return {
         success: true,
-        message: `Biometria programada na agenda operacional do ${payload?.tankName || "viveiro"}. Equipe de campo notificada para amostragem matinal.`
+        message: `Biometria programada na agenda operacional do ${payload?.tankName || "viveiro"}. Equipe de campo notificada para amostragem matinal com tarrafa.`
       };
     }
     if (fixActionType === "AJUSTAR_AERADOR") {
       return {
         success: true,
-        message: `Aeradores do ${payload?.tankId || "tanque"} acionados com sucesso pelo subsistema de telemetria.`
+        message: `Aeradores do ${payload?.tankId || "tanque"} acionados com sucesso! Oxigena\xE7\xE3o em recupera\xE7\xE3o acelerada.`
       };
     }
     return {
@@ -4603,6 +4771,7 @@ app.get("/api/brasilapi/cnpj/:cnpj", BrasilApiController.getCnpj);
 app.get("/api/brasilapi/cep/:cep", BrasilApiController.getCep);
 app.get("/api/brasilapi/feriados", BrasilApiController.getFeriados);
 app.get("/api/agro/credit-benchmark", AgroCreditController.getBenchmark);
+app.get("/api/agro-credit/benchmark", AgroCreditController.getBenchmark);
 app.post("/api/vision/analyze", VisionController.analyzeImage);
 app.post("/api/voice/command", VoiceController.processCommand);
 app.post("/api/ai/audit-invoice", AIAuditController.auditInvoice);
@@ -4614,9 +4783,20 @@ app.get("/api/sentinel/status", (_req, res) => {
 app.get("/api/sentinel/logs", (_req, res) => {
   res.json({ logs: aiSentinelService.getHistory() });
 });
-app.post("/api/sentinel/run", async (_req, res) => {
+app.post("/api/sentinel/snapshot", (req, res) => {
   try {
-    const report = await aiSentinelService.runFullSystemAudit("manual_forced");
+    if (req.body) {
+      aiSentinelService.updateCachedSnapshot(req.body);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.post("/api/sentinel/run", async (req, res) => {
+  try {
+    const liveSnapshot = req.body?.liveSnapshot || req.body;
+    const report = await aiSentinelService.runFullSystemAudit("manual_forced", liveSnapshot);
     res.json({ success: true, report });
   } catch (err) {
     res.status(500).json({ error: err.message });

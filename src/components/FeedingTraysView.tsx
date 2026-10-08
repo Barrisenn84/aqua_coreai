@@ -8,6 +8,7 @@ import {
   TrendingDown,
   Percent,
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
 
 interface FeedingTray {
   id: string;
@@ -23,6 +24,7 @@ interface FeedingTray {
 }
 
 export const FeedingTraysView: React.FC = () => {
+  const { recordFeeding } = useAquaCore();
   const [trays, setTrays] = useState<FeedingTray[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -34,6 +36,7 @@ export const FeedingTraysView: React.FC = () => {
   const [traysInspectedCount, setTraysInspectedCount] = useState<number>(10);
   const [trayStatus, setTrayStatus] = useState<'LIMPO' | 'POUCA_SOBRA' | 'SOBRA_MEDIA' | 'SOBRA_ALTA'>('LIMPO');
   const [leftoverPercentage, setLeftoverPercentage] = useState<number>(0);
+  const [feedAmountKg, setFeedAmountKg] = useState<number>(15);
 
   const fetchTrays = async () => {
     try {
@@ -73,6 +76,17 @@ export const FeedingTraysView: React.FC = () => {
     }
 
     try {
+      // 🔄 Cruza e integra em tempo real com todo o sistema AQUA-CORE
+      if (feedAmountKg > 0) {
+        await recordFeeding({
+          tankId,
+          amountKg: Number(feedAmountKg),
+          feedType: 'Ração Starter & Engorda 38% PB',
+          costPerKg: 4.20,
+          notes: `Checagem de comedouro: ${trayStatus} (${leftoverPercentage}% de sobra). ${rec}`,
+        });
+      }
+
       const res = await fetch('/api/db/feeding-trays', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,6 +100,7 @@ export const FeedingTraysView: React.FC = () => {
           leftoverPercentage,
           adjustmentSuggestedPct: adj,
           aiRecommendation: rec,
+          feedAmountKg: Number(feedAmountKg),
         }),
       });
 
@@ -308,6 +323,26 @@ export const FeedingTraysView: React.FC = () => {
                   onChange={(e) => setLeftoverPercentage(Number(e.target.value))}
                   className="w-full accent-cyan-400 cursor-pointer"
                 />
+              </div>
+
+              <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
+                <label className="block text-slate-300 font-medium mb-1 flex items-center justify-between">
+                  <span>Ração Fornecida neste Trato (kg):</span>
+                  <span className="text-emerald-400 font-mono font-bold">{feedAmountKg} kg</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={feedAmountKg}
+                  onChange={(e) => setFeedAmountKg(Number(e.target.value))}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono"
+                  placeholder="Ex: 15"
+                />
+                <p className="text-[11px] text-emerald-400/80 mt-1.5 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  Dá baixa automática no estoque do armazém e recalcula o FCA e DRE da fazenda em tempo real!
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
