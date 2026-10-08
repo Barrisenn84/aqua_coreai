@@ -293,8 +293,8 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* CLIMA & CENTRO DE LEITURA: POLO DE MOGEIRO – PB & FAZENDA RIVER LIFE */}
-      <div className="bg-slate-900/95 border border-cyan-900/60 p-4 rounded-2xl font-mono text-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
-        <div className="space-y-1">
+      <div className="glass-panel p-5 rounded-2xl font-mono text-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4 animate-slide-up">
+        <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-bold text-white text-sm">
@@ -375,7 +375,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
       {/* INDICADORES GERAIS (KPIS DINÂMICOS COM DIDÁTICA FÁCIL E LINGUAGEM CLARA) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 font-mono">
         {/* KPI 1: Tanques Povoados */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '0ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Tanques Povoados</span>
@@ -393,7 +393,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 2: Custo em Cultivo */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-amber-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '50ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Custo em Cultivo</span>
@@ -410,7 +410,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '100ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Fat. Esperado</span>
@@ -429,7 +429,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 4: Biomassa Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-cyan-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '150ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Biomassa Total</span>
@@ -448,7 +448,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 5: População Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-indigo-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">População Total</span>
@@ -465,7 +465,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 6: Ração Total */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-orange-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '250ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Ração Total</span>
@@ -482,7 +482,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
-        <div className="bg-slate-900/90 border border-slate-800 p-3.5 rounded-xl flex flex-col justify-between hover:border-emerald-500/40 transition-colors">
+        <div className="glass-card p-3.5 rounded-xl flex flex-col justify-between animate-slide-up" style={{ animationDelay: '300ms' }}>
           <div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">FCA Médio</span>
@@ -505,7 +505,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         <ProfitDial size="md" />
 
         {/* POLO MOGEIRO / PB: Saturação Dinâmica de O2 Integrada ao Clima */}
-        <div className="lg:col-span-2 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950 border border-cyan-900/40 p-4 rounded-2xl relative overflow-hidden shadow-lg shadow-cyan-950/20 font-mono text-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 glass-card p-5 rounded-2xl relative overflow-hidden font-mono text-xs flex flex-col justify-between animate-slide-up" style={{ animationDelay: '400ms' }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center text-cyan-400 shrink-0">
@@ -591,7 +591,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
       <FcrEvolutionChart />
 
       {/* 2. TABELA DE TANQUES CADASTRADOS */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 font-mono text-xs">
+      <div className="glass-panel rounded-2xl p-6 font-mono text-xs animate-slide-up" style={{ animationDelay: '600ms' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-cyan-400" />
@@ -754,7 +754,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
       />
 
       {/* Simulator Quick Action Toolbar */}
-      <div className="bg-slate-900/60 border border-slate-800 p-3 sm:p-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-xs font-mono">
+      <div className="glass-panel p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono animate-slide-up" style={{ animationDelay: '700ms' }}>
         <div className="flex items-center gap-2 text-slate-300">
           <Cpu className="w-4 h-4 text-cyan-400" />
           <span className="font-bold uppercase tracking-wider text-slate-200">

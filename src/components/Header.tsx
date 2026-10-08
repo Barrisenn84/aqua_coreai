@@ -188,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
+    <header className="glass-panel sticky top-0 z-40 border-b-0 border-b-cyan-500/20 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
       {/* Topmost Telemetry Status Bar */}
       <div className="border-b border-slate-800/80 px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-3 text-slate-400">
         <div className="flex items-center gap-3">
@@ -274,13 +274,13 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand identity & Mobile Trigger */}
         <div className="flex items-center justify-between w-full lg:w-auto">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-400/30 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-300/50 shrink-0 transform transition hover:scale-110 hover:rotate-3">
               <Droplets className="w-6 h-6 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-black tracking-wider text-white">
-                  AQUA<span className="text-cyan-400">-CORE</span>
+                  AQUA<span className="premium-gradient-text text-glow-cyan">-CORE</span>
                 </span>
                 <span className="px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
                   AI ENGINE
@@ -321,7 +321,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('nerve-center')}
             className={`px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === 'nerve-center'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                ? 'glass-card text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.3)] transform -translate-y-0.5'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
@@ -626,7 +626,7 @@ export const Header: React.FC<HeaderProps> = ({
       )}
 
       {/* 📱 BARRA DE NAVEGAÇÃO INFERIOR FIXA PARA SMARTPHONES (BOTTOM NAV) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 border-t border-slate-800 backdrop-blur-lg flex items-center justify-around py-2 px-2 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-t-cyan-500/20 flex items-center justify-around py-3 px-2 md:hidden rounded-t-2xl shadow-[0_-4px_30px_rgba(0,0,0,0.2)] pb-safe">
         <button
           onClick={() => setActiveTab('nerve-center')}
           className={`flex flex-col items-center gap-0.5 cursor-pointer ${
