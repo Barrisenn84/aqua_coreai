@@ -26,12 +26,12 @@ class AISentinelService {
   public startAutonomousCycle() {
     if (this.intervalTimer) return;
 
-    // Executa a primeira varredura em 2 segundos após inicialização
+    // Executa a primeira varredura em 8 segundos após inicialização para garantir subida imediata do servidor
     setTimeout(() => {
       this.runFullSystemAudit('autonomous_15m').catch((err) =>
         console.error('[AISentinel] Erro na varredura inicial:', err)
       );
-    }, 2000);
+    }, 8000);
 
     // Configura o ciclo recorrente estrito de 15 em 15 minutos
     this.intervalTimer = setInterval(() => {
@@ -40,7 +40,7 @@ class AISentinelService {
       );
     }, this.INTERVAL_MS);
 
-    this.nextRunTime = Date.now() + 2000;
+    this.nextRunTime = Date.now() + 8000;
     console.log('[AISentinel] 🛡️ Sentinela IA Ativo: Varreduras autônomas agendadas a cada 15 minutos.');
   }
 
@@ -558,10 +558,16 @@ Escreva um parecer executivo sintético, didático e de fácil compreensão para
 
         for (const model of modelsToTry) {
           try {
-            const response = await ai.models.generateContent({
-              model,
-              contents: prompt,
-            });
+            const timeoutPromise = new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Timeout Gemini')), 3500)
+            );
+            const response = (await Promise.race([
+              ai.models.generateContent({
+                model,
+                contents: prompt,
+              }),
+              timeoutPromise,
+            ])) as any;
             const text = response.text?.trim();
             if (text && text.length > 20) {
               return text;

@@ -3,6 +3,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import {
   TelemetryController,
@@ -38,6 +39,19 @@ const PRODUTOR_PHONE = process.env.PRODUCER_WHATSAPP_PHONE || '84988585211'; // 
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+/**
+ * 🩺 HEALTHCHECK ENDPOINTS (Railway, UpTime Robot & Kubernetes)
+ */
+app.get(['/api/health', '/health'], (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'AQUA-CORE AI Production Server',
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'production',
+  });
+});
 
 /**
  * 📡 HUB DE MENSAGERIA: WEBHOOK DE ENTRADA (WhatsApp Ghost UX)
@@ -477,10 +491,17 @@ setInterval(async () => {
 
 // Production or Vite Dev server middleware
 async function start() {
-  if (process.env.NODE_ENV === 'production') {
+  const distIndexHtml = path.resolve(__dirname, 'dist', 'index.html');
+  const hasDist = fs.existsSync(distIndexHtml);
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.RAILWAY_ENVIRONMENT !== undefined ||
+    hasDist;
+
+  if (isProduction && hasDist) {
     app.use(express.static(path.resolve(__dirname, 'dist')));
     app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(distIndexHtml);
     });
   } else {
     const vite = await createViteServer({

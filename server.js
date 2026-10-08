@@ -2772,6 +2772,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import path2 from "path";
+import fs2 from "fs";
 import { fileURLToPath as fileURLToPath2 } from "url";
 
 // src/api/aquaControllers.ts
@@ -4187,13 +4188,13 @@ var AISentinelService = class {
       this.runFullSystemAudit("autonomous_15m").catch(
         (err) => console.error("[AISentinel] Erro na varredura inicial:", err)
       );
-    }, 2e3);
+    }, 8e3);
     this.intervalTimer = setInterval(() => {
       this.runFullSystemAudit("autonomous_15m").catch(
         (err) => console.error("[AISentinel] Erro no ciclo de 15 min:", err)
       );
     }, this.INTERVAL_MS);
-    this.nextRunTime = Date.now() + 2e3;
+    this.nextRunTime = Date.now() + 8e3;
     console.log("[AISentinel] \u{1F6E1}\uFE0F Sentinela IA Ativo: Varreduras aut\xF4nomas agendadas a cada 15 minutos.");
   }
   /**
@@ -4595,10 +4596,16 @@ Escreva um parecer executivo sint\xE9tico, did\xE1tico e de f\xE1cil compreens\x
         ];
         for (const model of modelsToTry) {
           try {
-            const response = await ai.models.generateContent({
-              model,
-              contents: prompt
-            });
+            const timeoutPromise = new Promise(
+              (_, reject) => setTimeout(() => reject(new Error("Timeout Gemini")), 3500)
+            );
+            const response = await Promise.race([
+              ai.models.generateContent({
+                model,
+                contents: prompt
+              }),
+              timeoutPromise
+            ]);
             const text = response.text?.trim();
             if (text && text.length > 20) {
               return text;
@@ -4696,6 +4703,15 @@ var PORT = Number(process.env.PORT) || 3e3;
 var PRODUTOR_PHONE = process.env.PRODUCER_WHATSAPP_PHONE || "84988585211";
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.get(["/api/health", "/health"], (_req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "AQUA-CORE AI Production Server",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    environment: process.env.NODE_ENV || "production"
+  });
+});
 app.post("/webhook/whatsapp", async (req, res) => {
   try {
     const { from, text } = req.body;
@@ -5029,10 +5045,13 @@ setInterval(async () => {
   );
 }, 864e5);
 async function start() {
-  if (process.env.NODE_ENV === "production") {
+  const distIndexHtml = path2.resolve(__dirname2, "dist", "index.html");
+  const hasDist = fs2.existsSync(distIndexHtml);
+  const isProduction = process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT !== void 0 || hasDist;
+  if (isProduction && hasDist) {
     app.use(express.static(path2.resolve(__dirname2, "dist")));
     app.get("*", (_req, res) => {
-      res.sendFile(path2.resolve(__dirname2, "dist", "index.html"));
+      res.sendFile(distIndexHtml);
     });
   } else {
     const vite = await createViteServer({
