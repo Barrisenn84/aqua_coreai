@@ -385,11 +385,11 @@ app.post('/api/aqua-core/equipment/maintenance', async (req, res) => {
 
 // REST Endpoint: Previsão de Despesca Enriquecida
 app.get('/api/aqua-core/harvest-forecast', (req, res) => {
-  const currentWeight = req.query.weight ? Number(req.query.weight) : 550;
-  const population = req.query.population ? Number(req.query.population) : 15000;
-  const days = req.query.days ? Number(req.query.days) : 10;
+  const currentWeight = req.query.weight ? Number(req.query.weight) : 12;
+  const population = req.query.population ? Number(req.query.population) : 100000;
 
-  const forecast = calculateHarvestForecast(currentWeight, population, days);
+  const intervals = calculateHarvestForecast({ currentWeight, population });
+  const latest = intervals[intervals.length - 1] || { biomass: 0 };
 
   return res.json({
     farm: 'Fazenda River Life',
@@ -397,8 +397,8 @@ app.get('/api/aqua-core/harvest-forecast', (req, res) => {
     totalTanks: 7,
     totalPopulation: population,
     currentBiomassKg: Math.round((currentWeight * population) / 1000),
-    projectedBiomass10dKg: Math.round(forecast.biomass),
-    ...forecast,
+    projectedBiomass10dKg: latest.biomass,
+    forecastTimeline: intervals,
   });
 });
 

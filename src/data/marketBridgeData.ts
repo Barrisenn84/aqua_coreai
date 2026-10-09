@@ -32,7 +32,7 @@ export const initialBuyerBids: MarketBuyerBid[] = [
   {
     id: 'bid-03',
     buyerName: 'Cooperativa Aquícola Potiguar',
-    buyerType: 'Cooperativa de Beneficiamento',
+    buyerType: 'Cooperativa Aquícola',
     location: 'Natal / Canguaretama, RN',
     pricePerKg: 23.90,
     premiumDeltaPct: 3.2,
@@ -46,7 +46,7 @@ export const initialBuyerBids: MarketBuyerBid[] = [
   {
     id: 'bid-04',
     buyerName: 'Nordeste Seafoods International',
-    buyerType: 'Frigorífico Exportador SIF',
+    buyerType: 'Frigorífico Exportador',
     location: 'Fortaleza, CE (Entrega FOB Polo PB)',
     pricePerKg: 26.50,
     premiumDeltaPct: 10.5,

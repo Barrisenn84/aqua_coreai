@@ -468,7 +468,7 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
                         Garantias e Benefícios Comprovados no Rótulo:
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {scanResult.benefits.map((b, i) => (
+                        {scanResult.benefits.map((b: string, i: number) => (
                           <span key={i} className="text-[10px] font-mono bg-cyan-950/60 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded-md">
                             ✓ {b}
                           </span>

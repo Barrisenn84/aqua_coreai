@@ -230,8 +230,8 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
   ]);
 
-  // Migração de schema para carregar automaticamente dados reais do Meu Pescado
-  const DATA_SCHEMA_VERSION = 'v5_meu_pescado_riverlife_mogeiro';
+  // Migração de schema para carregar automaticamente dados reais do Meu Pescado (Mogeiro - PB)
+  const DATA_SCHEMA_VERSION = 'v6_shrimp_recovery_riverlife_mogeiro';
 
   const [currentTenant, setCurrentTenant] = useState<ITenant>(() => {
     try {
@@ -281,7 +281,12 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [farm, setFarm] = useState<Farm>(() => {
     try {
       const saved = localStorage.getItem('aquacore_saved_farm');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return { ...initialFarm, ...parsed };
+        }
+      }
     } catch {}
     return initialFarm;
   });
@@ -289,7 +294,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [tanks, setTanks] = useState<Tank[]>(() => {
     try {
       const saved = localStorage.getItem('aquacore_saved_tanks');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
     return initialTanks;
   });
@@ -297,7 +305,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [batches, setBatches] = useState<Batch[]>(() => {
     try {
       const saved = localStorage.getItem('aquacore_saved_batches');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
     return initialBatches;
   });
@@ -459,9 +470,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const batch = batches.find((b) => b.tankId === tank.id);
       if (!read || !batch) return;
 
+      const shrimpPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
       const toxicNh3 = calculateToxicAmmonia(read.ammoniaTotal, read.ph, read.temperature);
       const biomassKg = calculateBiomassKg(batch.currentCount, batch.currentWeightG);
-      const biomassValue = biomassKg * farm.camarãoSalePricePerKg;
+      const biomassValue = biomassKg * shrimpPrice;
 
       // Rule 1: Hypoxia (O2 < 3.2 mg/L)
       if (read.dissolvedOxygen < 3.2) {
@@ -502,7 +514,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
     return list;
-  }, [tanks, sensorReadings, batches, farm.camarãoSalePricePerKg]);
+  }, [tanks, sensorReadings, batches, farm.shrimpSalePricePerKg, farm.camarãoSalePricePerKg, farm.fishSalePricePerKg]);
 
   // Overall farm metrics & DRE
   const { totalBiomassKg, globalFcr, globalSurvivalRatePct, dre } = useMemo(() => {
@@ -550,13 +562,15 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const fcr = isInitialCycle ? 0 : (netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : (totalBiomass > 0 ? 1.35 : 0));
     const survivalRate = totalInitialcamarão > 0 ? Number(((totalCurrentcamarão / totalInitialcamarão) * 100).toFixed(1)) : 100;
 
+    const effectivePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
+
     // Agro DRE calculation (Em fase inicial reflete com fidelidade de centavos os dados do Meu Pescado)
-    const grossRevenue = isInitialCycle ? 42.36 : (totalBiomass * farm.camarãoSalePricePerKg);
-    const feedCost = totalFeedKg * farm.feedAverageCostPerKg;
+    const grossRevenue = isInitialCycle ? 42.36 : (totalBiomass * effectivePrice);
+    const feedCost = totalFeedKg * (farm.feedAverageCostPerKg || 4.20);
     // Energy: calculated from all active aerators
-    const totalAeratorKw = tanks.reduce((acc, t) => acc + (t.aeratorActive ? t.aeratorCount * t.aeratorPowerKw : 0), 0);
+    const totalAeratorKw = tanks.reduce((acc, t) => acc + (t.aeratorActive ? (t.aeratorCount || 0) * (t.aeratorPowerKw || 0) : 0), 0);
     const estimatedDailyEnergyKwh = totalAeratorKw * 10;
-    const energyCost = isInitialCycle ? 0 : (estimatedDailyEnergyKwh * farm.kwhCost * 30);
+    const energyCost = isInitialCycle ? 0 : (estimatedDailyEnergyKwh * (farm.kwhCost || 0.72) * 30);
     const juvenilesCost = isInitialCycle ? 3800.00 : (totalInitialcamarão * 0.32);
     const additivesProbioticsCost = isInitialCycle ? 60.50 : (totalBiomass * 0.42);
     const laborFixedCost = isInitialCycle ? 0 : (batches.length > 0 ? 6500 : 0);
@@ -565,7 +579,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const ebitda = grossRevenue - totalCost; // R$ 42,36 - R$ 3.860,50 = -R$ 3.818,14 no Meu Pescado
     const netMarginPct = grossRevenue > 0 ? Number(((ebitda / grossRevenue) * 100).toFixed(1)) : 0;
     const costPerKgProduced = isInitialCycle ? 1093.63 : (totalBiomass > 0 ? Number((totalCost / totalBiomass).toFixed(2)) : 0);
-    const breakevenBiomassKg = costPerKgProduced > 0 ? Math.round(totalCost / farm.camarãoSalePricePerKg) : 0;
+    const breakevenBiomassKg = costPerKgProduced > 0 && effectivePrice > 0 ? Math.round(totalCost / effectivePrice) : 0;
     const reportedBiomassKg = isInitialCycle ? 3.53 : Number(totalBiomass.toFixed(1));
 
     const dreResult: AgroDRE = {
@@ -927,7 +941,8 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 4. Notificação comemorativa no WhatsApp Ghost UX
     const whatsMsg: IWhatsAppMessage = {
       id: `harvest-alert-${Date.now()}`,
-      sender: 'Dr. Camarão • Oráculo Zootécnico',
+      sender: 'aqua-core-ai',
+      senderName: 'Dr. Camarão • Oráculo Zootécnico',
       text: `🎣 *DESPESCA REGISTRADA COM SUCESSO!* \n` +
         `• *Viveiro:* ${data.tankId}\n` +
         `• *Volume Despescado:* ${data.totalWeightKg.toLocaleString('pt-BR')} kg\n` +
@@ -935,7 +950,16 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         `• *Faturamento Bruto:* R$ ${revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
         `• *Comprador:* ${data.buyerName}\n` +
         `• *Fluxo de Caixa:* Lançado automaticamente como ENTRADA no DFC e DRE da fazenda.`,
+      content: `🎣 *DESPESCA REGISTRADA COM SUCESSO!* \n` +
+        `• *Viveiro:* ${data.tankId}\n` +
+        `• *Volume Despescado:* ${data.totalWeightKg.toLocaleString('pt-BR')} kg\n` +
+        `• *Preço:* R$ ${data.pricePerKg.toFixed(2)}/kg\n` +
+        `• *Faturamento Bruto:* R$ ${revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+        `• *Comprador:* ${data.buyerName}\n` +
+        `• *Fluxo de Caixa:* Lançado automaticamente como ENTRADA no DFC e DRE da fazenda.`,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      level: 'informative',
+      deliveryStatus: 'delivered',
       isOutgoing: false,
       status: 'delivered',
     };
@@ -988,13 +1012,21 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (data.quantity > 250) {
       const alertMsg: IWhatsAppMessage = {
         id: `mort-alert-${Date.now()}`,
-        sender: 'Sentinela IA • Alerta Sanitário',
+        sender: 'aqua-core-ai',
+        senderName: 'Sentinela IA • Alerta Sanitário',
         text: `⚠️ *ALERTA SANITÁRIO NO ${data.tankId.toUpperCase()}*\n` +
           `• Mortalidade lançada: ${data.quantity} camarões.\n` +
           `• Causa informada: ${data.probableCause}.\n` +
           `• Fase Lunar: ${data.lunarPhase}.\n` +
           `• Ação sugerida: Verificar alcalinidade e acionar aeração noturna.`,
+        content: `⚠️ *ALERTA SANITÁRIO NO ${data.tankId.toUpperCase()}*\n` +
+          `• Mortalidade lançada: ${data.quantity} camarões.\n` +
+          `• Causa informada: ${data.probableCause}.\n` +
+          `• Fase Lunar: ${data.lunarPhase}.\n` +
+          `• Ação sugerida: Verificar alcalinidade e acionar aeração noturna.`,
         timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        level: 'critical',
+        deliveryStatus: 'delivered',
         isOutgoing: false,
         status: 'delivered',
       };
@@ -1231,14 +1263,18 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         farmId: farm.id,
         tankId: newId,
         batchCode: tankData.initialBatchCode || `Lote_${String(updatedTanks.length).padStart(2, '0')}`,
-        species: currentTenant.speciesTarget || 'Litopenaeus vannamei',
+        species: 'Litopenaeus vannamei',
+        startDate: new Date().toISOString().split('T')[0],
+        cycleDay: 1,
         stockingDate: new Date().toISOString().split('T')[0],
         initialCount: tankData.initialShrimpCount,
         currentCount: tankData.initialShrimpCount,
         initialWeightG: tankData.initialWeightG || 0.02,
         currentWeightG: tankData.initialWeightG || 0.02,
-        targetWeightG: 12.0,
+        targetFinalWeightG: 12.0,
+        expectedFinalWeightG: 12.0,
         accumulatedFeedKg: 0,
+        targetHarvestDate: new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0],
         stage: 'engorda',
         healthStatus: 'excelente',
       };
@@ -1248,6 +1284,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSensorReadings((prev) => ({
       ...prev,
       [newId]: {
+        id: `reading-${newId}-${Date.now()}`,
         tankId: newId,
         timestamp: new Date().toISOString(),
         dissolvedOxygen: 5.8,
@@ -1256,6 +1293,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         salinityPpt: 15.0,
         ammoniaTotal: 0.35,
         ammoniaToxic: 0.008,
+        nitrite: 0.05,
         turbidityNtu: 25,
         orpMv: 210,
         batteryPct: 98,
@@ -1615,7 +1653,9 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       name: t.name,
       kwhCost: t.kwhCost,
       feedAverageCostPerKg: t.feedCost,
+      shrimpSalePricePerKg: t.salePrice,
       camarãoSalePricePerKg: t.salePrice,
+      fishSalePricePerKg: t.salePrice,
     }));
   };
 
@@ -1637,7 +1677,9 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         name: t.name,
         kwhCost: t.kwhCost,
         feedAverageCostPerKg: t.feedCost,
+        shrimpSalePricePerKg: t.salePrice,
         camarãoSalePricePerKg: t.salePrice,
+        fishSalePricePerKg: t.salePrice,
       }));
       return;
     }

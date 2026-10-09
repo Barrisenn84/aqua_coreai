@@ -1,6 +1,6 @@
 export type SpeciesType = 'Litopenaeus vannamei' | 'Camarão Vannamei' | 'Tambaqui' | 'Salmão do Atlântico';
 
-export type TankType = 'escavado' | 'rede' | 'ras' | 'bioflocos';
+export type TankType = 'escavado' | 'rede' | 'ras' | 'bioflocos' | 'berçário' | 'geomembrana' | 'raceways';
 
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 
@@ -12,8 +12,11 @@ export interface Farm {
   currency: string;
   kwhCost: number; // R$/kWh
   shrimpSalePricePerKg: number; // R$/kg
-  shrimpSalePricePerKg?: number; // R$/kg
   feedAverageCostPerKg: number; // R$/kg
+  producerPhone?: string;
+  fishSalePricePerKg?: number; // Compatibilidade legada
+  camarãoSalePricePerKg?: number; // Compatibilidade legada com acento
+  camaraoSalePricePerKg?: number; // Compatibilidade sem acento
 }
 
 export interface Tank {
@@ -45,6 +48,11 @@ export interface Batch {
   expectedFinalWeightG: number;
   accumulatedFeedKg: number;
   targetHarvestDate: string;
+  stage?: string;
+  stockingDate?: string;
+  targetWeightG?: number;
+  healthStatus?: string;
+  farmId?: string;
 }
 
 export interface SensorReading {
@@ -56,9 +64,12 @@ export interface SensorReading {
   ph: number;
   ammoniaTotal: number; // mg/L TAN (Total Ammonia Nitrogen)
   ammoniaToxic: number; // calculated NH3 un-ionized (mg/L)
-  nitrite: number; // mg/L NO2
+  nitrite?: number; // mg/L NO2
   orpMv?: number; // mV
   salinityPpt?: number;
+  turbidityNtu?: number;
+  batteryPct?: number;
+  solarPanelWatts?: number;
 }
 
 export interface FeedingLog {

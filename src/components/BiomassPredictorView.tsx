@@ -118,7 +118,7 @@ export const BiomassPredictorView: React.FC = () => {
               <span className="text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-yellow-400" />
-                Valor da Carga: <strong className="text-emerald-300">R$ {(prediction.projectedHarvestBiomassTons * 1000 * farm.camarãoSalePricePerKg).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong>
+                Valor da Carga: <strong className="text-emerald-300">R$ {(prediction.projectedHarvestBiomassTons * 1000 * (farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50)).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong>
               </span>
             </div>
           </div>

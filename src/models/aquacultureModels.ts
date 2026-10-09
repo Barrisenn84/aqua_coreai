@@ -91,6 +91,13 @@ export interface FeedLabelScanResult {
   suggestedFeedingRatePct: number;
   confidenceScore: number;
   summary: string;
+  itemType?: string;
+  productName?: string;
+  officialRegistration?: string;
+  priceBrl?: number;
+  pelletType?: string;
+  usageInstructions?: string;
+  benefits?: string[];
 }
 
 export type WhatsAppMessageLevel = 'informative' | 'consultative' | 'critical';
@@ -112,15 +119,18 @@ export interface WhatsAppGhostOutput {
 
 export interface IWhatsAppMessage {
   id: string;
-  sender: 'producer' | 'aqua-core-ai';
+  sender: 'producer' | 'aqua-core-ai' | string;
   senderName: string;
   timestamp: string;
   content: string;
+  text?: string;
   level: WhatsAppMessageLevel;
   tankId?: string;
   actionRequired?: boolean;
   followUpScheduleMinutes?: number;
-  deliveryStatus: 'sent' | 'delivered' | 'read';
+  deliveryStatus: 'sent' | 'delivered' | 'read' | string;
+  status?: string;
+  isOutgoing?: boolean;
   metadata?: {
     intent?: string;
     temperature?: number;

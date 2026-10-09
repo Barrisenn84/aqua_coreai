@@ -7,6 +7,7 @@ export enum MessageLevel {
   CONSULT = 'CONSULT',
   CONSULTATIVE = 'CONSULT',
   CRITICAL = 'CRITICAL',
+  EMERGENCY = 'CRITICAL',
 }
 
 export interface DispatchedLogItem {

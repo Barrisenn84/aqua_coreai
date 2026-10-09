@@ -810,7 +810,7 @@ export const aquacultureMath = {
   },
 
   // Saturação Dinâmica de O2 para Polo de Mogeiro / River Life
-  calculateDynamicO2Limit: (waterTempC: number, tempAmbienteC: number) => {
+  calculateDynamicO2Limit: (waterTempC: number, tempAmbienteC: number = 32.0) => {
     // Modelo de saturação água do mar (35 ppt) - Benson & Krause ajustado
     const saturation = 14.652 - 0.41022 * waterTempC + 0.0079995 * Math.pow(waterTempC, 2) - 0.000077774 * Math.pow(waterTempC, 3);
     // Fator de segurança para PLs de Camarão e ajuste por temp ambiente da PB

@@ -29,15 +29,13 @@ export interface RegionalQuote {
 export const MarketWatch: React.FC = () => {
   const { farm, totalBiomassKg, updateFarmSettings } = useAquaCore();
 
-  const [activeSpecies, setActiveSpecies] = useState<'camarão' | 'camarao'>('camarão');
+  const [activeSpecies, setActiveSpecies] = useState<'comercial' | 'exportacao'>('comercial');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<string>('Agora mesmo');
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
   // Preço de venda atual cadastrado no sistema
-  const systemPrice = activeSpecies === 'camarão'
-    ? farm.camarãoSalePricePerKg
-    : (farm.shrimpSalePricePerKg ?? farm.camarãoSalePricePerKg ?? 22.0);
+  const systemPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
 
   // Cotações regionais para camarão no Nordeste / Paraíba
   const camarãoQuotes: RegionalQuote[] = [
@@ -95,10 +93,10 @@ export const MarketWatch: React.FC = () => {
     },
   ];
 
-  const currentQuotes = activeSpecies === 'camarão' ? camarãoQuotes : camaraoQuotes;
+  const currentQuotes = activeSpecies === 'comercial' ? camarãoQuotes : camaraoQuotes;
   const benchmarkQuote = currentQuotes[0]; // Categoria principal de exportação/filé
   const spreadPerKg = benchmarkQuote.regionalPricePerKg - systemPrice;
-  const spreadPct = Number(((spreadPerKg / systemPrice) * 100).toFixed(1));
+  const spreadPct = systemPrice > 0 ? Number(((spreadPerKg / systemPrice) * 100).toFixed(1)) : 0;
   const totalBiomassPotentialImpact = Number(((totalBiomassKg * spreadPerKg)).toFixed(2));
 
   const handleRefresh = () => {
@@ -110,16 +108,12 @@ export const MarketWatch: React.FC = () => {
   };
 
   const handleApplyRegionalPrice = (targetPrice: number) => {
-    if (activeSpecies === 'camarão') {
-      updateFarmSettings({ camarãoSalePricePerKg: targetPrice });
-      setSuccessNotice(`Preço da camarão atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE recalculado.`);
-    } else {
-      updateFarmSettings({
-        shrimpSalePricePerKg: targetPrice,
-        camarãoSalePricePerKg: targetPrice, // Mantém paridade consistente no motor geral
-      });
-      setSuccessNotice(`Preço do Camarão atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE e valuation recalculados com paridade da Paraíba.`);
-    }
+    updateFarmSettings({
+      shrimpSalePricePerKg: targetPrice,
+      camarãoSalePricePerKg: targetPrice,
+      fishSalePricePerKg: targetPrice,
+    });
+    setSuccessNotice(`Preço do Camarão atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE e valuation recalculados.`);
     setTimeout(() => setSuccessNotice(null), 4000);
   };
 
@@ -158,24 +152,24 @@ export const MarketWatch: React.FC = () => {
         <div className="flex items-center gap-2">
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
-              onClick={() => setActiveSpecies('camarão')}
+              onClick={() => setActiveSpecies('comercial')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeSpecies === 'camarão'
+                activeSpecies === 'comercial'
                   ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🐟 Litopenaeus vannamei
+              🦐 Camarão Comercial
             </button>
             <button
-              onClick={() => setActiveSpecies('camarao')}
+              onClick={() => setActiveSpecies('exportacao')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeSpecies === 'camarao'
+                activeSpecies === 'exportacao'
                   ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🦐 Camarão (L. vannamei)
+              ✨ Grade Exportação
             </button>
           </div>
 

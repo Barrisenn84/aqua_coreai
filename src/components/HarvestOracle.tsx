@@ -22,8 +22,10 @@ export const HarvestOracle: React.FC = () => {
 
   // Selectable tank (defaults to Tanque 04 or 02)
   const [selectedTankId, setSelectedTankId] = useState<string>('tank-04');
-  const [customcamarãoPrice, setCustomcamarãoPrice] = useState<number>(farm.camarãoSalePricePerKg);
-  const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
+  const [customShrimpPrice, setCustomShrimpPrice] = useState<number>(
+    farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50
+  );
+  const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg || 4.20);
 
   const selectedTank = tanks?.find((t) => t.id === selectedTankId) || tanks?.[0];
   const selectedBatch = batches?.find((b) => b.tankId === selectedTankId) || batches?.[0];
@@ -39,15 +41,23 @@ export const HarvestOracle: React.FC = () => {
       selectedBatch,
       selectedTank,
       selectedReading,
-      farm.kwhCost,
+      farm.kwhCost || 0.72,
       customFeedPrice,
-      customcamarãoPrice
+      customShrimpPrice
     );
-  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customcamarãoPrice]);
+  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customShrimpPrice]);
 
-  const todayScenario = scenarios[0];
-  const optimalScenario = scenarios.find((s) => s.isOptimalPoint) || scenarios[3];
-  const lateScenario = scenarios[scenarios.length - 1]; // Day 30
+  const todayScenario = scenarios[0] || {
+    dayOffset: 0,
+    projectedAvgWeightG: 12,
+    projectedFcr: 1.25,
+    netProfitReais: 0,
+    isOptimalPoint: false,
+    projectedBiomassKg: 0,
+    accumulatedCostReais: 0,
+  };
+  const optimalScenario = scenarios.find((s) => s.isOptimalPoint) || scenarios[0] || todayScenario;
+  const lateScenario = scenarios[scenarios.length - 1] || todayScenario;
 
   // Inflection curve calculation for SVG
   const maxNetProfit = Math.max(...scenarios.map((s) => s.netProfitReais));
@@ -400,8 +410,8 @@ export const HarvestOracle: React.FC = () => {
               <input
                 type="number"
                 step="0.10"
-                value={customcamarãoPrice}
-                onChange={(e) => setCustomcamarãoPrice(Number(e.target.value))}
+                value={customShrimpPrice}
+                onChange={(e) => setCustomShrimpPrice(Number(e.target.value))}
                 className="w-16 bg-slate-900 text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-slate-700 text-right focus:outline-none"
               />
               <span className="text-slate-500">R$/kg</span>

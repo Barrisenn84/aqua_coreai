@@ -32,6 +32,7 @@ import { VoiceAssistantModal } from './components/VoiceAssistantModal';
 import { VisionAnalysisModal } from './components/VisionAnalysisModal';
 import { FarmProfileModal } from './components/FarmProfileModal';
 import { ResetControlModal } from './components/ResetControlModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export type CanonicalTabType =
   | 'nerve-center'
@@ -233,15 +234,16 @@ function AppContent() {
       {/* Emergency Hypoxia / Critical Banner (Visible on all tabs when triggered) */}
       <EmergencyBanner />
 
-      {/* Main Content Viewport - Garantido contra tela preta com renderização segura */}
+      {/* Main Content Viewport - Protegido por ErrorBoundary */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-4 py-4 sm:py-6 pb-24 md:pb-6 overflow-x-hidden">
-        {activeTab === 'nerve-center' && (
-          <NerveCenterDashboard
-            onOpenAudit={handleOpenAudit}
-            onOpenBiometry={handleOpenBiometry}
-            onNavigateToOracle={() => setActiveTab('harvest-oracle')}
-          />
-        )}
+        <ErrorBoundary fallbackTitle="Falha de Módulo • Recuperação em Andamento">
+          {activeTab === 'nerve-center' && (
+            <NerveCenterDashboard
+              onOpenAudit={handleOpenAudit}
+              onOpenBiometry={handleOpenBiometry}
+              onNavigateToOracle={() => setActiveTab('harvest-oracle')}
+            />
+          )}
 
         {activeTab === 'whatsapp-ghost' && <WhatsAppGhostUXView />}
 
@@ -297,6 +299,7 @@ function AppContent() {
             onNavigateToOracle={() => setActiveTab('harvest-oracle')}
           />
         )}
+        </ErrorBoundary>
       </main>
 
       {/* Footer System Telemetry */}
@@ -389,8 +392,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AquaCoreProvider>
-      <AppContent />
-    </AquaCoreProvider>
+    <ErrorBoundary>
+      <AquaCoreProvider>
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </AquaCoreProvider>
+    </ErrorBoundary>
   );
 }

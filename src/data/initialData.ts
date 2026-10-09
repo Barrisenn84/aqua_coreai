@@ -8,7 +8,11 @@ export const initialFarm: Farm = {
   currency: 'BRL (R$)',
   kwhCost: 0.72, // R$ por kWh
   shrimpSalePricePerKg: 24.50, // Camarão Vannamei Comercial Inteiro (R$ 24,50/kg)
+  fishSalePricePerKg: 24.50,
+  camarãoSalePricePerKg: 24.50,
+  camaraoSalePricePerKg: 24.50,
   feedAverageCostPerKg: 4.20, // R$ por kg (Média ponderada rações)
+  producerPhone: '+5584988585211',
 };
 
 // 7 Tanques Cadastrados: Todos Escavados | Linha: Engorda | Área Total: 1,682 ha (16.820 m²)
