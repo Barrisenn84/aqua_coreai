@@ -332,9 +332,9 @@ export const ResetControlModal: React.FC = () => {
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-cyan-300 font-bold focus:border-cyan-500 outline-none"
                   >
                     <option value="Litopenaeus vannamei (Camarão)">Litopenaeus vannamei (Camarão Branco do Pacífico)</option>
-                    <option value="Oreochromis niloticus (Tilápia do Nilo)">Oreochromis niloticus (Tilápia do Nilo)</option>
+                    <option value="Oreochromis niloticus (Litopenaeus vannamei)">Oreochromis niloticus (Litopenaeus vannamei)</option>
                     <option value="Macrobrachium rosenbergii (Camarão Gigante da Malásia)">Macrobrachium rosenbergii (Camarão Gigante da Malásia)</option>
-                    <option value="Policultivo (Camarão + Tilápia)">Policultivo (Camarão + Tilápia)</option>
+                    <option value="Policultivo (Camarão + Camarão)">Policultivo (Camarão + Camarão)</option>
                   </select>
                 </div>
 

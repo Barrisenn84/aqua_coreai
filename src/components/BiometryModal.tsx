@@ -121,7 +121,7 @@ export const BiometryModal: React.FC<BiometryModalProps> = ({
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono font-bold text-cyan-400 focus:outline-none focus:border-cyan-400"
                     />
                     <span className="absolute right-3 top-2.5 text-xs text-slate-500 font-mono">
-                      g/peixe
+                      g/camarão
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500 font-mono mt-1 block">
@@ -143,7 +143,7 @@ export const BiometryModal: React.FC<BiometryModalProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-cyan-400"
                   />
                   <span className="text-[10px] text-slate-500 font-mono mt-1 block">
-                    Recomendado: 100 a 200 peixes para CV &lt; 5%
+                    Recomendado: 100 a 200 camarãos para CV &lt; 5%
                   </span>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export const BiometryModal: React.FC<BiometryModalProps> = ({
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-cyan-400"
                   />
                   <span className="text-[10px] text-slate-500 font-mono mt-1 block">
-                    Peixes recolhidos nos controles diários
+                    camarãos recolhidos nos controles diários
                   </span>
                 </div>
 

@@ -5,7 +5,7 @@ export interface IFarm {
   timezone: string;
   currency: string;
   kwhCost: number;
-  fishSalePricePerKg: number;
+  camarãoSalePricePerKg: number;
   feedAverageCostPerKg: number;
   createdAt: Date;
   updatedAt: Date;
@@ -30,7 +30,7 @@ export interface IBatch {
   _id: string;
   tankId: string;
   batchCode: string;
-  species: 'Tilápia do Nilo' | 'Camarão Vannamei' | 'Tambaqui' | 'Salmão do Atlântico';
+  species: 'Litopenaeus vannamei' | 'Camarão Vannamei' | 'Tambaqui' | 'Salmão do Atlântico';
   startDate: Date;
   ageDays: number;
   initialCount: number;

@@ -31,7 +31,7 @@ export const AddTankModal: React.FC<AddTankModalProps> = ({ isOpen, onClose }) =
   // Lote inicial
   const [createInitialBatch, setCreateInitialBatch] = useState<boolean>(true);
   const [batchCode, setBatchCode] = useState('');
-  const [initialShrimpCount, setInitialShrimpCount] = useState<number>(50000);
+  const [initialShrimpCount, setInitialShrimpCount] = useState<string>('');
   const [initialWeightG, setInitialWeightG] = useState<number>(0.02);
 
   const [successMsg, setSuccessMsg] = useState(false);
@@ -56,7 +56,7 @@ export const AddTankModal: React.FC<AddTankModalProps> = ({ isOpen, onClose }) =
       aeratorActive: true,
       status: 'optimal',
       initialBatchCode: createInitialBatch ? (batchCode.trim() || `Lote_${Date.now().toString().slice(-4)}`) : undefined,
-      initialShrimpCount: createInitialBatch ? initialShrimpCount : 0,
+      initialShrimpCount: createInitialBatch ? Number(initialShrimpCount) : 0,
       initialWeightG: createInitialBatch ? initialWeightG : 0.02,
     });
 
@@ -248,13 +248,11 @@ export const AddTankModal: React.FC<AddTankModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 text-[10px]">Qtd. Povoada (PLs/un)</label>
+                  <label className="block text-slate-400 mb-1 text-[10px]">Qtd. Povoada (PLs de Camarão/un)</label>
                   <input
                     type="number"
-                    min="1000"
-                    step="5000"
                     value={initialShrimpCount}
-                    onChange={(e) => setInitialShrimpCount(Number(e.target.value))}
+                    onChange={(e) => setInitialShrimpCount(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:border-cyan-500 outline-none"
                   />
                 </div>

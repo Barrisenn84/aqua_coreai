@@ -36,8 +36,8 @@ export function calculateDoSaturation(tempC: number, salinityPpt: number = 0): n
 export interface JoaoPessoaOxygenConfig {
   ambientTempC: number;         // Temperatura ambiente em João Pessoa (°C, ex: 28°C - 32°C)
   waterTempC?: number;          // Temperatura da água medida (se ausente, calculada com base na insolação de JP)
-  salinityPpt?: number;         // Salinidade da água em ppt (padrão 20 ppt para Litopenaeus vannamei, 0 ppt para Tilápia)
-  species?: 'Litopenaeus vannamei' | 'Tilápia do Nilo' | 'Camarão' | 'Tilápia';
+  salinityPpt?: number;         // Salinidade da água em ppt (padrão 20 ppt para Litopenaeus vannamei, 0 ppt para camarão)
+  species?: 'Litopenaeus vannamei' | 'Litopenaeus vannamei' | 'Camarão' | 'camarão';
   stage?: 'Pós-Larva' | 'Juvenil' | 'Engorda' | 'Terminação';
   relativeHumidity?: number;    // Umidade relativa típica de João Pessoa (70% - 85%)
   solarHour?: number;           // Hora local em JP (0 a 24)
@@ -103,7 +103,7 @@ export function configureJoaoPessoaCriticalOxygenThresholds(
       optimalMinMgL = Number(Math.max(5.0, saturationDoMgL * 0.80).toFixed(2));
     }
   } else {
-    // Tilápia do Nilo: mais rústica, piso de 3.0 a 3.2 mg/L dependendo da temperatura tropical
+    // Litopenaeus vannamei: mais rústica, piso de 3.0 a 3.2 mg/L dependendo da temperatura tropical
     criticalLimitMgL = Number(Math.max(3.2, saturationDoMgL * 0.46).toFixed(2));
     warningLimitMgL = Number(Math.max(4.0, saturationDoMgL * 0.60).toFixed(2));
     optimalMinMgL = Number(Math.max(4.8, saturationDoMgL * 0.72).toFixed(2));
@@ -188,14 +188,14 @@ export function projectWeightTGC(
   currentWeightG: number,
   tempC: number,
   days: number,
-  species: SpeciesType = 'Tilápia do Nilo'
+  species: SpeciesType = 'Litopenaeus vannamei'
 ): number {
   // TGC benchmark constants for optimal aquaculture conditions
   let tgc = 1.15;
   if (species === 'Camarão Vannamei') tgc = 0.85;
   if (species === 'Tambaqui') tgc = 1.25;
 
-  // Temperature efficiency multiplier (Tilapia drops below 24C or above 33C)
+  // Temperature efficiency multiplier (camarão drops below 24C or above 33C)
   let tempFactor = 1.0;
   if (tempC < 22) tempFactor = 0.55;
   else if (tempC < 25) tempFactor = 0.78;
@@ -217,7 +217,7 @@ export function generateHarvestScenarios(
   reading: SensorReading,
   kwhCost: number = 0.65,
   feedCostPerKg: number = 4.8,
-  fishBasePricePerKg: number = 9.8
+  camarãoBasePricePerKg: number = 9.8
 ): HarvestScenario[] {
   const scenarios: HarvestScenario[] = [];
   const currentBiomass = calculateBiomassKg(batch.currentCount, batch.currentWeightG);
@@ -225,10 +225,10 @@ export function generateHarvestScenarios(
   // Calibrate daily feed rate (% of body weight) based on current weight
   // Juveniles eat 4-5%, sub-adults 2.5-3%, market size (>750g) eats 1.3-1.8%
   const getFeedPct = (w: number) => {
-    if (w < 100) return 0.045;
-    if (w < 350) return 0.028;
-    if (w < 650) return 0.021;
-    if (w < 850) return 0.016;
+    if (w < 10) return 0.045; // Juvenis/PLs
+    if (w < 50) return 0.028;
+    if (w < 100) return 0.021;
+    if (w < 200) return 0.016;
     return 0.013;
   };
 
@@ -244,10 +244,10 @@ export function generateHarvestScenarios(
     const projectedCount = Math.round(batch.currentCount * Math.pow(0.9992, offset));
     const projBiomass = calculateBiomassKg(projectedCount, projWeight);
 
-    // Premium price tier: Tilápia > 850g commands premium for fillet yield
-    let marketPrice = fishBasePricePerKg;
-    if (projWeight >= 850) marketPrice += 0.45; // Premium frigorífico filé grande
-    else if (projWeight < 600) marketPrice -= 0.6; // Desconto peixe miúdo
+    // Premium price tier: Camarão > 20g commands premium for export grade
+    let marketPrice = camarãoBasePricePerKg;
+    if (projWeight >= 20) marketPrice += 0.45; // Premium exportação
+    else if (projWeight < 10) marketPrice -= 0.6; // Desconto camarão miúdo
 
     const grossRev = projBiomass * marketPrice;
 
@@ -268,7 +268,7 @@ export function generateHarvestScenarios(
 
     // Accumulated total operational cost
     const baseFeedCost = batch.accumulatedFeedKg * feedCostPerKg;
-    const baseFixedCost = currentBiomass * 1.8; // Alevino + depreciação + insumos
+    const baseFixedCost = currentBiomass * 1.8; // pós-larva + depreciação + insumos
     const accumulatedTotalCost = baseFeedCost + baseFixedCost + additionalFeedCost + additionalEnergyCost;
 
     const netProfit = grossRev - accumulatedTotalCost;
@@ -463,7 +463,7 @@ export function runAquaCoreRuleEngine(params: {
       ],
       action: `REDUZIR RAÇÃO EM 60% E AUMENTAR AERAÇÃO PARA STRIPPING GASOSO.`,
       justification: `A combinação de pH elevado (${reading.ph.toFixed(1)}) e TAN ${reading.ammoniaTotal.toFixed(1)} gera ${toxicAmmonia.toFixed(3)} mg/L de NH3 tóxica livre, danificando o epitélio branquial.`,
-      expectedResult: `Queda da amônia tóxica para < 0.02 mg/L em 36h, estancamento de estresse osmótico e economia de R$ ${(biomassValueReais * 0.04).toFixed(0)} em peixes protegidos.`,
+      expectedResult: `Queda da amônia tóxica para < 0.02 mg/L em 36h, estancamento de estresse osmótico e economia de R$ ${(biomassValueReais * 0.04).toFixed(0)} em camarãos protegidos.`,
       quickMetrics: [
         { label: 'NH3 Tóxica', value: `${toxicAmmonia.toFixed(3)} mg/L`, status: 'crit' },
         { label: 'pH da Água', value: reading.ph.toFixed(2), status: 'warn' },
@@ -486,7 +486,7 @@ export function runAquaCoreRuleEngine(params: {
         {
           step: 'DADO',
           title: 'Biometria Real Registrada',
-          content: `Amostra de ${biometry.sampleSize} espécimes pesada no lote ${batch.batchCode}. Peso médio: ${biometry.avgWeightG}g. Uniformidade: ${biometry.uniformityPct}%. Mortalidade no período: ${biometry.mortalityCount} peixes.`,
+          content: `Amostra de ${biometry.sampleSize} espécimes pesada no lote ${batch.batchCode}. Peso médio: ${biometry.avgWeightG}g. Uniformidade: ${biometry.uniformityPct}%. Mortalidade no período: ${biometry.mortalityCount} camarãos.`,
           severity: 'neutral',
         },
         {
@@ -703,7 +703,7 @@ export function calculateAdaptiveFeedingPlan(
 
   if (o2 < 3.2) {
     metabolicMultiplier = 0.0; // Cut 100% of feed
-    generalGuideline = 'HIPÓXIA CRÍTICA: Ração 100% suspensa. Peixes não metabolizam em hipóxia e a fermentação de amido consome oxigênio vital.';
+    generalGuideline = 'HIPÓXIA CRÍTICA: Ração 100% suspensa. camarãos não metabolizam em hipóxia e a fermentação de amido consome oxigênio vital.';
   } else if (o2 < 4.2) {
     metabolicMultiplier = 0.40; // Cut 60%
     generalGuideline = 'O2 SUB-ÓTIMO: Redução drástica de 60% no trato. Fornecer apenas manutenção em áreas com maior aeração.';
@@ -802,7 +802,7 @@ export const aquacultureMath = {
 
   calculateProjectedProfit: (farmData: any, marketPrices: any): string => {
     const biomassKg = farmData?.totalBiomassKg || (farmData?.totalBiomassTons ? farmData.totalBiomassTons * 1000 : 23450);
-    const pricePerKg = marketPrices?.tilapiaLivePerKg || farmData?.salePricePerKg || 9.40;
+    const pricePerKg = marketPrices?.shrimpLivePerKg || farmData?.salePricePerKg || 24.50;
     const grossRevenue = biomassKg * pricePerKg;
     const estCost = biomassKg * (farmData?.costPerKg || 6.10);
     const profit = Math.max(0, grossRevenue - estCost);
@@ -813,7 +813,7 @@ export const aquacultureMath = {
   calculateDynamicO2Limit: (waterTempC: number, tempAmbienteC: number) => {
     // Modelo de saturação água do mar (35 ppt) - Benson & Krause ajustado
     const saturation = 14.652 - 0.41022 * waterTempC + 0.0079995 * Math.pow(waterTempC, 2) - 0.000077774 * Math.pow(waterTempC, 3);
-    // Fator de segurança para PLs e ajuste por temp ambiente da PB
+    // Fator de segurança para PLs de Camarão e ajuste por temp ambiente da PB
     const factorPL = 0.8; // Sobrevivência de PLs é crítica
     const factorTemp = tempAmbienteC > 30 ? 0.9 : 1.0; // Calor estressa mais
     return Math.round(saturation * factorPL * factorTemp * 100) / 100;
@@ -826,7 +826,7 @@ export const aquacultureMath = {
     const population = tankData.population || 15000;
     const intervals = [0, 10, 20, 30].map((m) => {
       const weight = currentWeight + (weeklyGrowth * m);
-      const pricePadrao = 8.90;
+    const pricePadrao = 8.90;
       const priceEspecial = 10.25;
       const biomass = Math.round((weight * population) / 1000);
       const grossRevenuePadrao = Math.round(biomass * pricePadrao);

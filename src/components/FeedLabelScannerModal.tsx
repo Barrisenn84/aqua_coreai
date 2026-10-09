@@ -58,9 +58,9 @@ export const FeedLabelScannerModal: React.FC<FeedLabelScannerModalProps> = ({
       costPerKg: 4.85,
     },
     {
-      label: 'Presence Tilápia Terminação 28% PB (6.0mm)',
+      label: 'Presence Camarão Terminação 28% PB (6.0mm)',
       manufacturer: 'Presence InVivo',
-      brandName: 'Tilápia Terminação Alta Energia',
+      brandName: 'Camarão Terminação Alta Energia',
       crudeProteinPct: 28,
       pelletSizeMm: 6.0,
       targetStage: 'Terminação' as const,

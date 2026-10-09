@@ -191,7 +191,7 @@ export class MessagingHub {
         userId,
         {
           lot: 'Lote B (Tanque 02)',
-          species: 'Tilápia do Nilo',
+          species: 'Litopenaeus vannamei',
           temperature: 27.8,
           biomassKg: 6420,
           query: incomingText,

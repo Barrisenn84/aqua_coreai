@@ -151,7 +151,7 @@ export const CloudArchitectureView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300 mb-4 leading-relaxed font-sans">
-              O produtor não pode esperar disco quando peixes estão morrendo. A última leitura é mantida em cache Redis com resposta inferior a 2 milissegundos.
+              O produtor não pode esperar disco quando camarãos estão morrendo. A última leitura é mantida em cache Redis com resposta inferior a 2 milissegundos.
             </p>
 
             <div className="space-y-2 font-mono text-xs">

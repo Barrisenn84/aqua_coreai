@@ -465,7 +465,7 @@ setInterval(async () => {
       marketPrices: {
         shrimp_premium: 45.00,
         shrimp_standard: 32.00,
-        tilapiaLivePerKg: 10.25,
+        camarãoLivePerKg: 10.25,
       },
     },
     MessageLevel.INFO
@@ -502,7 +502,7 @@ async function start() {
     📱 Client: ${PRODUTOR_PHONE} (Paraíba/PB)
     🦀 Focus: Litopenaeus vannamei (Pós-Larvas & Engorda)
     🛰️ Sensor Threshold: O2 < 4.0mg/L (Critical)
-    🧠 Engine: Gemini 2.5 Flash (Shrimp & Fish Expert)
+    🧠 Engine: Gemini 2.5 Flash (Shrimp & camarão Expert)
     🌐 Port: ${PORT} (Orchestrator & Web App Active)
     ==========================================================
     `);

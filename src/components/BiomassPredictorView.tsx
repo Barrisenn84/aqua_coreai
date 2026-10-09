@@ -114,7 +114,7 @@ export const BiomassPredictorView: React.FC = () => {
               <span className="text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-yellow-400" />
-                Valor da Carga: <strong className="text-emerald-300">R$ {(prediction.projectedHarvestBiomassTons * 1000 * farm.fishSalePricePerKg).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong>
+                Valor da Carga: <strong className="text-emerald-300">R$ {(prediction.projectedHarvestBiomassTons * 1000 * farm.camarãoSalePricePerKg).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong>
               </span>
             </div>
           </div>
@@ -178,7 +178,7 @@ export const BiomassPredictorView: React.FC = () => {
             <span>650g (Filé Pequeno)</span>
             <span>800g (Padrão Frigorífico Exportação)</span>
             <span>950g (Premium Ágio Máximo)</span>
-            <span>1.100g (Peixe Inteiro Especial)</span>
+            <span>1.100g (camarão Inteiro Especial)</span>
           </div>
         </div>
       </div>

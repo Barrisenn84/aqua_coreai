@@ -132,7 +132,7 @@ export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size
         </div>
         <div className="bg-slate-950/60 p-1.5 rounded-lg text-center border border-slate-800/60">
           <span className="text-[9px] text-slate-500 uppercase block">Margem Líquida</span>
-          <span className="font-bold text-emerald-400">R$ {(farm.fishSalePricePerKg - dre.costPerKgProduced).toFixed(2)}/kg</span>
+          <span className="font-bold text-emerald-400">R$ {(farm.camarãoSalePricePerKg - dre.costPerKgProduced).toFixed(2)}/kg</span>
         </div>
       </div>
     </div>

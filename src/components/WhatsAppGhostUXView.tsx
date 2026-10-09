@@ -144,7 +144,7 @@ export const WhatsAppGhostUXView: React.FC = () => {
 
   const simulateAudioNote = async () => {
     setAudioSimulating(true);
-    const audioText = '🎤 [Áudio Transcrito via Whisper/Gemini]: "AQUA-CORE, notei a água do tanque 4 meio parada e os peixes na flor d\'água... Devo ligar o aerador agora?"';
+    const audioText = '🎤 [Áudio Transcrito via Whisper/Gemini]: "AQUA-CORE, notei a água do tanque 4 meio parada e os camarãos na flor d\'água... Devo ligar o aerador agora?"';
     try {
       await sendWhatsAppMessage(audioText);
     } finally {

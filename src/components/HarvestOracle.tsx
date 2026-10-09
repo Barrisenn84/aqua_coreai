@@ -22,7 +22,7 @@ export const HarvestOracle: React.FC = () => {
 
   // Selectable tank (defaults to Tanque 04 or 02)
   const [selectedTankId, setSelectedTankId] = useState<string>('tank-04');
-  const [customFishPrice, setCustomFishPrice] = useState<number>(farm.fishSalePricePerKg);
+  const [customcamarãoPrice, setCustomcamarãoPrice] = useState<number>(farm.camarãoSalePricePerKg);
   const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
 
   const selectedTank = tanks.find((t) => t.id === selectedTankId) || tanks[0];
@@ -37,9 +37,9 @@ export const HarvestOracle: React.FC = () => {
       selectedReading,
       farm.kwhCost,
       customFeedPrice,
-      customFishPrice
+      customcamarãoPrice
     );
-  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customFishPrice]);
+  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customcamarãoPrice]);
 
   const todayScenario = scenarios[0];
   const optimalScenario = scenarios.find((s) => s.isOptimalPoint) || scenarios[3];
@@ -366,7 +366,7 @@ export const HarvestOracle: React.FC = () => {
               JUSTIFICATIVA TÉCNICA
             </span>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              O lote atinge {optimalScenario.projectedAvgWeightG}g no dia D+{optimalScenario.dayOffset}, desbloqueando a bonificação de peixe pesado com FCR em {optimalScenario.projectedFcr}. Após esse dia, cada 1 kg de ração adicionado produz menos receita do que seu custo.
+              O lote atinge {optimalScenario.projectedAvgWeightG}g no dia D+{optimalScenario.dayOffset}, desbloqueando a bonificação de camarão pesado com FCR em {optimalScenario.projectedFcr}. Após esse dia, cada 1 kg de ração adicionado produz menos receita do que seu custo.
             </p>
           </div>
 
@@ -396,8 +396,8 @@ export const HarvestOracle: React.FC = () => {
               <input
                 type="number"
                 step="0.10"
-                value={customFishPrice}
-                onChange={(e) => setCustomFishPrice(Number(e.target.value))}
+                value={customcamarãoPrice}
+                onChange={(e) => setCustomcamarãoPrice(Number(e.target.value))}
                 className="w-16 bg-slate-900 text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-slate-700 text-right focus:outline-none"
               />
               <span className="text-slate-500">R$/kg</span>

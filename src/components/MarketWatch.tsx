@@ -29,25 +29,25 @@ export interface RegionalQuote {
 export const MarketWatch: React.FC = () => {
   const { farm, totalBiomassKg, updateFarmSettings } = useAquaCore();
 
-  const [activeSpecies, setActiveSpecies] = useState<'tilapia' | 'camarao'>('tilapia');
+  const [activeSpecies, setActiveSpecies] = useState<'camarão' | 'camarao'>('camarão');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<string>('Agora mesmo');
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
   // Preço de venda atual cadastrado no sistema
-  const systemPrice = activeSpecies === 'tilapia'
-    ? farm.fishSalePricePerKg
-    : (farm.shrimpSalePricePerKg ?? farm.fishSalePricePerKg ?? 22.0);
+  const systemPrice = activeSpecies === 'camarão'
+    ? farm.camarãoSalePricePerKg
+    : (farm.shrimpSalePricePerKg ?? farm.camarãoSalePricePerKg ?? 22.0);
 
-  // Cotações regionais para Tilápia no Nordeste / Paraíba
-  const tilapiaQuotes: RegionalQuote[] = [
+  // Cotações regionais para camarão no Nordeste / Paraíba
+  const camarãoQuotes: RegionalQuote[] = [
     {
       category: 'Grade Especial Filé (>900g)',
       regionalPricePerKg: 10.4,
       trendPct7d: +4.2,
       marketChannel: 'Frigoríficos Polo Paraíba & PE',
       source: 'Cepea Regional / Polo PB',
-      description: 'Peixe limpo padrão exportação e filé de 1ª linha. Alto rendimento de carcaça.',
+      description: 'camarão limpo padrão exportação e filé de 1ª linha. Alto rendimento de carcaça.',
     },
     {
       category: 'Grade Padrão Inteiro (750g - 850g)',
@@ -55,7 +55,7 @@ export const MarketWatch: React.FC = () => {
       trendPct7d: +1.8,
       marketChannel: 'Frigoríficos Regionais',
       source: 'Bolsa Aquícola Nordeste',
-      description: 'Abate padrão para comercialização de peixe inteiro eviscerado.',
+      description: 'Abate padrão para comercialização de camarão inteiro eviscerado.',
     },
     {
       category: 'Mercado Atacadista (Campina Grande / JP)',
@@ -95,7 +95,7 @@ export const MarketWatch: React.FC = () => {
     },
   ];
 
-  const currentQuotes = activeSpecies === 'tilapia' ? tilapiaQuotes : camaraoQuotes;
+  const currentQuotes = activeSpecies === 'camarão' ? camarãoQuotes : camaraoQuotes;
   const benchmarkQuote = currentQuotes[0]; // Categoria principal de exportação/filé
   const spreadPerKg = benchmarkQuote.regionalPricePerKg - systemPrice;
   const spreadPct = Number(((spreadPerKg / systemPrice) * 100).toFixed(1));
@@ -110,13 +110,13 @@ export const MarketWatch: React.FC = () => {
   };
 
   const handleApplyRegionalPrice = (targetPrice: number) => {
-    if (activeSpecies === 'tilapia') {
-      updateFarmSettings({ fishSalePricePerKg: targetPrice });
-      setSuccessNotice(`Preço da Tilápia atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE recalculado.`);
+    if (activeSpecies === 'camarão') {
+      updateFarmSettings({ camarãoSalePricePerKg: targetPrice });
+      setSuccessNotice(`Preço da camarão atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE recalculado.`);
     } else {
       updateFarmSettings({
         shrimpSalePricePerKg: targetPrice,
-        fishSalePricePerKg: targetPrice, // Mantém paridade consistente no motor geral
+        camarãoSalePricePerKg: targetPrice, // Mantém paridade consistente no motor geral
       });
       setSuccessNotice(`Preço do Camarão atualizado para R$ ${targetPrice.toFixed(2)}/kg no sistema! DRE e valuation recalculados com paridade da Paraíba.`);
     }
@@ -158,14 +158,14 @@ export const MarketWatch: React.FC = () => {
         <div className="flex items-center gap-2">
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
-              onClick={() => setActiveSpecies('tilapia')}
+              onClick={() => setActiveSpecies('camarão')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeSpecies === 'tilapia'
+                activeSpecies === 'camarão'
                   ? 'bg-cyan-500 text-slate-950 shadow-md font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🐟 Tilápia do Nilo
+              🐟 Litopenaeus vannamei
             </button>
             <button
               onClick={() => setActiveSpecies('camarao')}

@@ -16,7 +16,7 @@
     },
     {
       "id": "tenant-santa-helena",
-      "name": "Fazenda Santa Helena (Tilápia BA)",
+      "name": "Fazenda Santa Helena (Camarão BA)",
       "code": "SANTA_HELENA",
       "type": "aquaculture_farm",
       "location": "Polo Paulo Afonso – BA",
@@ -26,7 +26,7 @@
       "feedCost": 3.9,
       "salePrice": 9.8,
       "producerPhone": "+5575991234567",
-      "speciesTarget": "Oreochromis niloticus (Tilápia do Nilo)"
+      "speciesTarget": "Oreochromis niloticus (Litopenaeus vannamei)"
     },
     {
       "id": "tenant-constr-ai-01",

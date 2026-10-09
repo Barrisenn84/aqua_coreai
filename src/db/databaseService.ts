@@ -208,7 +208,7 @@ const INITIAL_DB_DATA: DbSchema = {
     },
     {
       id: 'tenant-santa-helena',
-      name: 'Fazenda Santa Helena (Tilápia BA)',
+      name: 'Fazenda Santa Helena (Camarão BA)',
       code: 'SANTA_HELENA',
       type: 'aquaculture_farm',
       location: 'Polo Paulo Afonso – BA',
@@ -218,7 +218,7 @@ const INITIAL_DB_DATA: DbSchema = {
       feedCost: 3.90,
       salePrice: 9.80,
       producerPhone: '+5575991234567',
-      speciesTarget: 'Oreochromis niloticus (Tilápia do Nilo)',
+      speciesTarget: 'Oreochromis niloticus (Litopenaeus vannamei)',
     },
     {
       id: 'tenant-constr-ai-01',

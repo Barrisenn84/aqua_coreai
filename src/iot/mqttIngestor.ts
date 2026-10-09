@@ -4,7 +4,7 @@ import { messagingHub, MessageLevel } from '../services/MessagingHub';
 
 /**
  * High-performance In-Memory Redis-style Cache Layer
- * Prevents hitting disk or database when a fish mortality crisis is unfolding.
+ * Prevents hitting disk or database when a camarão mortality crisis is unfolding.
  * Guarantees < 2ms access latency for telemetry & aerator actuators.
  */
 class InMemoryRedisCache {

@@ -92,7 +92,7 @@ export const EmergencyBanner: React.FC = () => {
                   {primaryAlert.currentValue.toFixed(2)} mg/L
                 </span>{' '}
                 <span className="text-sm font-normal text-red-300">
-                  (Limiar letal para {targetTank?.name || 'peixes'})
+                  (Limiar letal para {targetTank?.name || 'camarãos'})
                 </span>
               </h2>
 

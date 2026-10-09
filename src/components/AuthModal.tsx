@@ -266,7 +266,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500 text-left transition-colors cursor-pointer"
                 >
                   <span className="text-white font-bold block truncate">Dra. Helena</span>
-                  <span className="text-[10px] text-cyan-400">Tilápia BA</span>
+                  <span className="text-[10px] text-cyan-400">Camarão BA</span>
                 </button>
                 <button
                   type="button"

@@ -123,7 +123,7 @@ export interface WhatsAppGhostOutput {
 /**
  * PILAR 3: O MOTOR DE CONVERSA GHOST UX & THE ORACLE
  * Especializado em Carcinicultura (Pós-Larvas PLs e Engorda de Camarão L. vannamei)
- * e Piscicultura de Precisão (Tilápia) no polo Paraíba / João Pessoa.
+ * e Piscicultura de Precisão (Camarão) no polo Paraíba / João Pessoa.
  */
 export class GeminiOracle {
   private getClient(): GoogleGenAI | null {
@@ -402,7 +402,7 @@ export async function scanFeedBagLabel(
 ): Promise<FeedLabelScanResult> {
   const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-  const prompt = `Você é um Engenheiro de Pesca e Aquicultura especialista em Carcinicultura e Nutrição Aquática (Litopenaeus vannamei, Peixes e Camarões).
+  const prompt = `Você é um Engenheiro de Pesca e Aquicultura especialista em Carcinicultura e Nutrição Aquática (Litopenaeus vannamei, Camarãos e Camarões).
 Analise com extrema precisão, rigor científico e fidelidade cirúrgica a imagem fornecida (saco de ração, etiqueta, rótulo de insumo, probiótico, fertilizante, anúncio comercial ou tabela de arraçoamento).
 
 DIRETRIZ DE OURO DE VERACIDADE:

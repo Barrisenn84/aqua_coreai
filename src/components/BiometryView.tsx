@@ -208,7 +208,7 @@ export const BiometryView: React.FC<BiometryViewProps> = ({ onOpenNewBiometry })
                 >
                   <option value="Extrusada 32% PB - 4.0mm">Extrusada 32% PB - 4.0mm (Crescimento)</option>
                   <option value="Extrusada 28% PB - 6.0mm Acabamento">Extrusada 28% PB - 6.0mm (Terminação)</option>
-                  <option value="Extrusada 36% PB - 2.0mm Juvenil">Extrusada 36% PB - 2.0mm (Alevinos)</option>
+                  <option value="Extrusada 36% PB - 2.0mm Juvenil">Extrusada 36% PB - 2.0mm (Pós-larvas)</option>
                   <option value="Bioflocos Camarão 35% PB">Bioflocos Camarão 35% PB Microesferas</option>
                 </select>
               </div>

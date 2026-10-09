@@ -28,7 +28,7 @@ export interface LiveCurrencyData {
   usdBrl: number;
   eurBrl: number;
   shrimpDollarParityUsd: number; // Valor do camarão em USD/kg
-  feedImportCostImpactPct: number; // Impacto na farinha de peixe / farelo de soja
+  feedImportCostImpactPct: number; // Impacto na farinha de camarão / farelo de soja
   source: string;
   isLive: boolean;
   updatedAt: string;
@@ -392,7 +392,7 @@ export async function consultarCnpjBrasilApi(cnpjRaw: string): Promise<BrasilApi
     razaoSocial: 'FRIGORIFICO POLO PARAIBA E NORDESTE LTDA',
     nomeFantasia: 'Polo Pescados & Camarão PB',
     situacaoCadastral: 'ATIVA (Regular na Receita Federal)',
-    cnaeFiscalDescricao: 'Preservação de peixes, crustáceos e moluscos (CNAE 10.20-1-01)',
+    cnaeFiscalDescricao: 'Preservação de camarãos, crustáceos e moluscos (CNAE 10.20-1-01)',
     municipio: 'João Pessoa',
     uf: 'PB',
     logradouro: 'Av. Industrial das Águas, 1420',

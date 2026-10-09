@@ -423,7 +423,7 @@ class AISentinelService {
         0
       );
       const netCashRs = totalEntriesRs - totalExpensesRs;
-      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.fishSalePricePerKg || 24.50;
+      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || 24.50;
       const projectedRevenueCycle = Math.round(totalBiomassKg * shrimpSalePrice);
 
       items.push({

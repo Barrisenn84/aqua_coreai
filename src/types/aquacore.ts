@@ -1,4 +1,4 @@
-export type SpeciesType = 'Tilápia do Nilo' | 'Camarão Vannamei' | 'Tambaqui' | 'Salmão do Atlântico';
+export type SpeciesType = 'Litopenaeus vannamei' | 'Camarão Vannamei' | 'Tambaqui' | 'Salmão do Atlântico';
 
 export type TankType = 'escavado' | 'rede' | 'ras' | 'bioflocos';
 
@@ -11,7 +11,7 @@ export interface Farm {
   timezone: string;
   currency: string;
   kwhCost: number; // R$/kWh
-  fishSalePricePerKg: number; // R$/kg
+  shrimpSalePricePerKg: number; // R$/kg
   shrimpSalePricePerKg?: number; // R$/kg
   feedAverageCostPerKg: number; // R$/kg
 }

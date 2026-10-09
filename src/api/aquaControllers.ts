@@ -194,7 +194,7 @@ export const WhatsAppController = {
         farmName: 'Santa Helena Aquacultura',
         tanks: initialTanks.map((t) => {
           const b = initialBatches.find((batch) => batch.tankId === t.id);
-          return { id: t.id, name: t.name, status: t.status, species: b?.species || 'Tilápia do Nilo' };
+          return { id: t.id, name: t.name, status: t.status, species: b?.species || 'Litopenaeus vannamei' };
         }),
         telemetry: {},
         batches: initialBatches,

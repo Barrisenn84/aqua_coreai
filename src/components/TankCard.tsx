@@ -36,7 +36,7 @@ export const TankCard: React.FC<TankCardProps> = ({
 
   const toxicNh3 = calculateToxicAmmonia(reading.ammoniaTotal, reading.ph, reading.temperature);
   const biomassKg = calculateBiomassKg(batch.currentCount, batch.currentWeightG);
-  const biomassValue = biomassKg * farm.fishSalePricePerKg;
+  const biomassValue = biomassKg * farm.camarãoSalePricePerKg;
   const aeratorTotalKw = tank.aeratorCount * tank.aeratorPowerKw;
   const aeratorHourlyCost = aeratorTotalKw * farm.kwhCost;
 

@@ -23,7 +23,7 @@ export const FinancialDREView: React.FC = () => {
 
   const [simulatedFcr, setSimulatedFcr] = useState<number>(globalFcr);
   const [simulatedFeedPrice, setSimulatedFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
-  const [simulatedFishPrice, setSimulatedFishPrice] = useState<number>(farm.fishSalePricePerKg);
+  const [simulatedcamarãoPrice, setSimulatedcamarãoPrice] = useState<number>(farm.camarãoSalePricePerKg);
 
   // Estado do CFO Virtual com IA
   const [isAuditingCfo, setIsAuditingCfo] = useState<boolean>(false);
@@ -85,7 +85,7 @@ export const FinancialDREView: React.FC = () => {
   // Feed consumed = totalBiomass * FCR
   const simulatedFeedKg = totalBiomassKg * simulatedFcr;
   const simulatedFeedCost = simulatedFeedKg * simulatedFeedPrice;
-  const simulatedGrossRev = totalBiomassKg * simulatedFishPrice;
+  const simulatedGrossRev = totalBiomassKg * simulatedcamarãoPrice;
   const simulatedTotalCost = simulatedFeedCost + dre.energyCost + dre.juvenilesCost + dre.additivesProbioticsCost + dre.laborFixedCost;
   const simulatedEbitda = simulatedGrossRev - simulatedTotalCost;
   const simulatedCostPerKg = totalBiomassKg > 0 ? Number((simulatedTotalCost / totalBiomassKg).toFixed(2)) : 0;
@@ -223,7 +223,7 @@ export const FinancialDREView: React.FC = () => {
             <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between font-bold text-slate-100">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-black">(+)</span>
-                <span>RECEITA BRUTA PROJETADA ({totalBiomassKg.toLocaleString('pt-BR')} kg @ R$ {farm.fishSalePricePerKg.toFixed(2)})</span>
+                <span>RECEITA BRUTA PROJETADA ({totalBiomassKg.toLocaleString('pt-BR')} kg @ R$ {farm.camarãoSalePricePerKg.toFixed(2)})</span>
               </div>
               <span className="text-sm text-emerald-400 font-black">
                 R$ {dre.grossRevenue.toLocaleString('pt-BR')}
@@ -259,7 +259,7 @@ export const FinancialDREView: React.FC = () => {
               <div className="flex items-center justify-between text-slate-300">
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                  Alevinos & Pós-Larvas ({juvenilesPct}%)
+                  pós-larvas & Pós-Larvas ({juvenilesPct}%)
                 </span>
                 <span className="font-bold">R$ {dre.juvenilesCost.toLocaleString('pt-BR')}</span>
               </div>
@@ -332,7 +332,7 @@ export const FinancialDREView: React.FC = () => {
             <div className="h-4 w-full rounded-full overflow-hidden flex bg-slate-950">
               <div style={{ width: `${feedPct}%` }} className="bg-amber-400 h-full" title={`Ração ${feedPct}%`}></div>
               <div style={{ width: `${energyPct}%` }} className="bg-cyan-400 h-full" title={`Energia ${energyPct}%`}></div>
-              <div style={{ width: `${juvenilesPct}%` }} className="bg-blue-400 h-full" title={`Alevinos ${juvenilesPct}%`}></div>
+              <div style={{ width: `${juvenilesPct}%` }} className="bg-blue-400 h-full" title={`pós-larvas ${juvenilesPct}%`}></div>
               <div style={{ width: `${othersPct}%` }} className="bg-purple-400 h-full" title={`Outros ${othersPct}%`}></div>
             </div>
 
@@ -346,7 +346,7 @@ export const FinancialDREView: React.FC = () => {
                 <span className="text-slate-300 font-semibold">R$ {(dre.energyCost / totalBiomassKg).toFixed(2)}/kg</span>
               </div>
               <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
-                <span className="text-[10px] text-blue-400 block font-bold">Alevinos: {juvenilesPct}%</span>
+                <span className="text-[10px] text-blue-400 block font-bold">pós-larvas: {juvenilesPct}%</span>
                 <span className="text-slate-300 font-semibold">R$ {(dre.juvenilesCost / totalBiomassKg).toFixed(2)}/kg</span>
               </div>
               <div className="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
@@ -386,16 +386,16 @@ export const FinancialDREView: React.FC = () => {
 
               <div>
                 <div className="flex justify-between text-slate-300 mb-1">
-                  <span>Preço Venda Peixe (R$/kg):</span>
-                  <span className="font-bold text-emerald-400">R$ {simulatedFishPrice.toFixed(2)}</span>
+                  <span>Preço Venda camarão (R$/kg):</span>
+                  <span className="font-bold text-emerald-400">R$ {simulatedcamarãoPrice.toFixed(2)}</span>
                 </div>
                 <input
                   type="range"
                   min="8.0"
                   max="12.0"
                   step="0.10"
-                  value={simulatedFishPrice}
-                  onChange={(e) => setSimulatedFishPrice(Number(e.target.value))}
+                  value={simulatedcamarãoPrice}
+                  onChange={(e) => setSimulatedcamarãoPrice(Number(e.target.value))}
                   className="w-full accent-emerald-400"
                 />
               </div>
