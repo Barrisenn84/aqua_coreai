@@ -71,7 +71,7 @@ export const AddTankModal: React.FC<AddTankModalProps> = ({ isOpen, onClose }) =
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="liquid-glass border border-slate-800 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         {/* Cabeçalho */}
         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
           <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ export const AddTankModal: React.FC<AddTankModalProps> = ({ isOpen, onClose }) =
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                Adicione os parâmetros reais dos seus tanques para monitoramento de telemetria e IA.
+                Coloque aqui os dados reais do seu tanque para a IA cuidar de tudo para você.
               </p>
             </div>
           </div>

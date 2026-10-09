@@ -193,7 +193,7 @@ A\xE7\xE3o: Forne\xE7a o parecer t\xE9cnico estruturado no formato JSON estrito.
 }
 async function scanFeedBagLabel(imageBase64, mimeType = "image/jpeg") {
   const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-  const prompt = `Voc\xEA \xE9 um Engenheiro de Pesca e Aquicultura especialista em Carcinicultura e Nutri\xE7\xE3o Aqu\xE1tica (Litopenaeus vannamei, camarãos e Camar\xF5es).
+  const prompt = `Voc\xEA \xE9 um Engenheiro de Pesca e Aquicultura especialista em Carcinicultura e Nutri\xE7\xE3o Aqu\xE1tica (Litopenaeus vannamei, Camar\xE3os e Camar\xF5es).
 Analise com extrema precis\xE3o, rigor cient\xEDfico e fidelidade cir\xFArgica a imagem fornecida (saco de ra\xE7\xE3o, etiqueta, r\xF3tulo de insumo, probi\xF3tico, fertilizante, an\xFAncio comercial ou tabela de arra\xE7oamento).
 
 DIRETRIZ DE OURO DE VERACIDADE:
@@ -1185,7 +1185,7 @@ var init_MessagingHub = __esm({
             userId,
             {
               lot: "Lote B (Tanque 02)",
-              species: "Til\xE1pia do Nilo",
+              species: "Litopenaeus vannamei",
               temperature: 27.8,
               biomassKg: 6420,
               query: incomingText
@@ -1631,7 +1631,7 @@ var init_databaseService = __esm({
         },
         {
           id: "tenant-santa-helena",
-          name: "Fazenda Santa Helena (Til\xE1pia BA)",
+          name: "Fazenda Santa Helena (Camar\xE3o BA)",
           code: "SANTA_HELENA",
           type: "aquaculture_farm",
           location: "Polo Paulo Afonso \u2013 BA",
@@ -1641,7 +1641,7 @@ var init_databaseService = __esm({
           feedCost: 3.9,
           salePrice: 9.8,
           producerPhone: "+5575991234567",
-          speciesTarget: "Oreochromis niloticus (Til\xE1pia do Nilo)"
+          speciesTarget: "Oreochromis niloticus (Litopenaeus vannamei)"
         },
         {
           id: "tenant-constr-ai-01",
@@ -2783,7 +2783,7 @@ function calculateFCR(accumulatedFeedKg, initialBiomassKg, currentBiomassKg) {
   if (gain <= 0) return 1.5;
   return Number((accumulatedFeedKg / gain).toFixed(2));
 }
-function projectWeightTGC(currentWeightG, tempC, days, species = "Til\xE1pia do Nilo") {
+function projectWeightTGC(currentWeightG, tempC, days, species = "Litopenaeus vannamei") {
   let tgc = 1.15;
   if (species === "Camar\xE3o Vannamei") tgc = 0.85;
   if (species === "Tambaqui") tgc = 1.25;
@@ -2901,7 +2901,7 @@ function runAquaCoreRuleEngine(params) {
       ],
       action: `REDUZIR RA\xC7\xC3O EM 60% E AUMENTAR AERA\xC7\xC3O PARA STRIPPING GASOSO.`,
       justification: `A combina\xE7\xE3o de pH elevado (${reading.ph.toFixed(1)}) e TAN ${reading.ammoniaTotal.toFixed(1)} gera ${toxicAmmonia.toFixed(3)} mg/L de NH3 t\xF3xica livre, danificando o epit\xE9lio branquial.`,
-      expectedResult: `Queda da am\xF4nia t\xF3xica para < 0.02 mg/L em 36h, estancamento de estresse osm\xF3tico e economia de R$ ${(biomassValueReais * 0.04).toFixed(0)} em camarãos protegidos.`,
+      expectedResult: `Queda da am\xF4nia t\xF3xica para < 0.02 mg/L em 36h, estancamento de estresse osm\xF3tico e economia de R$ ${(biomassValueReais * 0.04).toFixed(0)} em camar\xE3os protegidos.`,
       quickMetrics: [
         { label: "NH3 T\xF3xica", value: `${toxicAmmonia.toFixed(3)} mg/L`, status: "crit" },
         { label: "pH da \xC1gua", value: reading.ph.toFixed(2), status: "warn" },
@@ -2921,7 +2921,7 @@ function runAquaCoreRuleEngine(params) {
         {
           step: "DADO",
           title: "Biometria Real Registrada",
-          content: `Amostra de ${biometry.sampleSize} esp\xE9cimes pesada no lote ${batch.batchCode}. Peso m\xE9dio: ${biometry.avgWeightG}g. Uniformidade: ${biometry.uniformityPct}%. Mortalidade no per\xEDodo: ${biometry.mortalityCount} camarãos.`,
+          content: `Amostra de ${biometry.sampleSize} esp\xE9cimes pesada no lote ${batch.batchCode}. Peso m\xE9dio: ${biometry.avgWeightG}g. Uniformidade: ${biometry.uniformityPct}%. Mortalidade no per\xEDodo: ${biometry.mortalityCount} camar\xE3os.`,
           severity: "neutral"
         },
         {
@@ -3030,7 +3030,7 @@ function calculateAdaptiveFeedingPlan(batch, reading, feedPricePerKg = 4.85) {
   let generalGuideline = "";
   if (o2 < 3.2) {
     metabolicMultiplier = 0;
-    generalGuideline = "HIP\xD3XIA CR\xCDTICA: Ra\xE7\xE3o 100% suspensa. camarãos n\xE3o metabolizam em hip\xF3xia e a fermenta\xE7\xE3o de amido consome oxig\xEAnio vital.";
+    generalGuideline = "HIP\xD3XIA CR\xCDTICA: Ra\xE7\xE3o 100% suspensa. camar\xE3os n\xE3o metabolizam em hip\xF3xia e a fermenta\xE7\xE3o de amido consome oxig\xEAnio vital.";
   } else if (o2 < 4.2) {
     metabolicMultiplier = 0.4;
     generalGuideline = "O2 SUB-\xD3TIMO: Redu\xE7\xE3o dr\xE1stica de 60% no trato. Fornecer apenas manuten\xE7\xE3o em \xE1reas com maior aera\xE7\xE3o.";
@@ -3120,7 +3120,7 @@ var aquacultureMath = {
   },
   calculateProjectedProfit: (farmData, marketPrices) => {
     const biomassKg = farmData?.totalBiomassKg || (farmData?.totalBiomassTons ? farmData.totalBiomassTons * 1e3 : 23450);
-    const pricePerKg = marketPrices?.camarãoLivePerKg || farmData?.salePricePerKg || 9.4;
+    const pricePerKg = marketPrices?.shrimpLivePerKg || farmData?.salePricePerKg || 24.5;
     const grossRevenue = biomassKg * pricePerKg;
     const estCost = biomassKg * (farmData?.costPerKg || 6.1);
     const profit = Math.max(0, grossRevenue - estCost);
@@ -3160,7 +3160,7 @@ var initialFarm = {
   currency: "BRL (R$)",
   kwhCost: 0.72,
   // R$ por kWh
-  camarãoSalePricePerKg: 24.5,
+  shrimpSalePricePerKg: 24.5,
   // Camarão Vannamei Comercial Inteiro (R$ 24,50/kg)
   shrimpSalePricePerKg: 24.5,
   feedAverageCostPerKg: 4.2
@@ -3604,7 +3604,7 @@ var WhatsAppController = {
         farmName: "Santa Helena Aquacultura",
         tanks: initialTanks.map((t) => {
           const b = initialBatches.find((batch) => batch.tankId === t.id);
-          return { id: t.id, name: t.name, status: t.status, species: b?.species || "Til\xE1pia do Nilo" };
+          return { id: t.id, name: t.name, status: t.status, species: b?.species || "Litopenaeus vannamei" };
         }),
         telemetry: {},
         batches: initialBatches,
@@ -4364,7 +4364,7 @@ var AISentinelService = class {
         0
       );
       const netCashRs = totalEntriesRs - totalExpensesRs;
-      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || 24.5;
+      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.camar\u00E3oSalePricePerKg || 24.5;
       const projectedRevenueCycle = Math.round(totalBiomassKg * shrimpSalePrice);
       items.push({
         id: `audit-financial-market-${startTime}`,
@@ -4889,7 +4889,7 @@ setInterval(async () => {
       marketPrices: {
         shrimp_premium: 45,
         shrimp_standard: 32,
-        camarãoLivePerKg: 10.25
+        camar\u00E3oLivePerKg: 10.25
       }
     },
     "INFO" /* INFO */
@@ -4919,7 +4919,7 @@ async function start() {
     \u{1F4F1} Client: ${PRODUTOR_PHONE} (Para\xEDba/PB)
     \u{1F980} Focus: Litopenaeus vannamei (P\xF3s-Larvas & Engorda)
     \u{1F6F0}\uFE0F Sensor Threshold: O2 < 4.0mg/L (Critical)
-    \u{1F9E0} Engine: Gemini 2.5 Flash (Shrimp & camarão Expert)
+    \u{1F9E0} Engine: Gemini 2.5 Flash (Shrimp & camar\xE3o Expert)
     \u{1F310} Port: ${PORT} (Orchestrator & Web App Active)
     ==========================================================
     `);

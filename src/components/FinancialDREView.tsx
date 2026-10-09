@@ -23,7 +23,7 @@ export const FinancialDREView: React.FC = () => {
 
   const [simulatedFcr, setSimulatedFcr] = useState<number>(globalFcr);
   const [simulatedFeedPrice, setSimulatedFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
-  const [simulatedcamarãoPrice, setSimulatedcamarãoPrice] = useState<number>(farm.camarãoSalePricePerKg);
+  const [simulatedcamarãoPrice, setSimulatedcamarãoPrice] = useState<number>(farm.shrimpSalePricePerKg || 24.5);
 
   // Estado do CFO Virtual com IA
   const [isAuditingCfo, setIsAuditingCfo] = useState<boolean>(false);
@@ -223,7 +223,7 @@ export const FinancialDREView: React.FC = () => {
             <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between font-bold text-slate-100">
               <div className="flex items-center gap-2">
                 <span className="text-emerald-400 font-black">(+)</span>
-                <span>RECEITA BRUTA PROJETADA ({totalBiomassKg.toLocaleString('pt-BR')} kg @ R$ {farm.camarãoSalePricePerKg.toFixed(2)})</span>
+                <span>RECEITA BRUTA PROJETADA ({totalBiomassKg.toLocaleString('pt-BR')} kg @ R$ {(farm.shrimpSalePricePerKg || 24.5).toFixed(2)})</span>
               </div>
               <span className="text-sm text-emerald-400 font-black">
                 R$ {dre.grossRevenue.toLocaleString('pt-BR')}
