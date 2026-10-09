@@ -11,6 +11,18 @@ export const config = {
       ''
     );
   },
+  get producerPhone() {
+    return (typeof process !== 'undefined' && process.env?.PRODUCER_WHATSAPP_PHONE) || '84988585211';
+  },
+  get systemPixKey() {
+    return (typeof process !== 'undefined' && process.env?.SYSTEM_PIX_KEY) || 'financeiro@aquacore.ai';
+  },
+  get defaultTenantId() {
+    return (typeof process !== 'undefined' && process.env?.DEFAULT_TENANT_ID) || 'tenant-river-life';
+  },
+  get defaultFarmId() {
+    return (typeof process !== 'undefined' && process.env?.DEFAULT_FARM_ID) || 'farm_shrimp_jp';
+  },
   geminiModel: 'gemini-3.8-flash',
   fallbackModels: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'],
   redis: {

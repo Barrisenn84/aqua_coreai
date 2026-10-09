@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { errorHandler } from './src/middleware/errorHandler';
+import { authMiddleware } from './src/middleware/authMiddleware';
 import {
   TelemetryController,
   AIController,
@@ -35,7 +37,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const PRODUTOR_PHONE = process.env.PRODUCER_WHATSAPP_PHONE || '84988585211'; // NÚMERO REAL ATIVADO (Paraíba/NE)
+const PRODUTOR_PHONE = environment.producerPhone;
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -112,12 +114,13 @@ app.post('/api/messaging/dispatch', WhatsAppController.dispatchManual);
 app.get('/api/hardware/fleet', HardwareController.getFleet);
 app.post('/api/hardware/telemetry', HardwareController.ingestTelemetry);
 
-// 🔐 AUTENTICAÇÃO & MULTI-TENANT
+// 🔐 AUTENTICAÇÃO & MULTI-TENANT (Abertos para login)
 app.post('/api/auth/login', AuthController.login);
 app.get('/api/auth/tenants', AuthController.getTenants);
 app.post('/api/auth/switch-tenant', AuthController.switchTenant);
 
-// 💾 BANCO DE DADOS PERSISTENTE
+// 💾 BANCO DE DADOS PERSISTENTE (Protegidos por JWT)
+app.use('/api/db', authMiddleware);
 app.get('/api/db/biometries/:tenantId', DatabaseController.getBiometries);
 app.post('/api/db/biometries', DatabaseController.addBiometry);
 app.get('/api/db/equipments/:tenantId', DatabaseController.getEquipments);
@@ -156,24 +159,13 @@ app.get('/api/db/farm-profile', DatabaseController.getFarmProfile);
 app.put('/api/db/farm-profile', DatabaseController.updateFarmProfile);
 app.post('/api/db/farm-profile', DatabaseController.updateFarmProfile);
 
-// 🛡️ REINICIALIZAÇÃO CONTROLADA: ZERAR DADOS SALVOS SOMENTE COM CONFIRMAÇÃO DO USUÁRIO
+// 🛡️ REINICIALIZAÇÃO CONTROLADA
 app.post('/api/db/reset', DatabaseController.resetData);
 
-// ☀️ APIS GRATUITAS: CICLO SOLAR, BRASILAPI & BANCO CENTRAL
-app.get('/api/solar/cycle', SolarController.getCycle);
-app.get('/api/brasilapi/cnpj/:cnpj', BrasilApiController.getCnpj);
-app.get('/api/brasilapi/cep/:cep', BrasilApiController.getCep);
-app.get('/api/brasilapi/feriados', BrasilApiController.getFeriados);
-app.get('/api/agro/credit-benchmark', AgroCreditController.getBenchmark);
-app.get('/api/agro-credit/benchmark', AgroCreditController.getBenchmark);
-
-// 📷 VISÃO COMPUTACIONAL MULTIMODAL IA (5 Modos Especialistas)
+// 📷 VISÃO COMPUTACIONAL & IA (Protegidos)
+app.use(['/api/vision', '/api/voice', '/api/ai/audit', '/api/sentinel/run', '/api/sentinel/resolve'], authMiddleware);
 app.post('/api/vision/analyze', VisionController.analyzeImage);
-
-// 🎤 COMANDO POR VOZ MULTILATERAL (Voz IA Dr. Camarão)
 app.post('/api/voice/command', VoiceController.processCommand);
-
-// 🧠 IA EM TODA A POTÊNCIA: AUDITORIAS ESPECIALIZADAS COM GEMINI
 app.post('/api/ai/audit-invoice', AIAuditController.auditInvoice);
 app.post('/api/ai/audit-equipment', AIAuditController.auditEquipment);
 app.post('/api/ai/audit-dre', AIAuditController.auditDre);
@@ -255,19 +247,10 @@ app.post('/api/aqua-core/joao-pessoa-oxygen-config', (req, res) => {
 });
 
 // 1. Saturação Dinâmica de O2 (Fator 0.8 para segurança de PLs)
-const calculateDynamicO2Limit = (waterTempC: number): number => {
-  const saturation = 14.652 - 0.41022 * waterTempC + 0.0079995 * Math.pow(waterTempC, 2) - 0.000077774 * Math.pow(waterTempC, 3);
-  return Math.round(saturation * 0.8 * 100) / 100; // Fator 0.8 para segurança de PLs
-};
+const calculateDynamicO2Limit = aquacultureMath.calculateDynamicO2Limit;
 
 // 4. Previsão de Despesca Enriquecida (Crescimento acelerado JP tropical)
-const calculateHarvestForecast = (currentWeight: number = 550, population: number = 15000, days: number = 10) => {
-  const growthRate = 13.0; // g/dia (clima JP tropical)
-  const newWeight = currentWeight + (growthRate * days);
-  const biomass = (newWeight * population) / 1000;
-  const pricePadrao = 8.90, priceEspecial = 10.25;
-  return { newWeight, biomass, pricePadrao, priceEspecial };
-};
+const calculateHarvestForecast = aquacultureMath.calculateHarvestForecast;
 
 /**
  * 🛰️ MONITORAMENTO EM TEMPO REAL: GATILHO DE EMERGÊNCIA & OFFLINE SYNC
@@ -524,6 +507,8 @@ async function start() {
     ==========================================================
     `);
   });
+
+  app.use(errorHandler);
 }
 
 start();

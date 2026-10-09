@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { mqttIngestor, redisCache } from '../iot/mqttIngestor';
 import { getAIGuidance, scanFeedBagLabel } from '../ai/geminiOracle';
 import { runAquaCoreRuleEngine } from '../utils/aquacultureMath';
@@ -261,8 +262,19 @@ export const AuthController = {
       const user = db.findUserByEmail(email || '');
       const tenant = user ? db.getTenantById(user.tenantId) : db.getTenants()[0];
 
+      const secret = process.env.JWT_SECRET || 'aqua_core_default_secret_key_change_me';
+      const token = jwt.sign(
+        {
+          userId: user?.id || 'usr-default',
+          tenantId: tenant.id,
+          role: user?.role || 'engineer'
+        },
+        secret,
+        { expiresIn: '24h' }
+      );
+
       return res.json({
-        token: `jwt_session_${Date.now()}`,
+        token,
         user: user || {
           id: 'usr-default',
           name: 'Produtor Visitante',
