@@ -8,7 +8,6 @@ export const initialFarm: Farm = {
   currency: 'BRL (R$)',
   kwhCost: 0.72, // R$ por kWh
   shrimpSalePricePerKg: 24.50, // Camarão Vannamei Comercial Inteiro (R$ 24,50/kg)
-  shrimpSalePricePerKg: 24.50,
   feedAverageCostPerKg: 4.20, // R$ por kg (Média ponderada rações)
 };
 

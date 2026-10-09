@@ -37,9 +37,9 @@ export const MarketBridgeView: React.FC = () => {
 
   const targetBatch = batches.find((b) => b.tankId === 'tank-01') || batches[0];
   const targetTank = tanks.find((t) => t.id === 'tank-01') || tanks[0];
-  // Biomassa comercial projetada (100.000 un @ 15g = 1.50 t por tanque, ou total da fazenda 5.70 t)
+  // Biomassa comercial projetada
   const totalBiomassTons = (
-    (batches.reduce((acc, b) => acc + (b.currentCount || 0), 0) * 15) / 1000000
+    (batches?.reduce((acc, b) => acc + (b.currentCount || 0), 0) * 15) / 1000000 || 0
   ).toFixed(2);
 
   const handleOpenContract = (bid: MarketBuyerBid) => {

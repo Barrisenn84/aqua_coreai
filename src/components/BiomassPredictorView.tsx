@@ -25,9 +25,13 @@ export const BiomassPredictorView: React.FC = () => {
   const [targetWeightG, setTargetWeightG] = useState<number>(800);
   const [scheduledTruck, setScheduledTruck] = useState<boolean>(false);
 
-  const selectedTank = tanks.find((t) => t.id === selectedTankId) || tanks[0];
-  const selectedBatch = batches.find((b) => b.tankId === selectedTankId) || batches[0];
-  const selectedReading = sensorReadings[selectedTankId] || sensorReadings[selectedTank.id];
+  const selectedTank = tanks?.find((t) => t.id === selectedTankId) || tanks?.[0];
+  const selectedBatch = batches?.find((b) => b.tankId === selectedTankId) || batches?.[0];
+  const selectedReading = sensorReadings?.[selectedTankId] || sensorReadings?.[selectedTank?.id || ''];
+
+  if (!selectedTank || !selectedBatch || !selectedReading) {
+    return <div className="p-8 text-center text-slate-400">Carregando dados da produção...</div>;
+  }
 
   // Dynamic 3-variable regression prediction: FCR + TGD + Biometry
   const prediction = useMemo(() => {

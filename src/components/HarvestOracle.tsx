@@ -25,9 +25,13 @@ export const HarvestOracle: React.FC = () => {
   const [customcamarãoPrice, setCustomcamarãoPrice] = useState<number>(farm.camarãoSalePricePerKg);
   const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
 
-  const selectedTank = tanks.find((t) => t.id === selectedTankId) || tanks[0];
-  const selectedBatch = batches.find((b) => b.tankId === selectedTankId) || batches[0];
-  const selectedReading = sensorReadings[selectedTankId] || sensorReadings[selectedTank.id];
+  const selectedTank = tanks?.find((t) => t.id === selectedTankId) || tanks?.[0];
+  const selectedBatch = batches?.find((b) => b.tankId === selectedTankId) || batches?.[0];
+  const selectedReading = sensorReadings?.[selectedTankId] || sensorReadings?.[selectedTank?.id || ''];
+
+  if (!selectedTank || !selectedBatch || !selectedReading) {
+    return <div className="p-8 text-center text-slate-400">Carregando dados da produção...</div>;
+  }
 
   // Scenarios calculated across the next 30 days
   const scenarios = useMemo(() => {

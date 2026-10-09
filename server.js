@@ -3162,7 +3162,6 @@ var initialFarm = {
   // R$ por kWh
   shrimpSalePricePerKg: 24.5,
   // Camarão Vannamei Comercial Inteiro (R$ 24,50/kg)
-  shrimpSalePricePerKg: 24.5,
   feedAverageCostPerKg: 4.2
   // R$ por kg (Média ponderada rações)
 };
