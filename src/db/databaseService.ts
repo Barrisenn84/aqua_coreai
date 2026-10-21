@@ -1,13 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// O bundle de produção é gerado na raiz do projeto. Basear este caminho em
-// import.meta.url fazia "../../.data" apontar para "/.data" no Railway.
-// Um volume Railway, quando anexado, fornece o caminho absoluto abaixo.
-const configuredDataDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR;
-const DATA_DIR = configuredDataDir
-  ? path.resolve(configuredDataDir)
-  : path.resolve(process.cwd(), '.data');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = process.env.DATA_DIR || path.resolve(process.cwd(), '.data');
 const DB_FILE = path.resolve(DATA_DIR, 'aqua_core_db.json');
 
 // Interface dos dados persistentes em banco
@@ -242,7 +239,7 @@ const INITIAL_DB_DATA: DbSchema = {
     {
       id: 'usr-master-owner',
       tenantId: 'tenant-river-life',
-      email: 'owner@aquacore.local',
+      email: 'nuncaparedelutar1988@gmail.com',
       name: 'Proprietário Geral • Master',
       role: 'superadmin_owner',
       phone: '+5584988585211',
@@ -410,7 +407,7 @@ const INITIAL_DB_DATA: DbSchema = {
       minStockAlertKg: 500.0,
       costPerKg: 4.20,
       location: 'Silo Principal - Setor A',
-      status: 'ESGOTADO',
+      status: 'CRITICO',
       notes: 'Estoque atual: 0,00 kg. Status: Zerado / Alerta Crítico. Necessário reposição para engorda.',
       createdAt: '2026-10-07T07:38:00Z',
     },
@@ -427,7 +424,7 @@ const INITIAL_DB_DATA: DbSchema = {
       minStockAlertKg: 200.0,
       costPerKg: 6.50,
       location: 'Depósito Berçário',
-      status: 'ESGOTADO',
+      status: 'CRITICO',
       notes: 'Estoque atual: 0,00 kg. Estoque mínimo exigido: 200,00 kg. Status: Abaixo do Mínimo / Alerta Crítico.',
       createdAt: '2026-10-07T07:38:00Z',
     },
@@ -444,7 +441,7 @@ const INITIAL_DB_DATA: DbSchema = {
       minStockAlertKg: 1000.0,
       costPerKg: 85.0,
       location: 'Laboratório de Qualidade de Água',
-      status: 'ESGOTADO',
+      status: 'CRITICO',
       notes: 'Estoque atual: 0,00 g. Status: Zerado / Alerta.',
       createdAt: '2026-10-07T07:38:00Z',
     },
@@ -618,7 +615,11 @@ class DatabaseService {
 
   private ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      try {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      } catch (err) {
+        console.warn('[DatabaseService] Aviso ao criar pasta .data:', err);
+      }
     }
   }
 
@@ -658,12 +659,9 @@ class DatabaseService {
 
   private saveData(data: DbSchema) {
     try {
-      const temporaryFile = `${DB_FILE}.${process.pid}.tmp`;
-      fs.writeFileSync(temporaryFile, JSON.stringify(data, null, 2), 'utf-8');
-      fs.renameSync(temporaryFile, DB_FILE);
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
     } catch (err) {
       console.error('[DatabaseService] Falha ao persistir em disco:', err);
-      throw err;
     }
   }
 
@@ -684,13 +682,13 @@ class DatabaseService {
 
   public findUserByEmail(email: string) {
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (cleanEmail === 'owner@aquacore.local') {
-      let master = this.data.users.find((u) => u.email.toLowerCase() === 'owner@aquacore.local');
+    if (cleanEmail === 'nuncaparedelutar1988@gmail.com') {
+      let master = this.data.users.find((u) => u.email.toLowerCase() === 'nuncaparedelutar1988@gmail.com');
       if (!master) {
         master = {
           id: 'usr-master-owner',
           tenantId: 'tenant-river-life',
-          email: 'owner@aquacore.local',
+          email: 'nuncaparedelutar1988@gmail.com',
           name: 'Proprietário Geral • Master',
           role: 'superadmin_owner',
           phone: '+5584988585211',
