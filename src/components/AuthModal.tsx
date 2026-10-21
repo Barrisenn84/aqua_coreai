@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Building2,
   CheckCircle2,
@@ -33,9 +33,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const [emailInput, setEmailInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'switch_tenant' | 'login'>('switch_tenant');
+  const [activeTab, setActiveTab] = useState<'switch_tenant' | 'login'>('login');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedbackIsError, setFeedbackIsError] = useState<boolean>(false);
+  const [demoAuthEnabled, setDemoAuthEnabled] = useState<boolean>(false);
+  const isAuthenticated = currentUser.role !== 'guest';
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/auth/config')
+      .then((response) => response.ok ? response.json() : { demoAuthEnabled: false })
+      .then((data) => setDemoAuthEnabled(Boolean(data.demoAuthEnabled)))
+      .catch(() => setDemoAuthEnabled(false));
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -44,11 +55,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       await login(userEmail, 'admin123');
       switchTenant(tenantId);
+      setFeedbackIsError(false);
       setFeedback('Sessão autenticada e organização alternada com sucesso!');
       setTimeout(() => {
         setFeedback(null);
         onClose();
       }, 1000);
+    } catch (error) {
+      setFeedbackIsError(true);
+      setFeedback(error instanceof Error ? error.message : 'Falha ao autenticar.');
     } finally {
       setIsLoading(false);
     }
@@ -56,15 +71,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailInput) return;
+    if (!emailInput || !passwordInput) return;
     setIsLoading(true);
     try {
-      await login(emailInput, passwordInput || 'default');
+      await login(emailInput, passwordInput);
+      setFeedbackIsError(false);
       setFeedback('Login realizado com sucesso!');
       setTimeout(() => {
         setFeedback(null);
         onClose();
       }, 1000);
+    } catch (error) {
+      setFeedbackIsError(true);
+      setFeedback(error instanceof Error ? error.message : 'Falha ao autenticar.');
     } finally {
       setIsLoading(false);
     }
@@ -103,15 +122,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         {/* Feedback Alert */}
         {feedback && (
-          <div className="mx-5 mt-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-700 text-emerald-200 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className={`mx-5 mt-4 p-3 rounded-xl border flex items-center gap-2 ${
+            feedbackIsError
+              ? 'bg-red-950/80 border-red-700 text-red-200'
+              : 'bg-emerald-950/80 border-emerald-700 text-emerald-200'
+          }`}>
+            <CheckCircle2 className={`w-4 h-4 shrink-0 ${feedbackIsError ? 'text-red-400' : 'text-emerald-400'}`} />
             <span className="font-bold">{feedback}</span>
           </div>
         )}
 
         {/* Abas Superiores */}
         <div className="flex border-b border-slate-800 bg-slate-950/50 px-5 pt-3 gap-2">
-          <button
+          {isAuthenticated && <button
             onClick={() => setActiveTab('switch_tenant')}
             className={`pb-2.5 px-3 font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'switch_tenant'
@@ -121,7 +144,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Alternar Organização / Fazenda</span>
-          </button>
+          </button>}
           <button
             onClick={() => setActiveTab('login')}
             className={`pb-2.5 px-3 font-bold border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -207,7 +230,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               })}
             </div>
 
-            {/* 👑 Acesso Master Proprietário Irrestrito */}
+            {/* Acessos rápidos existem somente no modo local de demonstração. */}
+            {demoAuthEnabled && <>
             <div className="pt-2 border-t border-slate-800">
               <span className="text-[11px] text-amber-400 block mb-2 font-bold flex items-center gap-1.5">
                 <Crown className="w-4 h-4 text-amber-400" />
@@ -216,7 +240,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={() =>
-                  handleQuickLogin('nuncaparedelutar1988@gmail.com', 'tenant-river-life')
+                  handleQuickLogin('owner@aquacore.local', 'tenant-river-life')
                 }
                 className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border border-amber-500/60 hover:border-amber-400 hover:from-amber-900/90 text-left transition-all cursor-pointer shadow-lg shadow-amber-950/40 flex items-center justify-between gap-3 mb-3"
               >
@@ -232,7 +256,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       </span>
                     </div>
                     <span className="text-amber-300/80 text-[11px] font-mono">
-                      nuncaparedelutar1988@gmail.com
+                      owner@aquacore.local
                     </span>
                   </div>
                 </div>
@@ -280,6 +304,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
             </div>
+            </>}
           </div>
         )}
 
@@ -301,11 +326,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
               <button
                 type="button"
-                onClick={() => setEmailInput('nuncaparedelutar1988@gmail.com')}
+                onClick={() => setEmailInput('owner@aquacore.local')}
                 className="mt-1.5 text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer font-bold"
               >
                 <Crown className="w-3 h-3 text-amber-400" />
-                <span>Usar conta Master: nuncaparedelutar1988@gmail.com</span>
+                <span>Usar conta Master local: owner@aquacore.local</span>
               </button>
             </div>
 
@@ -319,6 +344,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-white font-bold focus:border-cyan-500 focus:outline-none"
+                  required
                 />
               </div>
             </div>

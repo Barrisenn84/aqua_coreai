@@ -27,10 +27,10 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
 - **🌦️ Open-Meteo API:** Previsão de microclima e frentes frias para manejo preventivo de choque térmico.
 - **💵 ExchangeRate API:** Paridade cambial USD/BRL para insumos importados da ração e cotação de frutos do mar.
 
-### 3. 🏢 Multi-Tenant & Persistência Dupla
+### 3. 🏢 Multi-Tenant & Persistência
 - **Múltiplos Produtores:** Isolamento completo de contas e propriedades com alternância instantânea.
-- **Prisma ORM & PostgreSQL / Supabase:** Mapeamento completo de tanques, lotes, biometrias, leituras, notas e equipamentos (`prisma/schema.prisma`).
-- **Armazenamento Atômico Offline:** Persistência autônoma em disco local para áreas rurais com baixa conectividade.
+- **Armazenamento JSON atômico:** Persistência autônoma em disco local para áreas rurais com baixa conectividade.
+- **Schema PostgreSQL de referência:** O arquivo `prisma/schema.prisma` documenta a migração futura para PostgreSQL, mas não é executado pela aplicação atual.
 
 ---
 
@@ -38,7 +38,7 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
 
 - **Frontend:** React 19, TypeScript, Tailwind CSS v4, Lucide Icons, Recharts, Motion.
 - **Backend & Orquestrador:** Node.js, Express, TSX, Dotenv.
-- **Banco de Dados:** Prisma ORM, PostgreSQL / Supabase, JSON Store atômico.
+- **Banco de Dados atual:** JSON Store atômico; schema PostgreSQL mantido como referência para migração.
 - **Inteligência Artificial:** Google Gen AI SDK (`@google/genai`), Gemini 2.5 Flash.
 
 ---
@@ -59,11 +59,11 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
 
 2. **Instalar Dependências:**
    ```bash
-   npm install --legacy-peer-deps
+   npm ci
    ```
 
 3. **Configurar Variáveis de Ambiente:**
-   Copie `.env.example` para `.env` e configure sua chave da API Gemini:
+   Copie `.env.example` para `.env`, troque todos os placeholders e configure a chave da API Gemini. Em desenvolvimento, `ALLOW_INSECURE_DEMO_AUTH=true` libera as contas de demonstração com a senha `admin123`:
    ```env
    GEMINI_API_KEY="SUA_CHAVE_AQUI"
    PORT=3000
@@ -77,8 +77,23 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
 
 5. **Compilar para Produção:**
    ```bash
-   npm run build
+   npm run check
    ```
+
+---
+
+## 🚂 Implantação no Railway
+
+O projeto exige Node.js 22 ou mais recente, compila o frontend Vite e o servidor Express com `npm run build`, inicia com `npm start` e responde ao healthcheck em `/api/health`.
+
+1. Crie o serviço a partir deste repositório GitHub. O Railpack detectará os scripts do `package.json`.
+2. Configure `NODE_ENV=production`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH` e `GEMINI_API_KEY` nas variáveis do serviço. Não habilite `ALLOW_INSECURE_DEMO_AUTH` em produção.
+3. Anexe um volume em `/data`. A aplicação detecta automaticamente `RAILWAY_VOLUME_MOUNT_PATH`; sem volume, os dados JSON são efêmeros e serão perdidos em um redeploy.
+4. Gere um domínio público em **Settings → Networking** e confirme que `/api/health` retorna HTTP 200.
+
+As rotinas que chamam serviços externos ficam desligadas por padrão. Habilite conscientemente `ENABLE_AI_SENTINEL_AUTORUN=true` e/ou `ENABLE_DAILY_DIGEST=true` somente depois de configurar e validar as integrações de IA e mensageria.
+
+O arquivo `.railway/railway.ts` contém a configuração Infrastructure as Code atual, incluindo healthcheck e volume. O `railway.json` permanece apenas para compatibilidade com serviços legados; o formato foi descontinuado para novos serviços pelo Railway.
 
 ---
 

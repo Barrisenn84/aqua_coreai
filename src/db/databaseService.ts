@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, '../../.data');
+// O bundle de produção é gerado na raiz do projeto. Basear este caminho em
+// import.meta.url fazia "../../.data" apontar para "/.data" no Railway.
+// Um volume Railway, quando anexado, fornece o caminho absoluto abaixo.
+const configuredDataDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.DATA_DIR;
+const DATA_DIR = configuredDataDir
+  ? path.resolve(configuredDataDir)
+  : path.resolve(process.cwd(), '.data');
 const DB_FILE = path.resolve(DATA_DIR, 'aqua_core_db.json');
 
 // Interface dos dados persistentes em banco
@@ -239,7 +242,7 @@ const INITIAL_DB_DATA: DbSchema = {
     {
       id: 'usr-master-owner',
       tenantId: 'tenant-river-life',
-      email: 'nuncaparedelutar1988@gmail.com',
+      email: 'owner@aquacore.local',
       name: 'Proprietário Geral • Master',
       role: 'superadmin_owner',
       phone: '+5584988585211',
@@ -615,11 +618,7 @@ class DatabaseService {
 
   private ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) {
-      try {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-      } catch (err) {
-        console.warn('[DatabaseService] Aviso ao criar pasta .data:', err);
-      }
+      fs.mkdirSync(DATA_DIR, { recursive: true });
     }
   }
 
@@ -659,9 +658,12 @@ class DatabaseService {
 
   private saveData(data: DbSchema) {
     try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+      const temporaryFile = `${DB_FILE}.${process.pid}.tmp`;
+      fs.writeFileSync(temporaryFile, JSON.stringify(data, null, 2), 'utf-8');
+      fs.renameSync(temporaryFile, DB_FILE);
     } catch (err) {
       console.error('[DatabaseService] Falha ao persistir em disco:', err);
+      throw err;
     }
   }
 
@@ -682,13 +684,13 @@ class DatabaseService {
 
   public findUserByEmail(email: string) {
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (cleanEmail === 'nuncaparedelutar1988@gmail.com') {
-      let master = this.data.users.find((u) => u.email.toLowerCase() === 'nuncaparedelutar1988@gmail.com');
+    if (cleanEmail === 'owner@aquacore.local') {
+      let master = this.data.users.find((u) => u.email.toLowerCase() === 'owner@aquacore.local');
       if (!master) {
         master = {
           id: 'usr-master-owner',
           tenantId: 'tenant-river-life',
-          email: 'nuncaparedelutar1988@gmail.com',
+          email: 'owner@aquacore.local',
           name: 'Proprietário Geral • Master',
           role: 'superadmin_owner',
           phone: '+5584988585211',

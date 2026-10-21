@@ -231,7 +231,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   ]);
 
   // Migração de schema para carregar automaticamente dados reais do Meu Pescado (Mogeiro - PB)
-  const DATA_SCHEMA_VERSION = 'v6_shrimp_recovery_riverlife_mogeiro';
+  const DATA_SCHEMA_VERSION = 'v7_secure_session';
 
   const [currentTenant, setCurrentTenant] = useState<ITenant>(() => {
     try {
@@ -267,11 +267,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      id: 'usr-01',
-      name: 'Collermhann',
-      email: 'collermhann@aquacore.ai',
-      role: 'owner',
-      phone: '+5584988585211',
+      id: 'guest',
+      name: 'Visitante',
+      email: '',
+      role: 'guest',
     };
   });
 
@@ -1659,51 +1658,21 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
-  const login = async (email: string, _password?: string) => {
-    const cleanEmail = (email || '').toLowerCase().trim();
-    if (cleanEmail === 'nuncaparedelutar1988@gmail.com') {
-      const masterUser: IUser = {
-        id: 'usr-master-owner',
-        name: 'Proprietário Geral • Master',
-        email: 'nuncaparedelutar1988@gmail.com',
-        role: 'superadmin_owner',
-        phone: '+5584988585211',
-      };
-      setCurrentUser(masterUser);
-      const t = availableTenants[0];
-      setCurrentTenant(t);
-      setFarm((prev) => ({
-        ...prev,
-        name: t.name,
-        kwhCost: t.kwhCost,
-        feedAverageCostPerKg: t.feedCost,
-        shrimpSalePricePerKg: t.salePrice,
-        camarãoSalePricePerKg: t.salePrice,
-        fishSalePricePerKg: t.salePrice,
-      }));
-      return;
+  const login = async (email: string, password?: string) => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password: password || '' }),
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Não foi possível autenticar.');
     }
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) setCurrentUser(data.user);
-        if (data.tenant) setCurrentTenant(data.tenant);
-        if (data.availableTenants) setAvailableTenants(data.availableTenants);
-      }
-    } catch {
-      setCurrentUser({
-        id: `usr-${Date.now()}`,
-        name: email.split('@')[0],
-        email,
-        role: 'engineer',
-      });
-    }
+    if (data.user) setCurrentUser(data.user);
+    if (data.tenant) setCurrentTenant(data.tenant);
+    if (data.availableTenants) setAvailableTenants(data.availableTenants);
   };
 
   return (

@@ -17,7 +17,11 @@ class AISentinelService {
   private readonly INTERVAL_MS = 15 * 60 * 1000; // 15 minutos exatos
 
   constructor() {
-    this.startAutonomousCycle();
+    if (process.env.ENABLE_AI_SENTINEL_AUTORUN === 'true') {
+      this.startAutonomousCycle();
+    } else {
+      console.log('[AISentinel] Autorun desativado. Use ENABLE_AI_SENTINEL_AUTORUN=true para habilitar.');
+    }
   }
 
   /**

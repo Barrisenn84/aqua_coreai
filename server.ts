@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { errorHandler } from './src/middleware/errorHandler';
 import { authMiddleware } from './src/middleware/authMiddleware';
+import { tenantScopeMiddleware } from './src/middleware/tenantScopeMiddleware';
 import {
   TelemetryController,
   AIController,
@@ -30,15 +30,45 @@ import { environment } from './src/config/environment';
 import { getLiveMogeiroWeather, getLiveCurrencies } from './src/services/freeApisService';
 import { aiSentinelService } from './src/services/aiSentinelService';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const PRODUTOR_PHONE = environment.producerPhone;
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
+const loginRateLimit: express.RequestHandler = (req, res, next) => {
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const existing = loginAttempts.get(key);
+  const attempt = !existing || existing.resetAt <= now
+    ? { count: 0, resetAt: now + 15 * 60 * 1000 }
+    : existing;
+
+  attempt.count += 1;
+  loginAttempts.set(key, attempt);
+
+  if (attempt.count > 10) {
+    res.setHeader('Retry-After', Math.ceil((attempt.resetAt - now) / 1000));
+    return res.status(429).json({ error: 'Muitas tentativas de login. Tente novamente mais tarde.' });
+  }
+
+  res.on('finish', () => {
+    if (res.statusCode < 400) loginAttempts.delete(key);
+  });
+  return next();
+};
+
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()');
+  next();
+});
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
@@ -92,6 +122,7 @@ app.post('/webhook/whatsapp', async (req, res) => {
 });
 
 // REST API Endpoints according to Backend Skeleton
+app.use(['/api/telemetry', '/api/ai', '/api/aqua-core', '/api/iot', '/api/messaging', '/api/hardware'], authMiddleware);
 app.get('/api/telemetry/latest/:tankId', TelemetryController.getLatest);
 app.get('/api/telemetry/history/:tankId', TelemetryController.getHistory);
 app.post('/api/telemetry/ingest', TelemetryController.ingestPacket);
@@ -105,7 +136,7 @@ app.get('/api/iot/status', IoTSystemController.getStatus);
 // PILAR 1 & 3: WhatsApp Meta Webhook, Twilio Webhook & Ghost UX endpoints
 app.get('/api/whatsapp/webhook', WhatsAppController.verifyWebhook);
 app.post('/api/whatsapp/webhook', WhatsAppController.handleWebhook);
-app.post('/api/whatsapp/simulate-incoming', WhatsAppController.simulateIncoming);
+app.post('/api/whatsapp/simulate-incoming', authMiddleware, WhatsAppController.simulateIncoming);
 app.post('/api/twilio/webhook', WhatsAppController.handleTwilioWebhook);
 app.get('/api/messaging/history', WhatsAppController.getHistory);
 app.post('/api/messaging/dispatch', WhatsAppController.dispatchManual);
@@ -115,12 +146,14 @@ app.get('/api/hardware/fleet', HardwareController.getFleet);
 app.post('/api/hardware/telemetry', HardwareController.ingestTelemetry);
 
 // 🔐 AUTENTICAÇÃO & MULTI-TENANT (Abertos para login)
-app.post('/api/auth/login', AuthController.login);
-app.get('/api/auth/tenants', AuthController.getTenants);
-app.post('/api/auth/switch-tenant', AuthController.switchTenant);
+app.post('/api/auth/login', loginRateLimit, AuthController.login);
+app.get('/api/auth/config', AuthController.getConfig);
+app.post('/api/auth/logout', AuthController.logout);
+app.get('/api/auth/tenants', authMiddleware, AuthController.getTenants);
+app.post('/api/auth/switch-tenant', authMiddleware, AuthController.switchTenant);
 
 // 💾 BANCO DE DADOS PERSISTENTE (Protegidos por JWT)
-app.use('/api/db', authMiddleware);
+app.use('/api/db', authMiddleware, tenantScopeMiddleware);
 app.get('/api/db/biometries/:tenantId', DatabaseController.getBiometries);
 app.post('/api/db/biometries', DatabaseController.addBiometry);
 app.get('/api/db/equipments/:tenantId', DatabaseController.getEquipments);
@@ -163,7 +196,7 @@ app.post('/api/db/farm-profile', DatabaseController.updateFarmProfile);
 app.post('/api/db/reset', DatabaseController.resetData);
 
 // 📷 VISÃO COMPUTACIONAL & IA (Protegidos)
-app.use(['/api/vision', '/api/voice', '/api/ai/audit', '/api/sentinel/run', '/api/sentinel/resolve'], authMiddleware);
+app.use(['/api/vision', '/api/voice', '/api/ai/audit', '/api/sentinel'], authMiddleware);
 app.post('/api/vision/analyze', VisionController.analyzeImage);
 app.post('/api/voice/command', VoiceController.processCommand);
 app.post('/api/ai/audit-invoice', AIAuditController.auditInvoice);
@@ -450,27 +483,33 @@ Emita o parecer do Engenheiro de Produção com impacto financeiro em Reais e di
 /**
  * 🌅 O RITUAL MATINAL: DAILY DIGEST CARCINICULTURA
  */
-setInterval(async () => {
-  console.log('[Daily Cron] Gerando resumos de lucro para carcinicultura PB...');
-  await messagingHub.processAndSend(
-    PRODUTOR_PHONE,
-    {
-      farmData: {
-        farmName: 'Fazenda Camarão Paraíba',
-        stability: 98,
-        criticalAlerts: 0,
-        tempDeviation: 0.1,
-        species: 'Litopenaeus vannamei',
-      },
-      marketPrices: {
-        shrimp_premium: 45.00,
-        shrimp_standard: 32.00,
-        camarãoLivePerKg: 10.25,
-      },
-    },
-    MessageLevel.INFO
-  );
-}, 86400000); // 24 horas
+if (process.env.ENABLE_DAILY_DIGEST === 'true') {
+  setInterval(async () => {
+    try {
+      console.log('[Daily Cron] Gerando resumos de lucro para carcinicultura PB...');
+      await messagingHub.processAndSend(
+        PRODUTOR_PHONE,
+        {
+          farmData: {
+            farmName: 'Fazenda Camarão Paraíba',
+            stability: 98,
+            criticalAlerts: 0,
+            tempDeviation: 0.1,
+            species: 'Litopenaeus vannamei',
+          },
+          marketPrices: {
+            shrimp_premium: 45.00,
+            shrimp_standard: 32.00,
+            camarãoLivePerKg: 10.25,
+          },
+        },
+        MessageLevel.INFO
+      );
+    } catch (error) {
+      console.error('[Daily Cron] Falha ao gerar ou enviar o resumo diário:', error);
+    }
+  }, 86400000); // 24 horas
+}
 
 // Production or Vite Dev server middleware
 async function start() {
@@ -483,6 +522,9 @@ async function start() {
 
   if (isProduction && hasDist) {
     app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.use('/api', (_req, res) => {
+      res.status(404).json({ success: false, error: 'Endpoint não encontrado.' });
+    });
     app.get('*', (_req, res) => {
       res.sendFile(distIndexHtml);
     });
@@ -511,4 +553,7 @@ async function start() {
   app.use(errorHandler);
 }
 
-start();
+start().catch((error) => {
+  console.error('[Startup] Falha ao iniciar o servidor:', error);
+  process.exitCode = 1;
+});

@@ -1,9 +1,16 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { mqttIngestor, redisCache } from '../iot/mqttIngestor';
 import { getAIGuidance, scanFeedBagLabel } from '../ai/geminiOracle';
 import { runAquaCoreRuleEngine } from '../utils/aquacultureMath';
 import { initialBatches, initialTanks } from '../data/initialData';
+import {
+  getJwtSecret,
+  isDemoAuthEnabled,
+  isProductionEnvironment,
+  SESSION_COOKIE_NAME,
+} from '../config/auth';
 
 export const TelemetryController = {
   getLatest: (req: Request, res: Response) => {
@@ -255,35 +262,86 @@ export const HardwareController = {
  * 🔐 CONTROLLER DE AUTENTICAÇÃO & MULTI-TENANT
  */
 export const AuthController = {
+  getConfig: async (_req: Request, res: Response) => {
+    return res.json({ demoAuthEnabled: isDemoAuthEnabled() });
+  },
+
   login: async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-      const { db } = await import('../db/databaseService');
-      const user = db.findUserByEmail(email || '');
-      const tenant = user ? db.getTenantById(user.tenantId) : db.getTenants()[0];
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      const cleanPassword = String(password || '');
 
-      const secret = process.env.JWT_SECRET || 'aqua_core_default_secret_key_change_me';
+      if (!cleanEmail || !cleanPassword) {
+        return res.status(400).json({ error: 'E-mail e senha são obrigatórios.' });
+      }
+
+      const { db } = await import('../db/databaseService');
+      const secret = getJwtSecret();
+
+      if (!secret) {
+        return res.status(503).json({
+          error: 'Defina JWT_SECRET com pelo menos 32 caracteres no ambiente de produção.',
+        });
+      }
+
+      let user = db.findUserByEmail(cleanEmail);
+      let authenticated = false;
+
+      if (isDemoAuthEnabled()) {
+        authenticated = Boolean(user) && cleanPassword === 'admin123';
+      } else {
+        const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+        const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH?.trim();
+
+        if (!adminEmail || !adminPasswordHash) {
+          return res.status(503).json({
+            error: 'Defina ADMIN_EMAIL e ADMIN_PASSWORD_HASH no ambiente de produção.',
+          });
+        }
+
+        authenticated = cleanEmail === adminEmail && await bcrypt.compare(cleanPassword, adminPasswordHash);
+        if (authenticated && !user) {
+          user = {
+            id: 'usr-admin',
+            tenantId: db.getTenants()[0].id,
+            email: adminEmail,
+            name: 'Administrador AQUA-CORE',
+            role: 'superadmin_owner',
+          };
+        }
+      }
+
+      if (!authenticated || !user) {
+        return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
+      }
+
+      const tenant = db.getTenantById(user.tenantId);
+
       const token = jwt.sign(
         {
-          userId: user?.id || 'usr-default',
+          userId: user.id,
           tenantId: tenant.id,
-          role: user?.role || 'engineer'
+          role: user.role,
         },
         secret,
         { expiresIn: '24h' }
       );
 
+      res.cookie(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: isProductionEnvironment(),
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000,
+        path: '/',
+      });
+
       return res.json({
-        token,
-        user: user || {
-          id: 'usr-default',
-          name: 'Produtor Visitante',
-          email: email || 'produtor@aquacore.ai',
-          role: 'engineer',
-          tenantId: tenant.id,
-        },
+        user,
         tenant,
-        availableTenants: db.getTenants(),
+        availableTenants: user.role === 'superadmin_owner'
+          ? db.getTenants()
+          : [tenant],
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -293,7 +351,11 @@ export const AuthController = {
   getTenants: async (_req: Request, res: Response) => {
     try {
       const { db } = await import('../db/databaseService');
-      return res.json({ tenants: db.getTenants() });
+      const session = (_req as any).user as { tenantId: string; role: string };
+      const tenants = session.role === 'superadmin_owner'
+        ? db.getTenants()
+        : [db.getTenantById(session.tenantId)];
+      return res.json({ tenants });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
@@ -303,11 +365,25 @@ export const AuthController = {
     try {
       const { tenantId } = req.body;
       const { db } = await import('../db/databaseService');
+      const session = (req as any).user as { tenantId: string; role: string };
+      if (session.role !== 'superadmin_owner' && tenantId !== session.tenantId) {
+        return res.status(403).json({ error: 'Acesso negado a esta organização.' });
+      }
       const tenant = db.getTenantById(tenantId);
       return res.json({ success: true, tenant });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
+  },
+
+  logout: async (_req: Request, res: Response) => {
+    res.clearCookie(SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      secure: isProductionEnvironment(),
+      sameSite: 'strict',
+      path: '/',
+    });
+    return res.status(204).send();
   },
 };
 

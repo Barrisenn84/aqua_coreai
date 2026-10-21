@@ -215,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
               <span className="text-white truncate">{currentTenant.name}</span>
               <span className="text-slate-500 shrink-0">•</span>
-              {currentUser.email === 'nuncaparedelutar1988@gmail.com' ? (
+              {currentUser.role === 'superadmin_owner' ? (
                 <span className="text-amber-300 font-mono text-[10px] sm:text-[11px] flex items-center gap-1 font-black bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-600/60 shrink-0">
                   <Crown className="w-3 h-3 text-amber-400" />
                   <span className="hidden sm:inline">Proprietário Master</span>
