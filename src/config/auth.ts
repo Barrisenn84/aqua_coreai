@@ -10,7 +10,11 @@ export function isProductionEnvironment(): boolean {
 
 export function isDemoAuthEnabled(): boolean {
   if (isProductionEnvironment()) return false;
-  return process.env.ALLOW_INSECURE_DEMO_AUTH !== 'false';
+  return process.env.ALLOW_INSECURE_DEMO_AUTH !== 'false' && Boolean(process.env.DEMO_AUTH_PASSWORD?.trim());
+}
+
+export function getDemoAuthPassword(): string {
+  return process.env.DEMO_AUTH_PASSWORD?.trim() || '';
 }
 
 export function getJwtSecret(): string | null {
@@ -21,4 +25,13 @@ export function getJwtSecret(): string | null {
   }
 
   return isDemoAuthEnabled() ? ephemeralDevelopmentSecret : null;
+}
+
+/** Public-safe status used by the login screen; never returns secret values. */
+export function isProductionAuthConfigured(): boolean {
+  return Boolean(
+    getJwtSecret() &&
+    process.env.ADMIN_EMAIL?.trim() &&
+    process.env.ADMIN_PASSWORD_HASH?.trim(),
+  );
 }

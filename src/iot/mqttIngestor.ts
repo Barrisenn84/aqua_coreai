@@ -113,8 +113,9 @@ export class MqttIngestorService extends EventEmitter {
       if (now - lastSent > 60000) {
         this.lastCriticalAlertTimestamps.set(data.tankId, now);
         const tankDisplayName = data.tankId.replace('tank-', 'Tanque ');
-        messagingHub.processAndSend(
-          process.env.PRODUCER_WHATSAPP_PHONE || '+5511999998888',
+        const recipient = process.env.PRODUCER_WHATSAPP_PHONE?.trim();
+        if (recipient) messagingHub.processAndSend(
+          recipient,
           {
             tankId: data.tankId,
             tankName: tankDisplayName,
@@ -122,7 +123,7 @@ export class MqttIngestorService extends EventEmitter {
             temperature: data.temperature,
             ph: data.ph,
             ammoniaToxic: data.ammoniaToxic,
-            financialLossRisk: 'R$ 14.800',
+            financialLossRisk: 'não calculado sem preço e biomassa conciliados',
           },
           MessageLevel.CRITICAL
         ).catch((err) => {

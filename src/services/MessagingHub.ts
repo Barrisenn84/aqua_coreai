@@ -179,7 +179,7 @@ export class MessagingHub {
           tankName: 'Tanque 04',
           dissolvedOxygen: 2.4,
           temperature: 28.5,
-          financialRisk: 'R$ 14.800',
+          financialRisk: 'não calculado sem preço e biomassa conciliados',
           query: incomingText,
         },
         MessageLevel.CRITICAL

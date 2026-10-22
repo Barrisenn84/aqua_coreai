@@ -29,14 +29,17 @@ export function generateGuardianWhatsAppAlert(
   tankName: string,
   dissolvedOxygen: number,
   temperature: number,
-  financialLossRisk: number
+  financialLossRisk: number | null
 ): { text: string; followUpScheduleMinutes: number } {
+  const financialText = typeof financialLossRisk === 'number' && financialLossRisk > 0
+    ? `R$ ${financialLossRisk.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+    : 'não calculado (preço e biomassa pendentes)';
   return {
     text: `🚨 *AQUA-CORE GUARDIAN | ALERTA CRÍTICO DE SOBREVIVÊNCIA*
 Tanque: *${tankName}*
 
 ⚠️ *OXIGÊNIO EM NÍVEL LETAL:* *${dissolvedOxygen.toFixed(1)} mg/L* (Mínimo seguro: 3.5 mg/L).
-Temperatura: ${temperature.toFixed(1)}°C | Risco financeiro iminente: *R$ ${financialLossRisk.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*.
+Temperatura: ${temperature.toFixed(1)}°C | Risco financeiro: *${financialText}*.
 
 *AÇÃO CORRETIVA IMEDIATA:*
 1. LIGUE OS AERADORES DO TANQUE AGORA.

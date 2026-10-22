@@ -1594,7 +1594,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       targetTank.name,
       reading.dissolvedOxygen,
       reading.temperature,
-      14800
+      null
     );
 
     const alertMsg: IWhatsAppMessage = {
@@ -1611,7 +1611,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       metadata: {
         dissolvedOxygen: reading.dissolvedOxygen,
         temperature: reading.temperature,
-        financialImpactEstimated: 'R$ 14.800,00',
+        financialImpactEstimated: 'não calculado',
       },
     };
 

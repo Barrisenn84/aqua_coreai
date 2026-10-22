@@ -64,7 +64,8 @@ export const OperationsHubView: React.FC = () => {
     `${partner.name} ${partner.type}`.toLowerCase().includes(query.toLowerCase())), [query, snapshot.partners]);
 
   return (
-    <div className="space-y-5">
+    <>
+    <div className="screen-only space-y-5">
       <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-2xl shadow-slate-950/30 sm:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
@@ -89,7 +90,7 @@ export const OperationsHubView: React.FC = () => {
               onClick={() => window.print()}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 text-sm font-bold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
             >
-              <FileBarChart className="h-4 w-4" /> Imprimir relatório
+              <FileBarChart className="h-4 w-4" /> Imprimir resumo
             </button>
           </div>
         </div>
@@ -182,7 +183,7 @@ export const OperationsHubView: React.FC = () => {
       )}
 
       {section === 'reports' && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{snapshot.reportCatalog.map((report) => <article key={report} className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-cyan-700/60"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><FileBarChart className="h-5 w-5" /></div><h2 className="mt-4 font-black text-white">{report}</h2><p className="mt-1 text-sm text-slate-400">Filtro por período, lote e tanque, pronto para impressão.</p><button type="button" onClick={() => window.print()} className="mt-4 min-h-11 rounded-xl px-3 text-sm font-bold text-cyan-300 hover:bg-cyan-950/50">Gerar relatório</button></article>)}</div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{snapshot.reportCatalog.map((report) => <article key={report} className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-cyan-700/60"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><FileBarChart className="h-5 w-5" /></div><h2 className="mt-4 font-black text-white">{report}</h2><p className="mt-1 text-sm text-slate-400">Catálogo disponível. O resumo operacional abaixo usa os dados importados e auditados.</p><button type="button" onClick={() => window.print()} className="mt-4 min-h-11 rounded-xl px-3 text-sm font-bold text-cyan-300 hover:bg-cyan-950/50">Imprimir resumo</button></article>)}</div>
       )}
 
       {section === 'partners' && (
@@ -193,5 +194,23 @@ export const OperationsHubView: React.FC = () => {
         <div className="space-y-3">{snapshot.dataQualityIssues.map((issue) => <article key={issue.id} className={`rounded-2xl border p-5 ${issue.severity === 'critical' ? 'border-rose-700/50 bg-rose-950/20' : issue.severity === 'high' ? 'border-amber-700/50 bg-amber-950/20' : 'border-blue-700/50 bg-blue-950/20'}`}><div className="flex items-start gap-3"><ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" /><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-black text-white">{issue.field}</h2><span className="rounded-full bg-slate-950/70 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-300">{issue.severity}</span></div><p className="mt-2 text-sm leading-6 text-slate-300">{issue.observed}</p><div className="mt-3 flex items-start gap-2 rounded-xl bg-slate-950/60 p-3 text-sm text-emerald-100"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />{issue.recommendation}</div></div></div></article>)}</div>
       )}
     </div>
+    <section className="print-report" aria-hidden="true">
+      <div className="print-report__header">
+        <div><p className="print-report__eyebrow">AQUA-CORE AI · OPERAÇÃO RIVER LIFE</p><h1>Resumo operacional auditável</h1><p>Dados importados do Meu Pescado · Gerado em {new Date().toLocaleString('pt-BR')}</p></div>
+        <span className="print-report__badge">Fonte registrada</span>
+      </div>
+      <div className="print-report__grid">
+        <div><span>Tanques povoados</span><strong>{snapshot.summary.populatedTanks} de {snapshot.tanks.length}</strong></div>
+        <div><span>Biomassa consolidada</span><strong>{number.format(snapshot.summary.totalBiomassKg)} kg</strong></div>
+        <div><span>População atual</span><strong>{number.format(snapshot.summary.totalPopulation)} un.</strong></div>
+        <div><span>Custo em cultivo</span><strong>{brl.format(snapshot.summary.cultivationCostRs)}</strong></div>
+      </div>
+      <h2>Lotes ativos</h2>
+      <table><thead><tr><th>Tanque</th><th>Lote</th><th>Fornecedor</th><th>População</th><th>Biomassa</th><th>FCA</th><th>Custo</th></tr></thead><tbody>{snapshot.lots.map((lot) => <tr key={lot.id}><td>{lot.tankName}</td><td>{lot.batchCode}</td><td>{lot.supplier}</td><td>{number.format(lot.currentPopulation)}</td><td>{number.format(lot.currentBiomassKg)} kg</td><td>{lot.fcr || '—'}</td><td>{brl.format(lot.cultivationCostRs)}</td></tr>)}</tbody></table>
+      <h2>Qualidade e pendências</h2>
+      <ul>{snapshot.dataQualityIssues.map((issue) => <li key={issue.id}><strong>{issue.severity.toUpperCase()} · {issue.field}:</strong> {issue.observed} <span>Próximo passo: {issue.recommendation}</span></li>)}</ul>
+      <p className="print-report__footnote">Este documento não substitui validação do responsável técnico. Valores conflitantes permanecem sinalizados e não devem alimentar decisões financeiras sem conciliação.</p>
+    </section>
+    </>
   );
 };

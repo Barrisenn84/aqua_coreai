@@ -13,7 +13,6 @@ import {
   Users,
   X,
   Zap,
-  Crown,
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
 
@@ -37,37 +36,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackIsError, setFeedbackIsError] = useState<boolean>(false);
-  const [demoAuthEnabled, setDemoAuthEnabled] = useState<boolean>(false);
+  const [authConfigured, setAuthConfigured] = useState<boolean>(false);
   const isAuthenticated = currentUser.role !== 'guest';
 
   useEffect(() => {
     if (!isOpen) return;
     fetch('/api/auth/config')
-      .then((response) => response.ok ? response.json() : { demoAuthEnabled: false })
-      .then((data) => setDemoAuthEnabled(Boolean(data.demoAuthEnabled)))
-      .catch(() => setDemoAuthEnabled(false));
+      .then((response) => response.ok ? response.json() : { authConfigured: false })
+      .then((data) => {
+        setAuthConfigured(Boolean(data.authConfigured) || Boolean(data.demoAuthEnabled));
+      })
+      .catch(() => setAuthConfigured(false));
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleQuickLogin = async (userEmail: string, tenantId: string) => {
-    setIsLoading(true);
-    try {
-      await login(userEmail, 'admin123');
-      switchTenant(tenantId);
-      setFeedbackIsError(false);
-      setFeedback('Sessão autenticada e organização alternada com sucesso!');
-      setTimeout(() => {
-        setFeedback(null);
-        onClose();
-      }, 1000);
-    } catch (error) {
-      setFeedbackIsError(true);
-      setFeedback(error instanceof Error ? error.message : 'Falha ao autenticar.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl font-mono text-xs">
         {/* Header com identidade da plataforma */}
         <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
@@ -101,7 +83,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-white font-black text-sm tracking-wide">
-                  Acesso & Multi-Tenant Central
+                  <span id="auth-title">Acesso & Multi-Tenant Central</span>
                 </h3>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-800">
                   ENTERPRISE
@@ -129,6 +111,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           }`}>
             <CheckCircle2 className={`w-4 h-4 shrink-0 ${feedbackIsError ? 'text-red-400' : 'text-emerald-400'}`} />
             <span className="font-bold">{feedback}</span>
+          </div>
+        )}
+
+        {!authConfigured && (
+          <div className="mx-5 mt-4 rounded-xl border border-amber-700/70 bg-amber-950/50 p-3 text-[11px] leading-5 text-amber-100" role="alert">
+            <strong className="block text-amber-300">Acesso administrativo ainda não configurado</strong>
+            <span>O administrador precisa cadastrar JWT_SECRET, ADMIN_EMAIL e ADMIN_PASSWORD_HASH no ambiente de produção. Nenhuma senha é exibida ou armazenada pela interface.</span>
           </div>
         )}
 
@@ -230,81 +219,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               })}
             </div>
 
-            {/* Acessos rápidos existem somente no modo local de demonstração. */}
-            {demoAuthEnabled && <>
-            <div className="pt-2 border-t border-slate-800">
-              <span className="text-[11px] text-amber-400 block mb-2 font-bold flex items-center gap-1.5">
-                <Crown className="w-4 h-4 text-amber-400" />
-                <span>Conta Master do Proprietário (Acesso Completo Irrestrito):</span>
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickLogin('owner@aquacore.local', 'tenant-river-life')
-                }
-                className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border border-amber-500/60 hover:border-amber-400 hover:from-amber-900/90 text-left transition-all cursor-pointer shadow-lg shadow-amber-950/40 flex items-center justify-between gap-3 mb-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300">
-                    <Crown className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-bold text-sm">Proprietário Geral • Master</span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-400 text-slate-950 uppercase">
-                        SUPERADMIN
-                      </span>
-                    </div>
-                    <span className="text-amber-300/80 text-[11px] font-mono">
-                      owner@aquacore.local
-                    </span>
-                  </div>
-                </div>
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] uppercase font-mono">
-                  Acessar Tudo
-                </span>
-              </button>
-            </div>
-
-            {/* Acessos Rápidos de Demonstração */}
-            <div className="pt-2 border-t border-slate-800">
-              <span className="text-[11px] text-slate-400 block mb-2 font-bold">
-                Perfis Rápidos para Teste de Venda & Demonstração:
-              </span>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleQuickLogin('collermhann@aquacore.ai', 'tenant-river-life')
-                  }
-                  className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500 text-left transition-colors cursor-pointer"
-                >
-                  <span className="text-white font-bold block truncate">Eng. Collermhann</span>
-                  <span className="text-[10px] text-cyan-400">Fazenda PB</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleQuickLogin('helena@aquacore.ai', 'tenant-santa-helena')
-                  }
-                  className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-cyan-500 text-left transition-colors cursor-pointer"
-                >
-                  <span className="text-white font-bold block truncate">Dra. Helena</span>
-                  <span className="text-[10px] text-cyan-400">Camarão BA</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleQuickLogin('mestre.silva@constr.ai', 'tenant-constr-ai-01')
-                  }
-                  className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500 text-left transition-colors cursor-pointer"
-                >
-                  <span className="text-white font-bold block truncate">Mestre Silva</span>
-                  <span className="text-[10px] text-amber-400">Constr.AI (Obra)</span>
-                </button>
-              </div>
-            </div>
-            </>}
           </div>
         )}
 
@@ -324,14 +238,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   required
                 />
               </div>
-              <button
-                type="button"
-                onClick={() => setEmailInput('owner@aquacore.local')}
-                className="mt-1.5 text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer font-bold"
-              >
-                <Crown className="w-3 h-3 text-amber-400" />
-                <span>Usar conta Master local: owner@aquacore.local</span>
-              </button>
             </div>
 
             <div className="space-y-1">

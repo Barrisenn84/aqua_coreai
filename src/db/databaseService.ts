@@ -239,7 +239,7 @@ const INITIAL_DB_DATA: DbSchema = {
     {
       id: 'usr-master-owner',
       tenantId: 'tenant-river-life',
-      email: 'nuncaparedelutar1988@gmail.com',
+      email: 'owner@aquacore.local',
       name: 'Proprietário Geral • Master',
       role: 'superadmin_owner',
       phone: '',
@@ -531,22 +531,6 @@ class DatabaseService {
 
   public findUserByEmail(email: string) {
     const cleanEmail = (email || '').toLowerCase().trim();
-    if (cleanEmail === 'nuncaparedelutar1988@gmail.com') {
-      let master = this.data.users.find((u) => u.email.toLowerCase() === 'nuncaparedelutar1988@gmail.com');
-      if (!master) {
-        master = {
-          id: 'usr-master-owner',
-          tenantId: 'tenant-river-life',
-          email: 'nuncaparedelutar1988@gmail.com',
-          name: 'Proprietário Geral • Master',
-          role: 'superadmin_owner',
-          phone: '',
-        };
-        this.data.users.unshift(master);
-        this.saveData(this.data);
-      }
-      return master;
-    }
     return this.data.users.find((u) => u.email.toLowerCase() === cleanEmail);
   }
 

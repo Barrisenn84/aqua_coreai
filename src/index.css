@@ -179,8 +179,28 @@
 }
 
 @media print {
-  aside, header, footer, button, [role="dialog"] { display: none !important; }
-  body, main { background: white !important; color: #0f172a !important; }
-  main { padding: 0 !important; max-width: none !important; }
-  article, section, table { break-inside: avoid; }
+  @page { size: A4 portrait; margin: 14mm; }
+  .screen-only, aside, header, footer, button, [role="dialog"] { display: none !important; }
+  .print-report { display: block !important; color: #0f172a !important; background: #fff !important; font-family: Inter, Arial, sans-serif; font-size: 10pt; line-height: 1.4; }
+  .print-report__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; border-bottom: 2px solid #0f766e; padding-bottom: 14px; }
+  .print-report__eyebrow { color: #0f766e; font-size: 8pt; font-weight: 800; letter-spacing: .14em; margin: 0 0 4px; }
+  .print-report h1 { color: #0f172a; font-size: 20pt; margin: 0; }
+  .print-report h2 { color: #0f172a; font-size: 12pt; margin: 20px 0 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+  .print-report p { margin: 4px 0; color: #475569; }
+  .print-report__badge { border: 1px solid #0f766e; border-radius: 999px; color: #0f766e; font-size: 8pt; font-weight: 800; padding: 4px 8px; white-space: nowrap; }
+  .print-report__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
+  .print-report__grid > div { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; }
+  .print-report__grid span, .print-report__grid strong { display: block; }
+  .print-report__grid span { color: #475569; font-size: 8pt; }
+  .print-report__grid strong { color: #0f172a; font-size: 12pt; margin-top: 3px; }
+  .print-report table { border-collapse: collapse; width: 100%; font-size: 8.5pt; }
+  .print-report th, .print-report td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; vertical-align: top; }
+  .print-report th { background: #e2e8f0; color: #0f172a; font-weight: 800; }
+  .print-report ul { margin: 0; padding-left: 18px; }
+  .print-report li { margin: 6px 0; }
+  .print-report li span { display: block; color: #475569; }
+  .print-report__footnote { border-top: 1px solid #cbd5e1; font-size: 8pt; margin-top: 22px !important; padding-top: 8px; }
+  .print-report h1, .print-report h2, .print-report table, .print-report li { break-inside: avoid; }
 }
+
+.print-report { display: none; }

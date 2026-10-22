@@ -586,16 +586,22 @@ Classifique e responda rigorosamente em um dos três níveis:
 
   // Deterministic fallback
   if (normalized.includes('oxig') || normalized.includes('alerta') || normalized.includes('emerg') || normalized.includes('morrendo')) {
+    const fallbackTank = contextData.tanks.find((tank) => tank.status === 'critical') || contextData.tanks[0];
+    const fallbackReading = fallbackTank ? contextData.telemetry[fallbackTank.id] : undefined;
+    const oxygen = Number(fallbackReading?.dissolvedOxygen ?? 0);
+    const temperature = Number(fallbackReading?.temperature ?? 0);
     return {
       level: 'critical',
-      replyText: `⚠️ *ALERTA CRÍTICO AQUA-CORE*: O oxigênio do *Tanque 04* está em *2.4 mg/L* (abaixo do limiar letal de 3.0 mg/L). *AÇÃO IMEDIATA:* Ligue o aerador de 7.5kW agora para evitar asfixia e perda de biomassa estimada em *R$ 14.800*. Vou monitorar a taxa de recuperação via telemetria contínua e te aviso em *15 minutos*.`,
+      replyText: fallbackTank && oxygen > 0
+        ? `⚠️ *ALERTA AQUA-CORE*: O oxigênio do *${fallbackTank.name}* está em *${oxygen.toFixed(2)} mg/L*. Temperatura registrada: ${temperature.toFixed(1)}°C. *AÇÃO IMEDIATA:* confira a leitura, acione a aeração conforme o protocolo local e suspenda o arraçoamento até validar a recuperação. Impacto financeiro não calculado: preço e biomassa precisam estar conciliados.`
+        : '⚠️ *ALERTA AQUA-CORE*: não há leitura de oxigênio válida no contexto recebido. Confira a sonda e o registro do tanque antes de executar o manejo.',
       intent: 'critical_hypoxia_alert',
       actionRequired: true,
       followUpMinutes: 15,
       metadata: {
-        tankId: 'tank-04',
-        dissolvedOxygen: 2.4,
-        financialImpactEstimated: 'R$ 14.800',
+        tankId: fallbackTank?.id,
+        dissolvedOxygen: oxygen || undefined,
+        financialImpactEstimated: 'não calculado',
       },
     };
   }

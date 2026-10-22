@@ -61,7 +61,7 @@ Lote: *Lote B (Tanque 02)*
 Tanque: *Tanque 04 (Lote D - Terminação)*
 
 ⚠️ *OXIGÊNIO EM NÍVEL LETAL:* *2.4 mg/L* (Mínimo seguro: 3.5 mg/L).
-Temperatura: 29.2°C | Risco financeiro iminente: *R$ 14.800,00* em biomassa.
+Temperatura: 29.2°C | Risco financeiro: *não calculado* (preço e biomassa pendentes).
 
 *AÇÃO CORRETIVA IMEDIATA:*
 1. LIGUE OS AERADORES DO TANQUE AGORA.
@@ -75,7 +75,7 @@ Temperatura: 29.2°C | Risco financeiro iminente: *R$ 14.800,00* em biomassa.
     deliveryStatus: 'read',
     metadata: {
       dissolvedOxygen: 2.4,
-      financialImpactEstimated: 'R$ 14.800,00',
+      financialImpactEstimated: 'não calculado',
     },
   },
   {

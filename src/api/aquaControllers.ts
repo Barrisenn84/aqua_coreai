@@ -7,7 +7,9 @@ import { runAquaCoreRuleEngine } from '../utils/aquacultureMath';
 import { initialBatches, initialTanks } from '../data/initialData';
 import {
   getJwtSecret,
+  getDemoAuthPassword,
   isDemoAuthEnabled,
+  isProductionAuthConfigured,
   isProductionEnvironment,
   SESSION_COOKIE_NAME,
 } from '../config/auth';
@@ -170,7 +172,8 @@ export const WhatsAppController = {
   handleTwilioWebhook: async (req: Request, res: Response) => {
     try {
       const { From, Body } = req.body;
-      const userPhone = From ? String(From).replace('whatsapp:', '') : '+5511999998888';
+      const userPhone = From ? String(From).replace('whatsapp:', '') : '';
+      if (!userPhone) return res.status(400).send('<Response><Message>Remetente não identificado.</Message></Response>');
       const text = String(Body || '');
       console.log(`[Twilio Webhook] Mensagem de ${userPhone}: "${text}"`);
 
@@ -232,7 +235,9 @@ export const WhatsAppController = {
       const { userId, payload, level } = req.body;
       const { messagingHub, MessageLevel } = await import('../services/MessagingHub');
       const lvl = level || MessageLevel.INFORMATIVE;
-      const message = await messagingHub.processAndSend(userId || '+5511999998888', payload || {}, lvl);
+      const destination = String(userId || '').trim();
+      if (!destination) return res.status(400).json({ error: 'Destino de mensagem não informado.' });
+      const message = await messagingHub.processAndSend(destination, payload || {}, lvl);
       return res.json({ success: true, message });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -263,7 +268,11 @@ export const HardwareController = {
  */
 export const AuthController = {
   getConfig: async (_req: Request, res: Response) => {
-    return res.json({ demoAuthEnabled: isDemoAuthEnabled() });
+    return res.json({
+      demoAuthEnabled: isDemoAuthEnabled(),
+      authConfigured: isProductionAuthConfigured(),
+      requiresAdministratorSetup: !isDemoAuthEnabled() && !isProductionAuthConfigured(),
+    });
   },
 
   login: async (req: Request, res: Response) => {
@@ -289,7 +298,7 @@ export const AuthController = {
       let authenticated = false;
 
       if (isDemoAuthEnabled()) {
-        authenticated = Boolean(user) && cleanPassword === 'admin123';
+        authenticated = Boolean(user) && cleanPassword === getDemoAuthPassword();
       } else {
         const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
         const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH?.trim();

@@ -63,7 +63,7 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
    ```
 
 3. **Configurar Variáveis de Ambiente:**
-   Copie `.env.example` para `.env`, troque todos os placeholders e configure a chave da API Gemini. Em desenvolvimento, `ALLOW_INSECURE_DEMO_AUTH=true` libera as contas de demonstração com a senha `admin123`:
+   Copie `.env.example` para `.env`, troque todos os placeholders e configure a chave da API Gemini. Em desenvolvimento, `ALLOW_INSECURE_DEMO_AUTH=true` só funciona quando `DEMO_AUTH_PASSWORD` também foi definido:
    ```env
    GEMINI_API_KEY="SUA_CHAVE_AQUI"
    PORT=3000
@@ -73,7 +73,7 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
    ```bash
    npm run dev
    ```
-   Acesse a aplicação no navegador em: `http://localhost:3000`
+   Acesse a aplicação no navegador em: `http://localhost:3000`. A senha de demonstração é lida somente da variável local `DEMO_AUTH_PASSWORD`.
 
 5. **Compilar para Produção:**
    ```bash
@@ -81,6 +81,12 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
    ```
 
 ---
+
+## 🚀 Implantação no Render
+
+No serviço web do Render, configure `NODE_ENV=production`, `JWT_SECRET` (segredo aleatório com pelo menos 32 caracteres), `ADMIN_EMAIL` e `ADMIN_PASSWORD_HASH` (hash bcrypt, nunca a senha em texto). O usuário definido em `ADMIN_EMAIL` recebe o papel `superadmin_owner` e pode alternar entre as organizações retornadas pelo servidor. A aplicação não oferece atalhos de senha nem credenciais embutidas.
+
+Mantenha `ALLOW_INSECURE_DEMO_AUTH=false` ou remova a variável em produção. Depois do deploy, valide `/api/health` e abra o modal de acesso: ele deve indicar que a configuração está pronta, sem revelar segredos.
 
 ## 🚂 Implantação no Railway
 
