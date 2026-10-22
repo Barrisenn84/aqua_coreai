@@ -11,6 +11,7 @@ import { InvoiceModal } from './components/InvoiceModal';
 import { EquipmentModal } from './components/EquipmentModal';
 import { AuthModal } from './components/AuthModal';
 import { VoiceAssistantModal } from './components/VoiceAssistantModal';
+import type { VoiceTankPayload } from './components/VoiceAssistantModal';
 import { VisionAnalysisModal } from './components/VisionAnalysisModal';
 import { FarmProfileModal } from './components/FarmProfileModal';
 import { ResetControlModal } from './components/ResetControlModal';
@@ -60,7 +61,7 @@ const normalizeTab = (value: string): CanonicalTabType => aliases[value.toLowerC
 const LoadingView = () => <div className="flex min-h-[45vh] items-center justify-center"><div className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900 px-5 py-4 text-sm font-bold text-slate-300"><LoaderCircle className="h-5 w-5 animate-spin text-cyan-300" />Carregando módulo…</div></div>;
 
 function AppContent() {
-  const { setActiveTankId, isAuthModalOpen, setIsAuthModalOpen, setIsResetModalOpen } = useAquaCore();
+  const { setActiveTankId, addTank, tanks, batches, sensorReadings, totalBiomassKg, globalFcr, globalSurvivalRatePct, farm, dre, isAuthModalOpen, setIsAuthModalOpen, setIsResetModalOpen } = useAquaCore();
   const [activeTab, setActiveTab] = useState<CanonicalTabType>('nerve-center');
   const [manualOpen, setManualOpen] = useState(() => localStorage.getItem('aquacore_manual_seen') !== 'yes');
   const [isBiometryModalOpen, setIsBiometryModalOpen] = useState(false);
@@ -114,7 +115,34 @@ function AppContent() {
       <InvoiceModal isOpen={isInvoiceModalOpen} onClose={() => setIsInvoiceModalOpen(false)} />
       <EquipmentModal isOpen={isEquipmentModalOpen} onClose={() => setIsEquipmentModalOpen(false)} />
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      <VoiceAssistantModal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)} onNavigateTab={navigate} onOpenVision={() => { setIsVoiceModalOpen(false); setIsVisionModalOpen(true); }} onOpenScanner={() => { setIsVoiceModalOpen(false); setIsScannerModalOpen(true); }} onOpenFarmProfile={() => { setIsVoiceModalOpen(false); setIsFarmProfileModalOpen(true); }} onOpenReset={() => { setIsVoiceModalOpen(false); setIsResetModalOpen(true); }} onOpenBiometry={() => { setIsVoiceModalOpen(false); openBiometry(); }} />
+      <VoiceAssistantModal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)} onNavigateTab={navigate} onOpenVision={() => { setIsVoiceModalOpen(false); setIsVisionModalOpen(true); }} onOpenScanner={() => { setIsVoiceModalOpen(false); setIsScannerModalOpen(true); }} onOpenFarmProfile={() => { setIsVoiceModalOpen(false); setIsFarmProfileModalOpen(true); }} onOpenReset={() => { setIsVoiceModalOpen(false); setIsResetModalOpen(true); }} onOpenBiometry={() => { setIsVoiceModalOpen(false); openBiometry(); }} snapshot={{
+        tankCount: tanks.length,
+        batchCount: batches.length,
+        biomassKg: totalBiomassKg,
+        globalFcr,
+        survivalPct: globalSurvivalRatePct,
+        salePricePerKg: farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0,
+        grossRevenue: dre.grossRevenue,
+        latestSensors: Object.values(sensorReadings).slice(0, 8).map((reading) => ({ tankId: reading.tankId, oxygenMgL: reading.dissolvedOxygen, temperatureC: reading.temperature, ph: reading.ph, updatedAt: reading.timestamp })),
+      }} onCreateTank={(payload: VoiceTankPayload) => {
+        const areaM2 = Number(payload.areaM2 || 0);
+        const depthM = Number(payload.depthM || 1.5);
+        const aeratorCount = Number(payload.aeratorCount || 0);
+        addTank({
+          name: payload.name || 'Tanque novo',
+          type: payload.type || 'escavado',
+          areaM2,
+          depthM,
+          volumeM3: Math.round(areaM2 * depthM),
+          aeratorCount,
+          aeratorPowerKw: Number(payload.aeratorPowerKw || 2.2),
+          aeratorActive: aeratorCount > 0,
+          status: 'optimal',
+          initialBatchCode: payload.initialBatchCode,
+          initialShrimpCount: payload.initialShrimpCount,
+          initialWeightG: payload.initialWeightG,
+        });
+      }} />
       <VisionAnalysisModal isOpen={isVisionModalOpen} onClose={() => setIsVisionModalOpen(false)} />
       <FarmProfileModal isOpen={isFarmProfileModalOpen} onClose={() => setIsFarmProfileModalOpen(false)} />
       <ResetControlModal />

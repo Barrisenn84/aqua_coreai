@@ -1028,191 +1028,175 @@ Retorne estritamente um JSON estruturado com:
 /**
  * 🎤 PROCESSADOR DE COMANDOS DE VOZ IA (Dr. Camarão / ShrimpAI Copilot)
  */
-export async function processVoiceAssistantCommand(transcript: string): Promise<{
-  action: 'navigate' | 'speak_advice' | 'trigger_action';
+export interface VoiceTankRegistrationFields {
+  name?: string;
+  type?: 'escavado' | 'berçário' | 'geomembrana' | 'raceways';
+  areaM2?: number;
+  depthM?: number;
+  aeratorCount?: number;
+  aeratorPowerKw?: number;
+  initialBatchCode?: string;
+  initialShrimpCount?: number;
+  initialWeightG?: number;
+}
+
+export interface VoiceWorkflowState {
+  type: 'tank_registration';
+  step: 'name' | 'type' | 'area' | 'depth' | 'aerators' | 'stocking' | 'weight' | 'confirm';
+  fields: VoiceTankRegistrationFields;
+}
+
+export interface VoiceConversationContext {
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  workflow?: VoiceWorkflowState | null;
+  snapshot?: Record<string, unknown>;
+}
+
+export interface VoiceAssistantResponse {
+  action: 'navigate' | 'speak_advice' | 'trigger_action' | 'conversation' | 'create_tank';
   targetTab?: string;
   triggerType?: 'open_vision' | 'open_farm_profile' | 'trigger_reset' | 'open_biometry' | 'open_scanner';
   spokenReply: string;
   intent: string;
-}> {
+  workflow?: VoiceWorkflowState | null;
+  actionPayload?: VoiceTankRegistrationFields;
+}
+
+const parseVoiceNumber = (value: string) => {
+  const clean = String(value).replace(/\s/g, '');
+  if (clean.includes(',')) return Number(clean.replace(/\./g, '').replace(',', '.'));
+  const dots = (clean.match(/\./g) || []).length;
+  if (dots === 1 && /\.\d{1,2}$/.test(clean)) return Number(clean);
+  return Number(clean.replace(/\./g, ''));
+};
+
+function extractTankFields(text: string, current: VoiceTankRegistrationFields): VoiceTankRegistrationFields {
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+  const next = { ...current };
+  const type = normalized.match(/(escavado|ber[çc]ário|geomembrana|raceway)/i)?.[1]?.toLowerCase();
+  if (type) next.type = type.startsWith('ber') ? 'berçário' : type.startsWith('race') ? 'raceways' : type as VoiceTankRegistrationFields['type'];
+  const area = normalized.match(/(\d+(?:[.,]\d+)?)\s*(m²|m2|metros? quadrados?|ha|hectares?)/i);
+  if (area) next.areaM2 = /ha|hectar/i.test(area[2]) ? parseVoiceNumber(area[1]) * 10000 : parseVoiceNumber(area[1]);
+  const depth = normalized.match(/(?:profundidade|profundo|l[âa]mina)[^\d]*(\d+(?:[.,]\d+)?)/i);
+  if (depth) next.depthM = parseVoiceNumber(depth[1]);
+  const aerators = normalized.match(/(\d+)\s*(?:aeradores?|aera[çc][ãa]o)/i);
+  if (aerators) next.aeratorCount = parseVoiceNumber(aerators[1]);
+  const power = normalized.match(/(\d+(?:[.,]\d+)?)\s*(?:kw|cv)/i);
+  if (power) next.aeratorPowerKw = parseVoiceNumber(power[1]);
+  const shrimp = normalized.match(/(\d[\d.,]*)\s*(?:camar[õo]es?|pls?|p[óo]s[- ]?larvas?|unidades?)/i);
+  if (shrimp) next.initialShrimpCount = parseVoiceNumber(shrimp[1]);
+  const weight = normalized.match(/(?:peso|gramas?|g)[^\d]*(\d+(?:[.,]\d+)?)/i);
+  if (weight) next.initialWeightG = parseVoiceNumber(weight[1]);
+  const batch = normalized.match(/(?:lote|c[óo]digo)[\s:#-]*([a-z0-9_-]+)/i);
+  if (batch) next.initialBatchCode = batch[1].toUpperCase();
+  if (!next.name && !/\b(escavado|ber[çc]ário|geomembrana|raceway)\b/i.test(normalized)) {
+    const named = normalized.match(/(?:nome|chame|identifica[çc][ãa]o)[\s:=-]+(.+)/i);
+    if (named?.[1]) next.name = named[1].replace(/[.!?]+$/, '').trim();
+  }
+  if (!next.name && !next.type && !next.areaM2 && !next.depthM && !next.aeratorCount && !next.initialShrimpCount && !next.initialBatchCode) {
+    const plainName = normalized.replace(/[.!?]+$/, '').trim();
+    if (plainName && !/^pular$|^n[ãa]o sei$|^desconhe[çc]o$/i.test(plainName)) next.name = plainName;
+  }
+  return next;
+}
+
+function tankWorkflowReply(workflow: VoiceWorkflowState, transcript: string): VoiceAssistantResponse {
   const norm = transcript.toLowerCase().trim();
+  if (/\b(cancelar|cancele|parar|sair|desistir)\b/.test(norm)) {
+    return { action: 'conversation', spokenReply: 'Tudo bem, cancelei o cadastro. Quando quiser, podemos começar de novo.', intent: 'TANK_REGISTRATION_CANCELLED', workflow: null };
+  }
+  const fields = extractTankFields(transcript, workflow.fields);
+  const looseNumber = norm.match(/\d[\d.,]*/)?.[0];
+  if (looseNumber) {
+    const parsedNumber = parseVoiceNumber(looseNumber);
+    if (workflow.step === 'area' && fields.areaM2 === undefined) fields.areaM2 = /ha|hectar/.test(norm) ? parsedNumber * 10000 : parsedNumber;
+    if (workflow.step === 'depth' && fields.depthM === undefined) fields.depthM = parsedNumber;
+    if (workflow.step === 'aerators' && fields.aeratorCount === undefined) fields.aeratorCount = parsedNumber;
+    if (workflow.step === 'stocking' && fields.initialShrimpCount === undefined) fields.initialShrimpCount = parsedNumber;
+    if (workflow.step === 'weight' && fields.initialWeightG === undefined) fields.initialWeightG = parsedNumber;
+  }
+  const yes = /\b(sim|confirmo|pode salvar|salvar|isso mesmo|correto)\b/.test(norm);
+  const no = /\b(n[ãa]o|corrigir|alterar)\b/.test(norm);
+  if (workflow.step === 'name' && !fields.name) return { action: 'conversation', spokenReply: 'Claro. Qual nome você quer dar ao tanque? Por exemplo: Tanque 06 ou Viveiro Norte.', intent: 'TANK_ASK_NAME', workflow: { ...workflow, step: 'name', fields } };
+  if (workflow.step === 'name' && fields.name) return { action: 'conversation', spokenReply: `Perfeito, vou chamar de ${fields.name}. Ele é escavado, berçário, geomembrana ou raceway?`, intent: 'TANK_ASK_TYPE', workflow: { ...workflow, step: 'type', fields } };
+  if (workflow.step === 'type' && !fields.type) return { action: 'conversation', spokenReply: 'Qual é o tipo da estrutura: escavado, berçário, geomembrana ou raceway?', intent: 'TANK_ASK_TYPE', workflow: { ...workflow, step: 'type', fields } };
+  if (workflow.step === 'type' && fields.type) return { action: 'conversation', spokenReply: 'Entendi. Qual é a área do tanque? Pode falar em metros quadrados ou hectares.', intent: 'TANK_ASK_AREA', workflow: { ...workflow, step: 'area', fields } };
+  if (workflow.step === 'area' && !fields.areaM2) return { action: 'conversation', spokenReply: 'Preciso da área para calcular o volume. Quantos metros quadrados ou hectares ele tem?', intent: 'TANK_ASK_AREA', workflow: { ...workflow, step: 'area', fields } };
+  if (workflow.step === 'area' && fields.areaM2) return { action: 'conversation', spokenReply: 'E qual é a profundidade média da lâmina d’água, em metros?', intent: 'TANK_ASK_DEPTH', workflow: { ...workflow, step: 'depth', fields } };
+  if (workflow.step === 'depth' && !fields.depthM) return { action: 'conversation', spokenReply: 'Qual é a profundidade média em metros? Se não souber, diga “pular” e eu uso 1,5 m como estimativa marcada.', intent: 'TANK_ASK_DEPTH', workflow: { ...workflow, step: 'depth', fields } };
+  if (workflow.step === 'depth' && fields.depthM) return { action: 'conversation', spokenReply: 'Quantos aeradores você quer registrar nesse tanque? Diga zero se ainda não houver.', intent: 'TANK_ASK_AERATORS', workflow: { ...workflow, step: 'aerators', fields } };
+  if (workflow.step === 'aerators' && fields.aeratorCount === undefined && !/\b(zero|nenhum|nenhuma)\b/.test(norm)) return { action: 'conversation', spokenReply: 'Quantos aeradores devo registrar?', intent: 'TANK_ASK_AERATORS', workflow: { ...workflow, step: 'aerators', fields } };
+  if (workflow.step === 'aerators' && fields.aeratorCount === undefined) fields.aeratorCount = 0;
+  if (workflow.step === 'aerators') return { action: 'conversation', spokenReply: 'Quer cadastrar o povoamento agora? Diga a quantidade de camarões ou pós-larvas, ou diga “não” para deixar o tanque vazio.', intent: 'TANK_ASK_STOCKING', workflow: { ...workflow, step: 'stocking', fields } };
+  if (workflow.step === 'stocking' && fields.initialShrimpCount === undefined && !/\b(n[ãa]o|vazio|sem povoamento|pular)\b/.test(norm)) return { action: 'conversation', spokenReply: 'Quantos camarões ou pós-larvas serão cadastrados?', intent: 'TANK_ASK_STOCKING', workflow: { ...workflow, step: 'stocking', fields } };
+  if (workflow.step === 'stocking' && fields.initialShrimpCount === undefined) return { action: 'conversation', spokenReply: 'Sem problema. Vou deixar o tanque sem lote inicial. Posso salvar assim?', intent: 'TANK_CONFIRM', workflow: { ...workflow, step: 'confirm', fields } };
+  if (workflow.step === 'stocking' && fields.initialShrimpCount !== undefined && !fields.initialWeightG) return { action: 'conversation', spokenReply: 'Qual o peso inicial médio de cada camarão, em gramas? Se não souber, diga “pular”.', intent: 'TANK_ASK_WEIGHT', workflow: { ...workflow, step: 'weight', fields } };
+  if (workflow.step === 'weight' && !fields.initialWeightG && /\b(pular|n[ãa]o sei|desconhe[çc]o)\b/.test(norm)) fields.initialWeightG = 0.02;
+  if (workflow.step === 'weight' && !fields.initialWeightG) return { action: 'conversation', spokenReply: 'Qual o peso inicial médio em gramas? Você também pode dizer “pular”.', intent: 'TANK_ASK_WEIGHT', workflow: { ...workflow, step: 'weight', fields } };
+  const summary = `Confira: ${fields.name || 'tanque sem nome'}, ${fields.type || 'escavado'}, ${Math.round(fields.areaM2 || 0).toLocaleString('pt-BR')} m², profundidade ${String(fields.depthM || 1.5).replace('.', ',')} m, ${fields.aeratorCount ?? 0} aerador(es) e ${fields.initialShrimpCount ? fields.initialShrimpCount.toLocaleString('pt-BR') + ' camarões' : 'sem lote inicial'}.`;
+  if (workflow.step !== 'confirm') return { action: 'conversation', spokenReply: `${summary} Posso salvar?`, intent: 'TANK_CONFIRM', workflow: { ...workflow, step: 'confirm', fields } };
+  if (no) {
+    const correctionStep: VoiceWorkflowState['step'] = /área|metros quadrados|hectare/.test(norm) ? 'area'
+      : /profundidade|lâmina/.test(norm) ? 'depth'
+      : /aerador|aeração/.test(norm) ? 'aerators'
+      : /povoamento|camarão|pl|quantidade/.test(norm) ? 'stocking'
+      : /peso|grama/.test(norm) ? 'weight'
+      : /tipo|escavado|berçário|geomembrana|raceway/.test(norm) ? 'type'
+      : 'name';
+    const prompts: Record<VoiceWorkflowState['step'], string> = {
+      name: 'Qual deve ser o novo nome?', type: 'Qual deve ser o novo tipo: escavado, berçário, geomembrana ou raceway?', area: 'Qual é a nova área em metros quadrados ou hectares?', depth: 'Qual é a nova profundidade média em metros?', aerators: 'Qual é a nova quantidade de aeradores?', stocking: 'Qual é a nova quantidade de camarões ou pós-larvas?', weight: 'Qual é o novo peso inicial médio em gramas?', confirm: 'Posso salvar as alterações?',
+    };
+    return { action: 'conversation', spokenReply: prompts[correctionStep], intent: 'TANK_CORRECTION', workflow: { ...workflow, step: correctionStep, fields } };
+  }
+  if (!yes) return { action: 'conversation', spokenReply: `${summary} Diga “sim, salvar” ou “cancelar”.`, intent: 'TANK_CONFIRM', workflow: { ...workflow, step: 'confirm', fields } };
+  return { action: 'create_tank', spokenReply: 'Perfeito. Vou cadastrar esse tanque agora e manter os dados marcados como informados por você.', intent: 'CREATE_TANK', workflow: null, actionPayload: fields };
+}
 
-  // 1. Ações diretas de ferramentas (Câmera, Scanner, Cadastro, Reset)
-  if (norm.includes('foto') || norm.includes('câmera') || norm.includes('camera') || norm.includes('olho vivo')) {
-    return {
-      action: 'trigger_action',
-      triggerType: 'open_vision',
-      spokenReply: 'Abrindo os olhos da IA. Aponte a câmera para o comedouro, camarão ou insumo.',
-      intent: 'TRIGGER_VISION',
-    };
-  }
-  if (norm.includes('scanner') || norm.includes('escanear rótulo') || norm.includes('escanear ração')) {
-    return {
-      action: 'trigger_action',
-      triggerType: 'open_scanner',
-      spokenReply: 'Abrindo o scanner inteligente de sacas de ração.',
-      intent: 'TRIGGER_SCANNER',
-    };
-  }
-  if (norm.includes('minha fazenda') || norm.includes('licença') || norm.includes('cnpj') || norm.includes('cadastro')) {
-    return {
-      action: 'trigger_action',
-      triggerType: 'open_farm_profile',
-      spokenReply: 'Abrindo o cadastro institucional e licença ambiental da Fazenda River Life.',
-      intent: 'TRIGGER_FARM_PROFILE',
-    };
-  }
-  if (norm.includes('zerar') || norm.includes('reiniciar') || norm.includes('limpar dados')) {
-    return {
-      action: 'trigger_action',
-      triggerType: 'trigger_reset',
-      spokenReply: 'Abrindo a tela de reinicialização controlada e protegida.',
-      intent: 'TRIGGER_RESET',
-    };
-  }
-
-  // 2. Navegação instantânea para as 18 telas canônicas do sistema
-  if (norm.includes('estoque') || norm.includes('armazém') || norm.includes('galpão') || norm.includes('insumo') || norm.includes('ração') || norm.includes('saco')) {
-    return {
-      action: 'navigate',
-      targetTab: 'inventory-warehouse',
-      spokenReply: 'Abrindo o galpão de estoque e insumos da fazenda.',
-      intent: 'NAVIGATE_INVENTORY',
-    };
-  }
-  if (norm.includes('viveiro') || norm.includes('tanque') || norm.includes('início') || norm.includes('painel') || norm.includes('controle')) {
-    return {
-      action: 'navigate',
-      targetTab: 'nerve-center',
-      spokenReply: 'Abrindo o centro de controle com todos os seus tanques e clima.',
-      intent: 'NAVIGATE_NERVE_CENTER',
-    };
-  }
-  if (norm.includes('bandeja') || norm.includes('comedouro') || norm.includes('alimentação') || norm.includes('trato') || norm.includes('sobra')) {
-    return {
-      action: 'navigate',
-      targetTab: 'feeding-trays',
-      spokenReply: 'Navegando para o manejo de comedouros e bandejas de ração.',
-      intent: 'NAVIGATE_FEEDING',
-    };
-  }
-  if (norm.includes('água') || norm.includes('agua') || norm.includes('oxigênio') || norm.includes('oxigenio') || norm.includes('salinidade') || norm.includes('alcalinidade') || norm.includes('ph') || norm.includes('iônico')) {
-    return {
-      action: 'navigate',
-      targetTab: 'water-quality',
-      spokenReply: 'Abrindo o painel de qualidade da água e balanço iônico.',
-      intent: 'NAVIGATE_WATER_QUALITY',
-    };
-  }
-  if (norm.includes('despesca') || norm.includes('colheita') || norm.includes('romaneio') || norm.includes('caminhão')) {
-    return {
-      action: 'navigate',
-      targetTab: 'harvest-commercial',
-      spokenReply: 'Acessando o módulo de despescas e romaneios comerciais.',
-      intent: 'NAVIGATE_HARVEST',
-    };
-  }
-  if (norm.includes('muda') || norm.includes('lua') || norm.includes('mortalidade') || norm.includes('casca') || norm.includes('sanidade')) {
-    return {
-      action: 'navigate',
-      targetTab: 'mortality-molt',
-      spokenReply: 'Abrindo o ciclo de mudas lunares e sanidade do camarão.',
-      intent: 'NAVIGATE_MOLT',
-    };
-  }
-  if (norm.includes('dre') || norm.includes('lucro') || norm.includes('custo') || norm.includes('despesa') || norm.includes('margem')) {
-    return {
-      action: 'navigate',
-      targetTab: 'dre',
-      spokenReply: 'Abrindo o DRE financeiro com apuração de custos e lucros.',
-      intent: 'NAVIGATE_DRE',
-    };
-  }
-  if (norm.includes('caixa') || norm.includes('fluxo') || norm.includes('banco') || norm.includes('pix')) {
-    return {
-      action: 'navigate',
-      targetTab: 'cash-flow',
-      spokenReply: 'Abrindo o fluxo de caixa diário e contas bancárias.',
-      intent: 'NAVIGATE_CASH_FLOW',
-    };
-  }
-  if (norm.includes('cotação') || norm.includes('preço') || norm.includes('mercado') || norm.includes('bolsa') || norm.includes('comprador') || norm.includes('venda')) {
-    return {
-      action: 'navigate',
-      targetTab: 'market-bridge',
-      spokenReply: 'Abrindo a bolsa Market-Bridge com as melhores cotações regionais.',
-      intent: 'NAVIGATE_MARKET',
-    };
-  }
-  if (norm.includes('biometria') || norm.includes('peso') || norm.includes('balança') || norm.includes('amostragem') || norm.includes('pesar')) {
-    return {
-      action: 'navigate',
-      targetTab: 'biometry',
-      spokenReply: 'Abrindo o histórico de biometrias e acompanhamento de peso.',
-      intent: 'NAVIGATE_BIOMETRY',
-    };
-  }
-  if (norm.includes('whatsapp') || norm.includes('zap') || norm.includes('mensagem')) {
-    return {
-      action: 'navigate',
-      targetTab: 'whatsapp-ghost',
-      spokenReply: 'Abrindo o assistente WhatsApp integrado.',
-      intent: 'NAVIGATE_WHATSAPP',
-    };
-  }
-  if (norm.includes('iot') || norm.includes('sensor') || norm.includes('caixa preta') || norm.includes('4g')) {
-    return {
-      action: 'navigate',
-      targetTab: 'blackbox-haas',
-      spokenReply: 'Abrindo a telemetria das caixas pretas IoT 4G.',
-      intent: 'NAVIGATE_IOT',
-    };
+export async function processVoiceAssistantCommand(transcript: string, context: VoiceConversationContext = {}): Promise<VoiceAssistantResponse> {
+  const norm = transcript.toLowerCase().trim();
+  if (!norm) return { action: 'conversation', spokenReply: 'Estou ouvindo. Pode falar ou digitar o que você precisa na fazenda.', intent: 'EMPTY_INPUT', workflow: context.workflow || null };
+  if (context.workflow?.type === 'tank_registration') return tankWorkflowReply(context.workflow, transcript);
+  if (/(cadastrar|adicionar|criar|novo)\s+(um\s+)?(tanque|viveiro)/i.test(norm)) {
+    return { action: 'conversation', spokenReply: 'Vamos cadastrar um tanque real passo a passo. Qual nome você quer dar a ele?', intent: 'START_TANK_REGISTRATION', workflow: { type: 'tank_registration', step: 'name', fields: {} } };
   }
 
-  // 3. Consulta inteligente aberta via Gemini AI com Cascata
+  if (norm.includes('foto') || norm.includes('câmera') || norm.includes('camera') || norm.includes('olho vivo')) return { action: 'trigger_action', triggerType: 'open_vision', spokenReply: 'Abrindo os olhos da IA. Aponte a câmera para o comedouro, camarão ou insumo.', intent: 'TRIGGER_VISION' };
+  if (norm.includes('scanner') || norm.includes('escanear rótulo') || norm.includes('escanear ração')) return { action: 'trigger_action', triggerType: 'open_scanner', spokenReply: 'Abrindo o scanner inteligente de sacas de ração.', intent: 'TRIGGER_SCANNER' };
+  if (norm.includes('minha fazenda') || norm.includes('licença') || norm.includes('cnpj')) return { action: 'trigger_action', triggerType: 'open_farm_profile', spokenReply: 'Abrindo o cadastro institucional e licença ambiental da Fazenda River Life.', intent: 'TRIGGER_FARM_PROFILE' };
+  if (norm.includes('zerar') || norm.includes('reiniciar') || norm.includes('limpar dados')) return { action: 'trigger_action', triggerType: 'trigger_reset', spokenReply: 'Abrindo a tela de reinicialização controlada e protegida. Nada será apagado sem confirmação.', intent: 'TRIGGER_RESET' };
+  const direct: Array<[RegExp, string, string, string]> = [
+    [/estoque|armazém|galpão|insumo|ração|saco/, 'inventory-warehouse', 'Abrindo o galpão de estoque e insumos da fazenda.', 'NAVIGATE_INVENTORY'],
+    [/viveiro|tanque|início|painel|controle/, 'nerve-center', 'Abrindo o centro de controle com todos os seus tanques e clima.', 'NAVIGATE_NERVE_CENTER'],
+    [/bandeja|comedouro|alimentação|trato|sobra/, 'feeding-trays', 'Navegando para o manejo de comedouros e bandejas de ração.', 'NAVIGATE_FEEDING'],
+    [/água|agua|oxigênio|oxigenio|salinidade|alcalinidade|ph|iônico/, 'water-quality', 'Abrindo o painel de qualidade da água e balanço iônico.', 'NAVIGATE_WATER_QUALITY'],
+    [/despesca|colheita|romaneio|caminhão/, 'harvest-commercial', 'Acessando o módulo de despescas e romaneios comerciais.', 'NAVIGATE_HARVEST'],
+    [/muda|lua|mortalidade|casca|sanidade/, 'mortality-molt', 'Abrindo o ciclo de mudas lunares e sanidade do camarão.', 'NAVIGATE_MOLT'],
+    [/dre|lucro|custo|despesa|margem/, 'dre', 'Abrindo o DRE financeiro com apuração de custos e lucros.', 'NAVIGATE_DRE'],
+    [/caixa|fluxo|banco|pix/, 'cash-flow', 'Abrindo o fluxo de caixa diário e contas bancárias.', 'NAVIGATE_CASH_FLOW'],
+    [/cotação|preço|mercado|bolsa|comprador|venda/, 'market-bridge', 'Abrindo a bolsa Market-Bridge e suas fontes de cotação.', 'NAVIGATE_MARKET'],
+    [/biometria|peso|balança|amostragem|pesar/, 'biometry', 'Abrindo o histórico de biometrias e acompanhamento de peso.', 'NAVIGATE_BIOMETRY'],
+    [/whatsapp|zap|mensagem/, 'whatsapp-ghost', 'Abrindo o assistente WhatsApp integrado.', 'NAVIGATE_WHATSAPP'],
+    [/iot|sensor|caixa preta|4g/, 'blackbox-haas', 'Abrindo a telemetria das caixas pretas IoT 4G.', 'NAVIGATE_IOT'],
+  ];
+  const match = direct.find(([pattern]) => pattern.test(norm));
+  if (match) return { action: 'navigate', targetTab: match[1], spokenReply: match[2], intent: match[3] };
+
   try {
-    const aiPrompt = `Você é o Dr. Camarão, assistente falado da Fazenda River Life em Mogeiro - PB (produtor Collermhann).
-Cultivo: 380.000 camarões Litopenaeus vannamei em 4 viveiros povoados.
-Pergunta ou comando do produtor: "${transcript}"
-
-Responda em formato JSON:
-- spokenReply: Resposta falada de no máximo 2 frases, amigável, clara e didática (linguagem simples para entender no campo).
-- action: "navigate" (se ele quer ir para uma tela), "trigger_action" (se for foto/câmera/reset) ou "speak_advice" (se for dúvida técnica).
-- targetTab: se action for navigate, informe exatamente uma das opções: "nerve-center", "feeding-trays", "water-quality", "inventory-warehouse", "harvest-commercial", "mortality-molt", "dre", "cash-flow", "market-bridge", "biometry".
-- triggerType: se action for trigger_action, informe "open_vision", "open_farm_profile" ou "trigger_reset".
-- intent: código do comando.`;
-
+    const history = (context.history || []).slice(-8).map((item) => `${item.role === 'user' ? 'Produtor' : 'Dr. Camarão'}: ${item.content}`).join('\n');
+    const snapshot = context.snapshot ? `Dados disponíveis agora: ${JSON.stringify(context.snapshot)}` : 'Não invente números: se um dado não estiver no contexto, diga que precisa consultá-lo.';
+    const aiPrompt = `Você é o Dr. Camarão, copiloto conversacional da Fazenda River Life, em Mogeiro-PB. Converse em português do Brasil, com naturalidade, respeito e frases curtas para serem faladas em voz alta. Você pode explicar aquicultura, interpretar dados disponíveis, orientar rotinas e navegar pelos módulos. Nunca invente cotação, diagnóstico ou número; diferencie fato, estimativa e recomendação. Faça uma pergunta por vez quando faltar informação.\n${snapshot}\nHistórico recente:\n${history || '(início da conversa)'}\nMensagem atual do produtor: ${transcript}\n\nRetorne JSON com spokenReply (2 a 4 frases), action (speak_advice, navigate ou conversation), intent e, apenas se necessário, targetTab. Se a pessoa pedir um cadastro, não execute sem coletar e confirmar os dados.`;
     const aiResponse = await generateContentWithCascade({
       contents: aiPrompt,
       config: {
-        temperature: 0.2,
+        temperature: 0.45,
         responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            spokenReply: { type: Type.STRING },
-            action: { type: Type.STRING, enum: ['navigate', 'speak_advice', 'trigger_action'] },
-            targetTab: { type: Type.STRING },
-            triggerType: { type: Type.STRING },
-            intent: { type: Type.STRING },
-          },
-          required: ['spokenReply', 'action', 'intent'],
-        },
+        responseSchema: { type: Type.OBJECT, properties: { spokenReply: { type: Type.STRING }, action: { type: Type.STRING, enum: ['navigate', 'speak_advice', 'conversation'] }, targetTab: { type: Type.STRING }, intent: { type: Type.STRING } }, required: ['spokenReply', 'action', 'intent'] },
       },
     });
-
     const parsed = JSON.parse(aiResponse.text || '{}');
-    if (parsed.spokenReply) {
-      return parsed;
-    }
+    if (parsed.spokenReply) return parsed as VoiceAssistantResponse;
   } catch (err: any) {
     console.warn('[GeminiOracle] Fallback em processVoiceAssistantCommand:', err.message);
   }
-
-  // 4. Fallback amigável padrão
-  return {
-    action: 'speak_advice',
-    spokenReply: 'Dr. Camarão na escuta. A água e os viveiros estão monitorados. Você pode me pedir para abrir o estoque, ver a qualidade da água ou as bandejas de comida.',
-    intent: 'ZOOTECHNICAL_ADVICE',
-  };
+  return { action: 'conversation', spokenReply: 'Estou com você. Posso conversar sobre água, alimentação, sanidade, biometria, estoque, mercado e finanças. O que você quer resolver primeiro?', intent: 'GENERAL_CONVERSATION' };
 }

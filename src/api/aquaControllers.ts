@@ -781,9 +781,9 @@ export const VisionController = {
 export const VoiceController = {
   processCommand: async (req: Request, res: Response) => {
     try {
-      const { transcript } = req.body;
+      const { transcript, context } = req.body;
       const { processVoiceAssistantCommand } = await import('../ai/geminiOracle');
-      const response = await processVoiceAssistantCommand(transcript || '');
+      const response = await processVoiceAssistantCommand(transcript || '', context || {});
       return res.json(response);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

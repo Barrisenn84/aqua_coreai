@@ -28,10 +28,10 @@ export const MarketScenariosSimulator: React.FC = () => {
     return batches.reduce((acc, b) => acc + (b.currentCount || 0), 0);
   }, [batches]);
 
-  // Biomassa técnica atual no sistema (fase inicial de berçário = 3,53 kg)
+  // Biomassa técnica atual derivada dos lotes carregados no sistema.
   const currentBiomassTechnicalKg = useMemo(() => {
     return batches.reduce((acc, b) => acc + ((b.currentCount * b.currentWeightG) / 1000), 0);
-  }, []);
+  }, [batches]);
 
   // Estado dos controles de simulação
   const [selectedPricePerKg, setSelectedPricePerKg] = useState<number>(farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0);
@@ -62,7 +62,7 @@ export const MarketScenariosSimulator: React.FC = () => {
     const grossRevenue = activeBiomassKg * selectedPricePerKg;
 
     // 2. Ração Necessária e Custo Estimado de Ração
-    // Ganho de peso líquido projetado = biomassa final - biomassa inicial (3,53kg)
+    // Ganho de peso líquido projetado = biomassa final - biomassa técnica atual.
     const netWeightGainKg = Math.max(0, activeBiomassKg - currentBiomassTechnicalKg);
     const estimatedFeedKg = netWeightGainKg * simulatedFcr;
     const estimatedFeedCost = estimatedFeedKg * feedCostPerKg;
@@ -97,6 +97,7 @@ export const MarketScenariosSimulator: React.FC = () => {
       breakevenPricePerKg,
       breakevenBiomassKg,
       costPerKgProduced,
+      hasSalePrice: selectedPricePerKg > 0,
     };
   }, [
     activeBiomassKg,
@@ -111,7 +112,7 @@ export const MarketScenariosSimulator: React.FC = () => {
   // Matriz de Sensibilidade: 5 faixas de preço x 3 faixas de FCR
   const sensitivityMatrix = useMemo(() => {
     const basePrice = selectedPricePerKg > 0 ? selectedPricePerKg : 0;
-    const priceLevels = basePrice > 0 ? [basePrice * 0.8, basePrice * 0.9, basePrice, basePrice * 1.1, basePrice * 1.2].map((value) => Number(value.toFixed(2))) : [0];
+    const priceLevels = basePrice > 0 ? [basePrice * 0.8, basePrice * 0.9, basePrice, basePrice * 1.1, basePrice * 1.2].map((value) => Number(value.toFixed(2))) : [];
     const fcrLevels = [
       { label: 'Otimista (1.15)', value: 1.15 },
       { label: 'Meta Técnica (1.30)', value: 1.30 },
@@ -157,6 +158,15 @@ export const MarketScenariosSimulator: React.FC = () => {
       };
     }
 
+    if (!financials.hasSalePrice) {
+      return {
+        title: 'Preço de venda pendente · cenário não calculado',
+        summary: 'A biomassa e os custos abaixo são uma simulação de planejamento. Cadastre um preço de venda negociado, com unidade, fonte e data, para calcular receita, margem e lucro.',
+        recommendation: 'Abra Mercado & compradores, registre uma cotação válida e só então use o resultado para decidir a despesca.',
+        alertLevel: 'warning',
+      };
+    }
+
     if (financials.netMarginPct >= 50) {
       return {
         title: 'Excelente Margem Comercial • Janela de Alta Rentabilidade',
@@ -198,7 +208,7 @@ export const MarketScenariosSimulator: React.FC = () => {
             Simulador de Lucro Projetado vs. Faixas de Preço de Venda
           </h2>
           <p className="text-xs text-slate-400 max-w-2xl">
-            Simula em tempo real o faturamento bruto, custos com ração por FCA, margem EBITDA e ponto de equilíbrio com base nas 380.000 PLs povoadas na Fazenda River Life (Mogeiro - PB).
+            Simula um cenário de planejamento com os lotes carregados na fazenda. Os resultados não são uma leitura atual: preço, sobrevivência, gramatura e FCA são premissas editáveis.
           </p>
         </div>
 
@@ -213,7 +223,7 @@ export const MarketScenariosSimulator: React.FC = () => {
             }`}
           >
             <Target className="w-3.5 h-3.5" />
-            <span>Despesca Projetada ({activeBiomassKg > 100 ? `${(activeBiomassKg / 1000).toFixed(2)} t` : '5,4 t'})</span>
+            <span>Despesca Projetada ({(activeBiomassKg / 1000).toFixed(2)} t)</span>
           </button>
           <button
             onClick={() => setSimulationMode('technical_current')}
@@ -224,7 +234,7 @@ export const MarketScenariosSimulator: React.FC = () => {
             }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Biomassa Atual (3,53 kg)</span>
+            <span>Biomassa Atual ({currentBiomassTechnicalKg.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg)</span>
           </button>
         </div>
       </div>
@@ -243,7 +253,7 @@ export const MarketScenariosSimulator: React.FC = () => {
               <div className="flex items-baseline gap-1 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-lg">
                 <span className="text-xs text-emerald-300 font-bold">R$</span>
                 <span className="text-xl font-black text-emerald-300 font-mono">
-                  {selectedPricePerKg.toFixed(2)}
+                  {selectedPricePerKg > 0 ? selectedPricePerKg.toFixed(2) : '—'}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono">/kg</span>
               </div>
@@ -256,7 +266,7 @@ export const MarketScenariosSimulator: React.FC = () => {
                 min="14.00"
                 max="36.00"
                 step="0.50"
-                value={selectedPricePerKg}
+                value={selectedPricePerKg > 0 ? selectedPricePerKg : 14}
                 onChange={(e) => setSelectedPricePerKg(parseFloat(e.target.value))}
                 className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
               />
@@ -420,7 +430,9 @@ export const MarketScenariosSimulator: React.FC = () => {
         <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
           {/* Card Principal: Lucro Líquido Projetado */}
           <div className={`p-5 rounded-2xl border-2 transition-all relative overflow-hidden ${
-            financials.projectedProfit >= 0
+            !financials.hasSalePrice
+              ? 'bg-gradient-to-br from-amber-950/60 via-slate-900 to-slate-900 border-amber-500/60'
+              : financials.projectedProfit >= 0
               ? 'bg-gradient-to-br from-emerald-950/80 via-slate-900 to-cyan-950/60 border-emerald-500/70 shadow-emerald-950/50'
               : 'bg-gradient-to-br from-rose-950/80 via-slate-900 to-red-950/60 border-rose-500/70 shadow-rose-950/50'
           } shadow-xl`}>
@@ -430,25 +442,27 @@ export const MarketScenariosSimulator: React.FC = () => {
                 <span>Lucro Líquido Projetado (EBITDA)</span>
               </span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-black font-mono border ${
-                financials.projectedProfit >= 0
+                !financials.hasSalePrice
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  : financials.projectedProfit >= 0
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                   : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
               }`}>
-                {financials.netMarginPct.toFixed(1)}% MARGEM
+                {financials.hasSalePrice ? `${financials.netMarginPct.toFixed(1)}% MARGEM` : 'AGUARDA PREÇO'}
               </span>
             </div>
 
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-sm font-bold text-slate-400 font-mono">R$</span>
+              {financials.hasSalePrice && <span className="text-sm font-bold text-slate-400 font-mono">R$</span>}
               <span className={`text-3xl sm:text-4xl font-black font-mono tracking-tight ${
-                financials.projectedProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'
+                !financials.hasSalePrice ? 'text-amber-300' : financials.projectedProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'
               }`}>
-                {financials.projectedProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {financials.hasSalePrice ? financials.projectedProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'Não calculado'}
               </span>
             </div>
 
             <p className="text-[11px] text-slate-400 mt-2 font-mono">
-              Base: {activeBiomassKg.toLocaleString('pt-BR')} kg a R$ {selectedPricePerKg.toFixed(2)}/kg
+              Base do cenário: {activeBiomassKg.toLocaleString('pt-BR')} kg · {selectedPricePerKg > 0 ? `R$ ${selectedPricePerKg.toFixed(2)}/kg` : 'preço de venda não informado'}
             </p>
           </div>
 
@@ -459,7 +473,7 @@ export const MarketScenariosSimulator: React.FC = () => {
                 <TrendingUp className="w-3.5 h-3.5" /> Faturamento Bruto:
               </span>
               <span className="font-black text-white text-sm">
-                R$ {financials.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {financials.hasSalePrice ? `R$ ${financials.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Não calculada'}
               </span>
             </div>
 
@@ -498,7 +512,7 @@ export const MarketScenariosSimulator: React.FC = () => {
               <span className="text-[10px] text-slate-400 uppercase block font-semibold">Preço de Equilíbrio</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-black text-cyan-300">
-                  R$ {financials.breakevenPricePerKg.toFixed(2)}
+                  {financials.hasSalePrice ? `R$ ${financials.breakevenPricePerKg.toFixed(2)}` : '—'}
                 </span>
                 <span className="text-[10px] text-slate-500">/kg</span>
               </div>
@@ -509,7 +523,7 @@ export const MarketScenariosSimulator: React.FC = () => {
               <span className="text-[10px] text-slate-400 uppercase block font-semibold">Custo Médio / kg</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-black text-amber-300">
-                  R$ {financials.costPerKgProduced.toFixed(2)}
+                  {activeBiomassKg > 0 ? `R$ ${financials.costPerKgProduced.toFixed(2)}` : '—'}
                 </span>
                 <span className="text-[10px] text-slate-500">/kg</span>
               </div>
@@ -533,7 +547,8 @@ export const MarketScenariosSimulator: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
+        {!financials.hasSalePrice && <div className="rounded-xl border border-amber-700/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-200">A matriz ficará disponível depois que você informar um preço de venda válido. O sistema não transforma preço ausente em R$ 0,00 nem em prejuízo real.</div>}
+        <div className={`overflow-x-auto rounded-xl border border-slate-800 ${!financials.hasSalePrice ? 'hidden' : ''}`}>
           <table className="w-full text-left font-mono text-xs">
             <thead>
               <tr className="bg-slate-950/90 text-slate-400 border-b border-slate-800">
