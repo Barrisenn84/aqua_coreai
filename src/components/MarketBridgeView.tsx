@@ -70,8 +70,8 @@ export const MarketBridgeView: React.FC = () => {
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-1 flex items-center gap-2">
             <span>Market-Bridge Aquícola (Bolsa Direta de Compradores)</span>
-            <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30">
-              +12% MARGEM DIRETA
+            <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-200 font-mono font-bold border border-amber-500/30">
+              MARGEM AGUARDA COTAÇÃO
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
@@ -83,8 +83,8 @@ export const MarketBridgeView: React.FC = () => {
         <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-xs text-right space-y-1">
           <span className="text-[10px] text-slate-400 uppercase block">Cotação Polo Paraíba & NE</span>
           <div className="flex items-center gap-2 justify-end">
-            <span className="text-slate-100 font-bold">Camarão Vannamei:</span>
-            <span className="text-emerald-400 font-black">R$ 24,50/kg (+6.5%)</span>
+            <span className="text-slate-100 font-bold">Referência de camarão:</span>
+            <span className="text-amber-300 font-black">Consulte a fonte no Market Watch</span>
           </div>
         </div>
       </div>
@@ -118,11 +118,11 @@ export const MarketBridgeView: React.FC = () => {
             </div>
 
             <h2 className="text-base sm:text-lg font-bold text-white">
-              "Produção ativa de 380.000 pós-larvas na Fazenda River Life (Mogeiro - PB). Cotação regional favorável (+6.5%). Deseja travar contratos futuros e listar a safra para compradores homologados?"
+              "A produção só deve ser listada depois de validar biometria, calibre, volume e uma cotação negociada com comprador homologado."
             </h2>
 
             <p className="text-xs text-slate-300 font-mono">
-              Biomassa comercial projetada: <strong>{totalBiomassTons} toneladas</strong> • Janela de despesca: <strong>Novembro/2026</strong>
+              Biomassa projetada (cenário, não medição): <strong>{totalBiomassTons} toneladas</strong> • Registre a data de despesca após confirmar a biometria.
             </p>
           </div>
 

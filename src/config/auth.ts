@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 
 export const SESSION_COOKIE_NAME = 'aquacore_session';
+export const MIN_JWT_SECRET_LENGTH = 7;
 
 const ephemeralDevelopmentSecret = randomBytes(48).toString('hex');
 
@@ -20,7 +21,7 @@ export function getDemoAuthPassword(): string {
 export function getJwtSecret(): string | null {
   const configuredSecret = process.env.JWT_SECRET?.trim();
 
-  if (configuredSecret && configuredSecret.length >= 32) {
+  if (configuredSecret && configuredSecret.length >= MIN_JWT_SECRET_LENGTH && /^[A-Za-z0-9]+$/.test(configuredSecret)) {
     return configuredSecret;
   }
 

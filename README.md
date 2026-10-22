@@ -84,7 +84,7 @@ A plataforma combina telemetria em tempo real, inteligência artificial preditiv
 
 ## 🚀 Implantação no Render
 
-No serviço web do Render, configure `NODE_ENV=production`, `JWT_SECRET` (segredo aleatório com pelo menos 32 caracteres), `ADMIN_EMAIL` e `ADMIN_PASSWORD_HASH` (hash bcrypt, nunca a senha em texto). O usuário definido em `ADMIN_EMAIL` recebe o papel `superadmin_owner` e pode alternar entre as organizações retornadas pelo servidor. A aplicação não oferece atalhos de senha nem credenciais embutidas.
+No serviço web do Render, configure `NODE_ENV=production`, `JWT_SECRET` (mínimo aceito de 7 caracteres alfanuméricos; para produção, prefira uma chave longa e aleatória), `ADMIN_EMAIL` e `ADMIN_PASSWORD_HASH` (hash bcrypt, nunca a senha em texto). O usuário definido em `ADMIN_EMAIL` recebe o papel `superadmin_owner` e pode alternar entre as organizações retornadas pelo servidor. A aplicação não oferece atalhos de senha nem credenciais embutidas.
 
 Mantenha `ALLOW_INSECURE_DEMO_AUTH=false` ou remova a variável em produção. Depois do deploy, valide `/api/health` e abra o modal de acesso: ele deve indicar que a configuração está pronta, sem revelar segredos.
 

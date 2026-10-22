@@ -290,7 +290,7 @@ export const AuthController = {
 
       if (!secret) {
         return res.status(503).json({
-          error: 'Defina JWT_SECRET com pelo menos 32 caracteres no ambiente de produção.',
+          error: 'Defina JWT_SECRET com pelo menos 7 caracteres usando somente letras e números no ambiente de produção. Para maior segurança, prefira uma chave longa e aleatória.',
         });
       }
 

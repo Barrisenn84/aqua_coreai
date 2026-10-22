@@ -455,6 +455,42 @@ app.get('/api/market/live-currencies', async (_req, res) => {
   }
 });
 
+// REST Endpoint: Referência pública de preços de pescados (CEASA Pernambuco).
+// Os valores são atacadistas e nunca devem ser apresentados como preço garantido
+// na fazenda; o cliente deve registrar a negociação real antes de calcular margem.
+app.get('/api/market/live-shrimp', async (_req, res) => {
+  const source = 'CEASA Pernambuco — Cotação de pescados';
+  try {
+    const response = await fetch('https://www.ceasape.org.br/cotacao/pescados', {
+      headers: { 'user-agent': 'AQUA-CORE-AI market reference/1.0' },
+    });
+    if (!response.ok) {
+      return res.status(502).json({ error: 'Fonte pública de preços indisponível.', source });
+    }
+
+    const html = await response.text();
+    const sourceDate = html.match(/data-date="([^"]+)"/)?.[1] || null;
+    const rows = [...html.matchAll(/<tr class="tr">([\s\S]*?)<\/tr>/gi)]
+      .map((match) => [...match[1].matchAll(/<td(?:\s[^>]*)?>([\s\S]*?)<\/td>/gi)]
+        .map((cell) => cell[1].replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim()))
+      .filter((cells) => cells[0]?.toUpperCase().includes('CAMARÃO COM CASCA'))
+      .map((cells) => ({
+        category: `Camarão com casca · ${cells[3]?.toLowerCase() || 'classificação não informada'}`,
+        averagePricePerKg: Number((cells[5] || '').replace(/[^0-9,.-]/g, '').replace(',', '.')),
+        marketStatus: cells[7] || 'não informado',
+      }))
+      .filter((quote) => Number.isFinite(quote.averagePricePerKg) && quote.averagePricePerKg > 0);
+
+    if (!rows.length) {
+      return res.status(502).json({ error: 'A fonte não retornou preços de camarão reconhecíveis.', source, sourceDate });
+    }
+
+    return res.json({ source, sourceDate, retrievedAt: new Date().toISOString(), quotes: rows });
+  } catch (error: any) {
+    return res.status(502).json({ error: error?.message || 'Falha ao consultar a fonte pública.', source });
+  }
+});
+
 // REST Endpoint: Auditoria Geral de Saúde da Fazenda via IA
 app.post('/api/ai/farm-health-audit', async (req, res) => {
   try {
