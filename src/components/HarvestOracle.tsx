@@ -23,9 +23,9 @@ export const HarvestOracle: React.FC = () => {
   // Selectable tank (defaults to Tanque 04 or 02)
   const [selectedTankId, setSelectedTankId] = useState<string>('tank-04');
   const [customShrimpPrice, setCustomShrimpPrice] = useState<number>(
-    farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50
+    farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0
   );
-  const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg || 4.20);
+  const [customFeedPrice, setCustomFeedPrice] = useState<number>(farm.feedAverageCostPerKg || 0);
 
   const selectedTank = tanks?.find((t) => t.id === selectedTankId) || tanks?.[0];
   const selectedBatch = batches?.find((b) => b.tankId === selectedTankId) || batches?.[0];
@@ -35,8 +35,14 @@ export const HarvestOracle: React.FC = () => {
     return <div className="p-8 text-center text-slate-400">Carregando dados da produção...</div>;
   }
 
-  // Scenarios calculated across the next 30 days
+  const hasSalePrice = customShrimpPrice > 0;
+  const hasFeedPrice = customFeedPrice > 0;
+
+  // Scenarios are generated only when the required prices are known. The
+  // imported Meu Pescado snapshot has no sale-price history, so we must ask
+  // the operator instead of inventing a market quote.
   const scenarios = useMemo(() => {
+    if (!hasSalePrice || !hasFeedPrice) return [];
     return generateHarvestScenarios(
       selectedBatch,
       selectedTank,
@@ -45,7 +51,52 @@ export const HarvestOracle: React.FC = () => {
       customFeedPrice,
       customShrimpPrice
     );
-  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customShrimpPrice]);
+  }, [selectedBatch, selectedTank, selectedReading, farm.kwhCost, customFeedPrice, customShrimpPrice, hasSalePrice, hasFeedPrice]);
+
+  if (!hasSalePrice || !hasFeedPrice) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-slate-900/90 border border-amber-800/70 rounded-2xl p-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-300 mt-0.5 shrink-0" />
+            <div>
+              <h1 className="text-xl font-black text-white">Previsão de despesca aguardando dados comerciais</h1>
+              <p className="text-sm text-slate-300 mt-2 max-w-3xl">
+                O Meu Pescado não forneceu histórico de preço de venda para este ciclo. Para não fabricar receita ou margem, informe abaixo o preço negociado e o custo médio da ração. A projeção será recalculada no mesmo instante.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-xl">
+            <label className="text-xs text-slate-300 font-semibold">
+              Preço de venda (R$/kg)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customShrimpPrice || ''}
+                onChange={(event) => setCustomShrimpPrice(Number(event.target.value) || 0)}
+                className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                placeholder="Ex.: 18,50"
+              />
+            </label>
+            <label className="text-xs text-slate-300 font-semibold">
+              Custo médio da ração (R$/kg)
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customFeedPrice || ''}
+                onChange={(event) => setCustomFeedPrice(Number(event.target.value) || 0)}
+                className="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-white"
+                placeholder="Ex.: 38,85"
+              />
+            </label>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-4">Biomassa e lotes importados: fonte Meu Pescado. Preços acima são informados pelo operador e não são cotação automática.</p>
+        </div>
+      </div>
+    );
+  }
 
   const todayScenario = scenarios[0] || {
     dayOffset: 0,
@@ -101,120 +152,22 @@ export const HarvestOracle: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. TELA DE PREVISÃO DE DESPESCA APRIMORADA (PROMPT 3) */}
+      {/* Resumo calculado do ciclo selecionado */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 font-mono text-xs shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-amber-400" />
-            <h2 className="text-base font-bold text-white uppercase tracking-wider">
-              Resumo & Previsão de Despesca Enriquecida • Fazenda River Life
-            </h2>
+            <h2 className="text-base font-bold text-white uppercase tracking-wider">Resumo calculado do ciclo</h2>
           </div>
-          <span className="text-xs text-amber-300 font-bold bg-amber-950/80 px-2.5 py-1 rounded-lg border border-amber-800/60">
-            Polo de Mogeiro – PB (Cotações Oficiais)
-          </span>
+          <span className="text-xs text-cyan-300 font-bold bg-cyan-950/70 px-2.5 py-1 rounded-lg border border-cyan-800/60">Fonte: lote e biometria importados</span>
         </div>
-
-        {/* Resumo dos 4 KPIs solicitados */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
-            <span className="text-[10px] text-slate-400 uppercase block">N° de Tanques</span>
-            <span className="text-2xl font-black text-white">7</span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">Escavados (0,158 ha)</span>
-          </div>
-
-          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
-            <span className="text-[10px] text-slate-400 uppercase block">População Total</span>
-            <span className="text-2xl font-black text-cyan-400">15.000 <span className="text-xs text-slate-400">un.</span></span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">Lotes 01 a 07</span>
-          </div>
-
-          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
-            <span className="text-[10px] text-slate-400 uppercase block">Biomassa Atual</span>
-            <span className="text-2xl font-black text-emerald-400">8.500 <span className="text-xs text-slate-400">kg</span></span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">IA Preditiva Mogeiro</span>
-          </div>
-
-          <div className="bg-slate-950/80 p-3 rounded-xl border border-amber-800/80 bg-amber-950/20">
-            <span className="text-[10px] text-amber-400 uppercase font-bold block">Biomassa Prevista (10 dias)</span>
-            <span className="text-2xl font-black text-amber-300">11.200 <span className="text-xs text-amber-200/70">kg</span></span>
-            <span className="text-[10px] text-emerald-400 block mt-0.5 font-bold">+2.700 kg de ganho</span>
-          </div>
+          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800"><span className="text-[10px] text-slate-400 uppercase block">Tanques</span><span className="text-2xl font-black text-white">{tanks.length}</span><span className="text-[10px] text-slate-500 block mt-0.5">cadastrados</span></div>
+          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800"><span className="text-[10px] text-slate-400 uppercase block">População atual</span><span className="text-2xl font-black text-cyan-400">{selectedBatch.currentCount.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">un.</span></span><span className="text-[10px] text-slate-500 block mt-0.5">tanque selecionado</span></div>
+          <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800"><span className="text-[10px] text-slate-400 uppercase block">Biomassa atual</span><span className="text-2xl font-black text-emerald-400">{todayScenario.projectedBiomassKg.toLocaleString('pt-BR')} <span className="text-xs text-slate-400">kg</span></span><span className="text-[10px] text-slate-500 block mt-0.5">calculada do peso médio</span></div>
+          <div className="bg-slate-950/80 p-3 rounded-xl border border-amber-800/80 bg-amber-950/20"><span className="text-[10px] text-amber-400 uppercase font-bold block">Janela calculada</span><span className="text-2xl font-black text-amber-300">D+{optimalScenario.dayOffset}</span><span className="text-[10px] text-amber-200/70 block mt-0.5">{optimalScenario.targetDate}</span></div>
         </div>
-
-        {/* Projeção Mensal (Tabela Semanal de 4 Semanas) */}
-        <div className="pt-2">
-          <div className="flex items-center justify-between pb-2">
-            <span className="text-slate-300 font-bold uppercase text-[11px] flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Projeção Mensal de Safra & Paridade de Mercado (Semana a Semana)</span>
-            </span>
-            <span className="text-[10px] text-slate-400">Tendência de Crescimento Zootécnico (+0.8g/dia)</span>
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider bg-slate-950/90">
-                  <th className="py-2.5 px-3">Horizonte</th>
-                  <th className="py-2.5 px-3">Biomassa Projetada</th>
-                  <th className="py-2.5 px-3">Preço Padrão (700-800g)</th>
-                  <th className="py-2.5 px-3">Preço Especial (&gt;900g)</th>
-                  <th className="py-2.5 px-3">Receita Bruta (Grade Especial)</th>
-                  <th className="py-2.5 px-3 text-right">Diretriz IA</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/80 bg-slate-950/40 text-xs">
-                <tr className="hover:bg-slate-900/60 transition-colors">
-                  <td className="py-3 px-3 font-bold text-white">Semana 1 (D+7)</td>
-                  <td className="py-3 px-3 font-bold text-cyan-300">8.800 kg</td>
-                  <td className="py-3 px-3 text-slate-300">R$ 8,90 / kg</td>
-                  <td className="py-3 px-3 font-bold text-emerald-400">R$ 10,25 / kg</td>
-                  <td className="py-3 px-3 font-black text-white">R$ 90.200,00</td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-bold">Aguardar Ganho</span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-900/60 transition-colors">
-                  <td className="py-3 px-3 font-bold text-white">Semana 2 (D+14)</td>
-                  <td className="py-3 px-3 font-bold text-cyan-300">9.100 kg</td>
-                  <td className="py-3 px-3 text-slate-300">R$ 8,90 / kg</td>
-                  <td className="py-3 px-3 font-bold text-emerald-400">R$ 10,25 / kg</td>
-                  <td className="py-3 px-3 font-black text-white">R$ 93.275,00</td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-bold">Manejo Nominal</span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-900/60 transition-colors bg-amber-950/10">
-                  <td className="py-3 px-3 font-bold text-amber-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Semana 3 (D+21) • MEY Ótimo</span>
-                  </td>
-                  <td className="py-3 px-3 font-bold text-amber-200">9.400 kg</td>
-                  <td className="py-3 px-3 text-slate-300">R$ 8,90 / kg</td>
-                  <td className="py-3 px-3 font-bold text-emerald-400">R$ 10,25 / kg</td>
-                  <td className="py-3 px-3 font-black text-amber-300">R$ 96.350,00</td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500 text-slate-950 font-black">Janela Ideal</span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-slate-900/60 transition-colors">
-                  <td className="py-3 px-3 font-bold text-white">Semana 4 (D+28)</td>
-                  <td className="py-3 px-3 font-bold text-cyan-300">9.700 kg</td>
-                  <td className="py-3 px-3 text-slate-300">R$ 8,90 / kg</td>
-                  <td className="py-3 px-3 font-bold text-emerald-400">R$ 10,25 / kg</td>
-                  <td className="py-3 px-3 font-black text-white">R$ 99.425,00</td>
-                  <td className="py-3 px-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-red-950 text-red-300 font-bold border border-red-800">Risco Saturação</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div className="text-[11px] text-slate-400">Preço utilizado: R$ {customShrimpPrice.toFixed(2)}/kg · ração: R$ {customFeedPrice.toFixed(2)}/kg · tarifa: R$ {(farm.kwhCost || 0).toFixed(2)}/kWh. Ajuste os valores acima para simular outro cenário.</div>
       </div>
 
       {/* Disruption Comparison Card (Today vs Optimal vs Late) */}

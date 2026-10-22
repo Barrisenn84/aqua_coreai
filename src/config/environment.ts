@@ -12,7 +12,7 @@ export const config = {
     );
   },
   get producerPhone() {
-    return (typeof process !== 'undefined' && process.env?.PRODUCER_WHATSAPP_PHONE) || '84988585211';
+    return (typeof process !== 'undefined' && process.env?.PRODUCER_WHATSAPP_PHONE) || '';
   },
   get systemPixKey() {
     return (typeof process !== 'undefined' && process.env?.SYSTEM_PIX_KEY) || 'financeiro@aquacore.ai';

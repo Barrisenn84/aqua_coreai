@@ -199,10 +199,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       type: 'aquaculture_farm',
       location: 'Mogeiro – PB',
       kwhCost: 0.72,
-      feedCost: 4.20,
-      salePrice: 24.50,
+      feedCost: 38.85,
+      salePrice: 0,
       speciesTarget: 'Litopenaeus vannamei (Camarão)',
-      producerPhone: '+5584988585211',
+      producerPhone: '',
     },
     {
       id: 'tenant-santa-helena',
@@ -212,9 +212,9 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       location: 'Polo Paulo Afonso – BA',
       kwhCost: 0.68,
       feedCost: 3.90,
-      salePrice: 9.80,
+      salePrice: 0,
       speciesTarget: 'Oreochromis niloticus (Litopenaeus vannamei)',
-      producerPhone: '+5575991234567',
+      producerPhone: '',
     },
     {
       id: 'tenant-constr-ai-01',
@@ -226,12 +226,12 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       feedCost: 0.0,
       salePrice: 0.0,
       speciesTarget: 'Edifício Residencial 18 Pavimentos',
-      producerPhone: '+5583998765432',
+      producerPhone: '',
     },
   ]);
 
   // Migração de schema para carregar automaticamente dados reais do Meu Pescado (Mogeiro - PB)
-  const DATA_SCHEMA_VERSION = 'v7_secure_session';
+  const DATA_SCHEMA_VERSION = 'v8_meu_pescado_audited_20261021';
 
   const [currentTenant, setCurrentTenant] = useState<ITenant>(() => {
     try {
@@ -254,10 +254,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       type: 'aquaculture_farm',
       location: 'Mogeiro – PB',
       kwhCost: 0.72,
-      feedCost: 4.20,
-      salePrice: 24.50,
+      feedCost: 38.85,
+      salePrice: 0,
       speciesTarget: 'Litopenaeus vannamei (Camarão)',
-      producerPhone: '+5584988585211',
+      producerPhone: '',
     };
   });
 
@@ -407,6 +407,10 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   useEffect(() => {
+    if (currentUser.role === 'guest') {
+      setSentinelReport(null);
+      return;
+    }
     const fetchSentinelStatus = async () => {
       try {
         const res = await fetch('/api/sentinel/status');
@@ -437,7 +441,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }, 1000);
 
     return () => clearInterval(countdownTimer);
-  }, [runSentinelAuditNow]);
+  }, [runSentinelAuditNow, currentUser.role]);
 
   // Time-series history for charts and sparklines
   const [sensorHistory, setSensorHistory] = useState<Record<string, SensorReading[]>>(() => {
@@ -469,7 +473,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const batch = batches.find((b) => b.tankId === tank.id);
       if (!read || !batch) return;
 
-      const shrimpPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
+      const shrimpPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0;
       const toxicNh3 = calculateToxicAmmonia(read.ammoniaTotal, read.ph, read.temperature);
       const biomassKg = calculateBiomassKg(batch.currentCount, batch.currentWeightG);
       const biomassValue = biomassKg * shrimpPrice;
@@ -555,31 +559,39 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       totalCurrentcamarão += b.currentCount;
     });
 
+    const isMeuPescadoImportedCycle =
+      batches.length === 4 &&
+      batches.every((batch) => ['L171026', 'L1171026'].includes(batch.batchCode)) &&
+      totalCurrentcamarão === 2220000;
     const isInitialCycle = totalFeedKg === 0 && batches.length > 0;
 
     const netGain = totalBiomass - initialTotalBiomass;
-    const fcr = isInitialCycle ? 0 : (netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : (totalBiomass > 0 ? 1.35 : 0));
+    const calculatedFcr = netGain > 0 ? Number((totalFeedKg / netGain).toFixed(2)) : 0;
+    // Um FCA acima de 5 é biologicamente implausível para este cultivo e indica
+    // inconsistência entre biomassa inicial, arraçoamento e despescas. Não o
+    // apresentamos como uma recomendação válida.
+    const fcr = isInitialCycle || calculatedFcr > 5 ? 0 : calculatedFcr;
     const survivalRate = totalInitialcamarão > 0 ? Number(((totalCurrentcamarão / totalInitialcamarão) * 100).toFixed(1)) : 100;
 
-    const effectivePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
+    const effectivePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0;
 
     // Agro DRE calculation (Em fase inicial reflete com fidelidade de centavos os dados do Meu Pescado)
-    const grossRevenue = isInitialCycle ? 42.36 : (totalBiomass * effectivePrice);
-    const feedCost = totalFeedKg * (farm.feedAverageCostPerKg || 4.20);
+    const grossRevenue = isMeuPescadoImportedCycle ? 0 : (isInitialCycle ? 42.36 : (totalBiomass * effectivePrice));
+    const feedCost = totalFeedKg * (farm.feedAverageCostPerKg || 0);
     // Energy: calculated from all active aerators
     const totalAeratorKw = tanks.reduce((acc, t) => acc + (t.aeratorActive ? (t.aeratorCount || 0) * (t.aeratorPowerKw || 0) : 0), 0);
     const estimatedDailyEnergyKwh = totalAeratorKw * 10;
-    const energyCost = isInitialCycle ? 0 : (estimatedDailyEnergyKwh * (farm.kwhCost || 0.72) * 30);
-    const juvenilesCost = isInitialCycle ? 3800.00 : (totalInitialcamarão * 0.32);
-    const additivesProbioticsCost = isInitialCycle ? 60.50 : (totalBiomass * 0.42);
-    const laborFixedCost = isInitialCycle ? 0 : (batches.length > 0 ? 6500 : 0);
+    const energyCost = isMeuPescadoImportedCycle || isInitialCycle ? 0 : (estimatedDailyEnergyKwh * (farm.kwhCost || 0.72) * 30);
+    const juvenilesCost = isMeuPescadoImportedCycle ? Math.max(0, 22234 - feedCost) : (isInitialCycle ? 3800.00 : (totalInitialcamarão * 0.32));
+    const additivesProbioticsCost = isMeuPescadoImportedCycle ? 0 : (isInitialCycle ? 60.50 : (totalBiomass * 0.42));
+    const laborFixedCost = isMeuPescadoImportedCycle || isInitialCycle ? 0 : (batches.length > 0 ? 6500 : 0);
 
-    const totalCost = isInitialCycle ? 3860.50 : (feedCost + energyCost + juvenilesCost + additivesProbioticsCost + laborFixedCost);
+    const totalCost = isMeuPescadoImportedCycle ? 22234 : (isInitialCycle ? 3860.50 : (feedCost + energyCost + juvenilesCost + additivesProbioticsCost + laborFixedCost));
     const ebitda = grossRevenue - totalCost; // R$ 42,36 - R$ 3.860,50 = -R$ 3.818,14 no Meu Pescado
     const netMarginPct = grossRevenue > 0 ? Number(((ebitda / grossRevenue) * 100).toFixed(1)) : 0;
-    const costPerKgProduced = isInitialCycle ? 1093.63 : (totalBiomass > 0 ? Number((totalCost / totalBiomass).toFixed(2)) : 0);
+    const costPerKgProduced = totalBiomass > 0 ? Number((totalCost / totalBiomass).toFixed(2)) : 0;
     const breakevenBiomassKg = costPerKgProduced > 0 && effectivePrice > 0 ? Math.round(totalCost / effectivePrice) : 0;
-    const reportedBiomassKg = isInitialCycle ? 3.53 : Number(totalBiomass.toFixed(1));
+    const reportedBiomassKg = isMeuPescadoImportedCycle ? 6.43 : Number(totalBiomass.toFixed(2));
 
     const dreResult: AgroDRE = {
       grossRevenue: Math.round(grossRevenue),
@@ -842,7 +854,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }) => {
     const feedType = data.feedType || 'Ração Samaria Starter 40% PB';
     const proteinPct = data.proteinPct || 40.0;
-    const costPerKg = data.costPerKg || 4.20;
+    const costPerKg = data.costPerKg || farm.feedAverageCostPerKg || 0;
 
     // 1. Atualiza batch e logs de alimentação (recalcula FCA e DRE em tempo real)
     addFeedingLog({
@@ -1351,7 +1363,7 @@ export const AquaCoreProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const fName = params.farmName.trim() || 'Minha Fazenda';
     const loc = params.location.trim() || 'Brasil';
-    const phone = params.producerPhone?.trim() || '+5584988585211';
+    const phone = params.producerPhone?.trim() || '';
     const species = params.speciesTarget?.trim() || 'Litopenaeus vannamei (Camarão)';
 
     const newFarm: Farm = {

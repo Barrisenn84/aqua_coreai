@@ -97,14 +97,12 @@ export async function requestWhatsAppGhostResponse(
   ) {
     return {
       level: 'critical',
-      replyText: `🚨 O2 Tanque 01 em 3.6mg/L (Dinâmico: 4.0mg/L por temp 29.8°C). Risco de mortalidade de PLs em < 2h. Aeração máxima NOW. Perda estimada: R$ 8.900,00.`,
+      replyText: `Para verificar um possível alerta de oxigênio, informe o tanque, a leitura atual, o horário e a temperatura. Sem esses dados, a AQUA não simula uma emergência como se fosse real.`,
       intent: 'critical_hypoxia_alert',
       actionRequired: true,
       followUpMinutes: 15,
       metadata: {
-        tankId: 'tank-04',
-        dissolvedOxygen: 3.6,
-        financialImpactEstimated: 'R$ 8.900,00',
+        validationRequired: true,
       },
     };
   }
@@ -120,20 +118,19 @@ export async function requestWhatsAppGhostResponse(
   ) {
     return {
       level: 'consultative',
-      replyText: `Grade Padrão (750g): R$ 8,90/kg. Grade Especial (950g): R$ 10,25/kg. Projeção 10 dias: +R$ 15.000 lucro líquido. Recomendação: Segurar despesca para atingir calibre especial no Polo Paraíba.`,
+      replyText: `Ainda não há base validada para recomendar a despesca. Confirme uma biometria recente, a cotação com fonte e data, os custos realizados e a qualidade da água. Depois disso, a AQUA compara os cenários sem inventar preço ou lucro.`,
       intent: 'market_consultative_oracle',
       actionRequired: false,
       metadata: {
         tankId: 'tank-02',
-        temperature: 29.5,
-        recommendedFeedKg: 14.5,
+        validationRequired: true,
       },
     };
   }
 
   return {
     level: 'informative',
-    replyText: `Bom dia! Sobrevivência 92% na Fazenda River Life. Chuva prevista 0,8mm às 10h (sensação 34°C, vento 16km/h). Custo ração dia: R$ 4,15. Projeção biomassa: 12.000kg para colheita ótima em 20/Out.`,
+    replyText: `Posso montar o resumo da fazenda com dados validados. Abra o Centro de Controle para conferir clima, lotes, alimentação e alertas; valores ausentes não serão inventados.`,
     intent: 'farm_status_summary',
     actionRequired: false,
   };

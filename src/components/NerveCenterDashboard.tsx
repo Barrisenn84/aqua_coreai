@@ -206,12 +206,12 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         setAiAuditResult(data.analysis);
       } else {
         setAiAuditResult(
-          `Grade Padrão (750g): R$ 8,90/kg. Grade Especial (950g): R$ 10,25/kg. Projeção 10 dias: +R$ 15.000 lucro líquido. Recomendação: Segurar despesca para atingir calibre especial no Polo Paraíba. Biomassa total de 8.500kg estabilizada com FCR 1.35 e oxigênio dentro da margem de segurança zootécnica de 4.0mg/L.`
+          `A auditoria generativa está temporariamente indisponível. Dados locais: ${totalBiomassKg.toLocaleString('pt-BR')} kg de biomassa, ${globalSurvivalRatePct.toLocaleString('pt-BR')}% de sobrevivência e FCA ${globalFcr > 0 ? globalFcr.toLocaleString('pt-BR') : 'indisponível por inconsistência nos lançamentos'}. Antes de decidir alimentação ou despesca, revise os conflitos na tela Operação & Lotes e cadastre uma análise de água validada.`
         );
       }
     } catch {
       setAiAuditResult(
-        `Grade Padrão (750g): R$ 8,90/kg. Grade Especial (950g): R$ 10,25/kg. Projeção 10 dias: +R$ 15.000 lucro líquido. Recomendação: Segurar despesca para atingir calibre especial no Polo Paraíba.`
+        `Não foi possível consultar a IA. A AQUA preservou o modo seguro: biomassa ${totalBiomassKg.toLocaleString('pt-BR')} kg; sobrevivência ${globalSurvivalRatePct.toLocaleString('pt-BR')}%; FCA ${globalFcr > 0 ? globalFcr.toLocaleString('pt-BR') : 'não validado'}. Nenhuma projeção financeira foi inventada.`
       );
     } finally {
       setIsAiAuditing(false);
@@ -225,7 +225,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: '+5584988585211',
+          userId: currentTenant.producerPhone || '',
           level: 'CONSULT',
           payload: {
             question: 'Auditoria Geral da Fazenda River Life',
@@ -256,9 +256,9 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         body: JSON.stringify({ recordsCount: 28 }),
       });
       const data = await response.json();
-      setSyncNotice(data.message || '✅ Sincronização Offline concluída! WhatsApp disparado para Collermhann (+55 84 98858-5211).');
+      setSyncNotice(data.message || '✅ Sincronização offline concluída. A notificação foi preparada para o destinatário configurado.');
     } catch {
-      setSyncNotice('✅ Sincronização Offline realizada. Dados: Nutrição, Biometria, Mortalidade, Calagem, Arraçoamento, Analise de água. WhatsApp enviado para Collermhann (+55 84 98858-5211).');
+      setSyncNotice('✅ Sincronização offline realizada. Dados: nutrição, biometria, mortalidade, calagem, arraçoamento e análise de água.');
     } finally {
       setIsSyncing(false);
       setTimeout(() => setSyncNotice(null), 6000);
@@ -301,7 +301,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               {farm.name} • {farm.location} (Centro de Leitura)
             </span>
             <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800 text-[10px] font-bold">
-              GHOST UX: {currentTenant.producerPhone || farm.producerPhone || '+55 84 98858-5211'} ({currentUser.name})
+              GHOST UX: destino protegido ({currentUser.name})
             </span>
             <span className="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 text-[10px] font-bold flex items-center gap-1">
               <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
@@ -347,10 +347,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
             onClick={handleRunFullAiAudit}
             disabled={isAiAuditing}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-purple-900/40 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
-            title="Acionar o AQUA-CORE AI (Gemini 2.5 Flash) com Cadeia de Pensamento completa e cálculo financeiro"
+            title="Gerar um parecer com evidências, cálculos, incertezas e ações recomendadas"
           >
             <Sparkles className={`w-3.5 h-3.5 text-yellow-300 ${isAiAuditing ? 'animate-spin' : ''}`} />
-            <span>{isAiAuditing ? 'Analisando Viveiros...' : '🤖 Parecer IA em Toda Potência'}</span>
+            <span>{isAiAuditing ? 'Analisando viveiros…' : '🤖 Gerar parecer auditável'}</span>
           </button>
 
           <button
@@ -412,7 +412,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               R$ {dre.totalCost > 0 ? dre.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '3.860,50'}
             </span>
           </div>
-          <span className="text-[9px] text-slate-400 mt-1 truncate block">Larvas R$ 3.800 + DECOSOLO</span>
+          <span className="text-[9px] text-slate-400 mt-1 truncate block">Consolidado importado do Meu Pescado</span>
         </div>
 
         {/* KPI 3: Faturamento Esperado */}
@@ -426,11 +426,11 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           </div>
           <div className="mt-1">
             <span className="text-base sm:text-lg font-black text-emerald-400 truncate block">
-              R$ {dre.grossRevenue > 0 ? dre.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '42,36'}
+              R$ {dre.grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <span className="text-[9px] text-emerald-500/90 mt-1 truncate block">
-            {dre.grossRevenue <= 100 ? 'Proj. Safra: R$ 139.650' : 'Grade Comercial'}
+            {dre.grossRevenue > 0 ? 'Receita calculada' : 'Preço de venda não informado'}
           </span>
         </div>
 
@@ -449,7 +449,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
             </span>
           </div>
           <span className="text-[9px] text-cyan-400 mt-1 truncate block">
-            {totalBiomassKg <= 10 ? 'Proj. Despesca: 5.700 kg' : 'IA Preditiva'}
+            Consolidado provisório dos lotes
           </span>
         </div>
 
@@ -484,7 +484,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               {batches.reduce((acc, b) => acc + b.accumulatedFeedKg, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">kg</span>
             </span>
           </div>
-          <span className="text-[9px] text-slate-500 mt-1 truncate block">Arraçoamento 0,00 kg</span>
+          <span className="text-[9px] text-amber-300 mt-1 truncate block">Origem contém conflito: 8,27 kg vs 10,80 kg</span>
         </div>
 
         {/* KPI 7: FCA Médio em Cultivo */}
@@ -498,10 +498,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
           </div>
           <div className="mt-1">
             <span className="text-base sm:text-lg font-black text-cyan-300 truncate block">
-              {globalFcr > 0 ? globalFcr.toFixed(2) : '0,00'}
+              {globalFcr > 0 ? globalFcr.toFixed(2) : '—'}
             </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold mt-1 truncate block">Meta: 1.30 (Ótimo)</span>
+          <span className="text-[9px] text-amber-300 font-bold mt-1 truncate block">Requer conciliação dos lançamentos</span>
         </div>
       </div>
 
@@ -593,8 +593,20 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
         </div>
       </div>
 
-      {/* Gráfico de Linha Recharts: Evolução do FCR Semanal vs Meta de 1.35 */}
-      <FcrEvolutionChart />
+      {/* O gráfico só é exibido quando existe um FCA validado. */}
+      {globalFcr > 0 ? (
+        <FcrEvolutionChart />
+      ) : (
+        <div className="rounded-2xl border border-amber-700/50 bg-amber-950/25 p-5 text-sm text-amber-100">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+            <div>
+              <h2 className="font-black text-white">Evolução do FCA pausada por segurança</h2>
+              <p className="mt-1 leading-6 text-amber-100/80">O Meu Pescado apresenta 370,14 no consolidado, 1,47 no T1 e 0,00 nos demais lotes. A AQUA não usa essa série em projeções até que biomassa inicial, ração e despescas sejam conciliadas.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. TABELA DE TANQUES CADASTRADOS */}
       <div className="glass-panel rounded-2xl p-6 font-mono text-xs animate-slide-up" style={{ animationDelay: '600ms' }}>
@@ -831,10 +843,10 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-white text-sm">
-                    Parecer Executivo AQUA-CORE AI (Potência Total)
+                    Parecer executivo AQUA-CORE AI
                   </h3>
                   <p className="text-[11px] text-purple-300/80">
-                    Gemini 2.5 Flash • Engenharia de Produção & Análise Financeira PB
+                    Evidências observadas • Cálculos • Incertezas • Ações
                   </p>
                 </div>
               </div>
@@ -857,11 +869,15 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
                 </div>
                 <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
                   <span className="text-slate-400 block">Biomassa Total</span>
-                  <span className="font-bold text-cyan-400 text-xs">8.500 kg (15.000 un)</span>
+                  <span className="font-bold text-cyan-400 text-xs">
+                    {totalBiomassKg.toLocaleString('pt-BR')} kg ({batches.reduce((sum, batch) => sum + batch.currentCount, 0).toLocaleString('pt-BR')} un)
+                  </span>
                 </div>
                 <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
                   <span className="text-slate-400 block">FCR Médio Global</span>
-                  <span className="font-bold text-emerald-400 text-xs">1.35 (Meta Batida)</span>
+                  <span className={`font-bold text-xs ${globalFcr > 0 ? 'text-emerald-400' : 'text-amber-300'}`}>
+                    {globalFcr > 0 ? globalFcr.toLocaleString('pt-BR') : 'Não validado'}
+                  </span>
                 </div>
                 <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
                   <span className="text-slate-400 block">Sensação Satélite</span>
@@ -884,7 +900,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
                 {isAiAuditing ? (
                   <div className="py-8 flex flex-col items-center justify-center gap-3 text-slate-400">
                     <Sparkles className="w-6 h-6 text-purple-400 animate-spin" />
-                    <span>Processando cadeia de pensamento do Engenheiro Aquícola...</span>
+                    <span>Conferindo evidências, cálculos e riscos operacionais…</span>
                   </div>
                 ) : (
                   <div className="text-slate-200 text-xs leading-relaxed whitespace-pre-line font-mono">
@@ -897,13 +913,13 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
               <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-slate-950 border border-emerald-500/30 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase block font-semibold">
-                    Rentabilidade Projetada na Grade Especial (&gt;900g)
+                    Resultado atual calculado com dados disponíveis
                   </span>
                   <span className="text-base font-black text-emerald-400">
-                    +R$ 15.000,00 de Lucro Líquido
+                    {dre.ebitda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                   <p className="text-[10px] text-slate-400 mt-0.5">
-                    Recomendação: Segurar despesca por 10 dias para atingir cotação premium de R$ 10,25/kg.
+                    Projeções sem biometria e preço de venda validados são exibidas como indisponíveis.
                   </p>
                 </div>
                 <div className="text-right">
@@ -916,7 +932,7 @@ export const NerveCenterDashboard: React.FC<NerveCenterDashboardProps> = ({
             {/* Modal Footer Actions */}
             <div className="px-5 py-3 bg-slate-950 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] text-slate-500">
-                Ghost UX: +55 84 98858-5211 (Collermhann)
+                Ghost UX: destino protegido
               </span>
 
               <div className="flex items-center gap-2">

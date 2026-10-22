@@ -134,7 +134,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose }) =
         quantityKg,
         pricePerKg,
         totalValue,
-        whatsappDispatchedTo: currentTenant.producerPhone || '+55 84 98858-5211',
+        whatsappDispatchedTo: currentTenant.producerPhone || 'Destino não configurado',
         message: `📄 NF gerada para ${selectedBatchCode}. Quantidade: ${quantityKg}kg | Valor: R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Anexar PDF.`,
       });
     } finally {

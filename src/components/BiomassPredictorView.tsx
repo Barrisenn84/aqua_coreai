@@ -113,12 +113,12 @@ export const BiomassPredictorView: React.FC = () => {
               <span className="text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-                FCR Projetado: <strong className="text-emerald-400">{targetPoint?.projectedFcr || 1.38}</strong>
+                FCR Projetado: <strong className="text-emerald-400">{targetPoint?.projectedFcr || '—'}</strong>
               </span>
               <span className="text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5 text-yellow-400" />
-                Valor da Carga: <strong className="text-emerald-300">R$ {(prediction.projectedHarvestBiomassTons * 1000 * (farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50)).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong>
+                Valor da Carga: <strong className="text-emerald-300">{(farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0) > 0 ? `R$ ${(prediction.projectedHarvestBiomassTons * 1000 * (farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0)).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` : 'Preço não informado'}</strong>
               </span>
             </div>
           </div>

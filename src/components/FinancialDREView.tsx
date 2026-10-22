@@ -23,7 +23,7 @@ export const FinancialDREView: React.FC = () => {
 
   const [simulatedFcr, setSimulatedFcr] = useState<number>(globalFcr);
   const [simulatedFeedPrice, setSimulatedFeedPrice] = useState<number>(farm.feedAverageCostPerKg);
-  const [simulatedcamarãoPrice, setSimulatedcamarãoPrice] = useState<number>(farm.shrimpSalePricePerKg || 24.5);
+  const [simulatedcamarãoPrice, setSimulatedcamarãoPrice] = useState<number>(farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0);
 
   // Estado do CFO Virtual com IA
   const [isAuditingCfo, setIsAuditingCfo] = useState<boolean>(false);
@@ -71,10 +71,10 @@ export const FinancialDREView: React.FC = () => {
         ],
         suggestedActionPlan: [
           'Fracionar alimentação em 4 tratos térmicos para reduzir FCR em 0,08 pontos.',
-          'Segurar a colheita por 8 dias adicionais para atingir calibre especial a R$ 10,25/kg (+14,5% na receita).',
+          'Registrar preço negociado, biomassa e custo de ração antes de simular uma janela de colheita ou estimar receita.',
         ],
         potentialMarginGainPct: 4.8,
-        cfoExecutiveSummary: `Operação com saúde financeira classe A. Custo por kg de R$ ${dre.costPerKgProduced.toFixed(2)}/kg está 12% abaixo da média do polo nordestino.`,
+        cfoExecutiveSummary: dre.grossRevenue > 0 ? `Resumo calculado com os dados cadastrados. Custo por kg: R$ ${dre.costPerKgProduced.toFixed(2)}.` : 'Receita ainda não informada; o resumo financeiro aguarda conciliação e preço de venda.',
       });
     } finally {
       setIsAuditingCfo(false);

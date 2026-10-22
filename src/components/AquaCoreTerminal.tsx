@@ -131,7 +131,7 @@ export const AquaCoreTerminal: React.FC<AquaCoreTerminalProps> = ({ initialTankI
 
           <button
             onClick={() =>
-              handlePreset('Compensa realizar a despesca imediata na Grade Padrão (R$ 8,90/kg) ou segurar 10 dias para Grade Especial (R$ 10,25/kg)?')
+              handlePreset('Com os dados atuais, qual é o impacto de realizar a despesca agora versus aguardar? Informe preço negociado, biomassa e custo de ração antes de recomendar uma janela.')
             }
             className="px-3 py-1.5 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-800/80 transition-all flex items-center gap-1.5 cursor-pointer font-semibold"
           >
@@ -184,7 +184,7 @@ export const AquaCoreTerminal: React.FC<AquaCoreTerminalProps> = ({ initialTankI
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 font-mono">
               <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-sm font-bold text-purple-300">
-                Processando Chain of Thought Aquícola...
+                Processando trilha auditável aquícola...
               </p>
               <p className="text-xs text-slate-500 max-w-sm">
                 Calculando Emerson NH3, balanço de oxigenação, coeficientes térmicos e rentabilidade marginal.
@@ -211,11 +211,11 @@ export const AquaCoreTerminal: React.FC<AquaCoreTerminalProps> = ({ initialTankI
                 ))}
               </div>
 
-              {/* Chain of Thought Breakdown (The 6 Steps) */}
+              {/* Trilha auditável de evidências e decisões */}
               <div className="space-y-3">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5" />
-                  <span>Cadeia Operacional de Raciocínio (Chain of Thought):</span>
+                  <span>Trilha auditável: evidência → risco → ação</span>
                 </span>
 
                 <div className="space-y-2.5 font-mono text-xs">

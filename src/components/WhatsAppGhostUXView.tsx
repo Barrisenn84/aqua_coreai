@@ -39,7 +39,9 @@ export const WhatsAppGhostUXView: React.FC = () => {
     farm,
     totalBiomassKg,
     globalFcr,
+    globalSurvivalRatePct,
     sensorReadings,
+    currentTenant,
   } = useAquaCore();
 
   const [inputPrompt, setInputPrompt] = useState<string>('');
@@ -75,21 +77,21 @@ export const WhatsAppGhostUXView: React.FC = () => {
     try {
       let payload: any = {};
       if (level === 'CRITICAL') {
+        const reading = sensorReadings['tank-01'];
         payload = {
-          tankId: 'Tanque 01',
-          tankName: 'Tanque 01',
+          tankId: 'tank-01',
+          tankName: 'T1',
           sensor: 'Oxigênio',
-          value: 3.6,
+          value: reading?.dissolvedOxygen,
           limit: 4.0,
-          temp: 29.0,
-          potentialLoss: 'R$ 8.900,00',
+          temp: reading?.temperature,
         };
       } else if (level === 'CONSULT') {
         payload = {
-          lot: 'Lote_04 (Tanque 04)',
+          lot: 'L171026 (T1–T3)',
           species: 'Camarão Vannamei',
-          temperature: 29.8,
-          biomassKg: 8500,
+          temperature: sensorReadings['tank-01']?.temperature,
+          biomassKg: totalBiomassKg,
           question: 'Compensa colher agora ou esperar?',
         };
       } else {
@@ -97,7 +99,7 @@ export const WhatsAppGhostUXView: React.FC = () => {
           farmName: 'Fazenda River Life (Polo de Mogeiro – PB)',
           totalBiomassTons: totalBiomassKg / 1000,
           avgFcr: globalFcr,
-          survivalRate: 92,
+          survivalRate: globalSurvivalRatePct,
         };
       }
 
@@ -105,7 +107,7 @@ export const WhatsAppGhostUXView: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: '+5584988585211',
+          userId: currentTenant.producerPhone || '',
           level,
           payload,
         }),
@@ -309,7 +311,7 @@ export const WhatsAppGhostUXView: React.FC = () => {
 
                 <div className="flex items-center gap-4 text-slate-400">
                   <span className="text-xs font-mono text-emerald-400 font-bold hidden sm:inline-block bg-[#111b21] px-2.5 py-1 rounded-full border border-emerald-800">
-                    +55 84 98858-5211 (Collermhann)
+                    Destino protegido
                   </span>
                   <button className="hover:text-slate-200">
                     <Phone className="w-4 h-4" />

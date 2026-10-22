@@ -114,6 +114,7 @@ export interface WhatsAppGhostOutput {
     dissolvedOxygen?: number;
     recommendedFeedKg?: number;
     financialImpactEstimated?: string;
+    validationRequired?: boolean;
   };
 }
 
@@ -137,6 +138,7 @@ export interface IWhatsAppMessage {
     dissolvedOxygen?: number;
     recommendedFeedKg?: number;
     financialImpactEstimated?: string;
+    validationRequired?: boolean;
   };
 }
 

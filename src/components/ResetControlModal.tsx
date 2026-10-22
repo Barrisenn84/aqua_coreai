@@ -54,7 +54,7 @@ export const ResetControlModal: React.FC = () => {
     currentUser.name !== 'Engenheiro Collermhann' ? currentUser.name : 'Produtor Responsável'
   );
   const [realProducerPhone, setRealProducerPhone] = useState(
-    currentTenant.producerPhone || '+5584988585211'
+    currentTenant.producerPhone || ''
   );
   const [realSpecies, setRealSpecies] = useState(
     currentTenant.speciesTarget || 'Litopenaeus vannamei (Camarão)'
@@ -318,7 +318,7 @@ export const ResetControlModal: React.FC = () => {
                       type="text"
                       value={realProducerPhone}
                       onChange={(e) => setRealProducerPhone(e.target.value)}
-                      placeholder="Ex: 84988585211"
+                      placeholder="Ex: DDD + número"
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold focus:border-cyan-500 outline-none"
                     />
                   </div>

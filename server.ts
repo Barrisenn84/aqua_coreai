@@ -354,7 +354,7 @@ app.post('/api/aqua-core/offline-sync', async (req, res) => {
   return res.json({
     status: 'success',
     syncedAt: new Date().toISOString(),
-    message: 'Sincronização offline processada e notificação WhatsApp disparada para Collermhann (+55 84 98858-5211).',
+    message: 'Sincronização offline processada e notificação preparada para o destinatário configurado.',
   });
 });
 
@@ -459,10 +459,13 @@ app.get('/api/market/live-currencies', async (_req, res) => {
 app.post('/api/ai/farm-health-audit', async (req, res) => {
   try {
     const { farmData } = req.body;
-    const auditPrompt = `AUDITORIA COMPLETA DE PRODUÇÃO - FAZENDA RIVER LIFE (POLO DE MOGEIRO – PB):
-Realize uma auditoria detalhada dos 7 tanques em cultivo de camarão Litopenaeus vannamei.
-Dados: Sobrevivência 98%, FCR 1.35 (meta 1.35), População 15.000 un, Biomassa 8.500 kg, Faturamento projetado R$ 22.500, Custo R$ 12.500.
-Emita o parecer do Engenheiro de Produção com impacto financeiro em Reais e diretrizes de manejo para o próximo ciclo de aeração.`;
+    const tanksCount = Number(farmData?.tanksCount || 0);
+    const biomassKg = Number(farmData?.totalBiomassKg || 0);
+    const fcr = Number(farmData?.globalFcr || 0);
+    const survival = Number(farmData?.globalSurvivalRatePct || 0);
+    const auditPrompt = `AUDITORIA DE PRODUÇÃO — RIVER LIFE, MOGEIRO/PB.
+Use exclusivamente os dados recebidos no contexto: ${tanksCount} tanques, biomassa consolidada de ${biomassKg.toLocaleString('pt-BR')} kg, sobrevivência calculada de ${survival.toLocaleString('pt-BR')}% e FCA validado ${fcr > 0 ? fcr.toLocaleString('pt-BR') : 'indisponível por inconsistência na origem'}.
+Separe claramente: (1) evidências observadas, (2) cálculos, (3) incertezas e conflitos, (4) ações recomendadas, (5) impacto financeiro estimado. Não invente preços, volumes, mortalidade, medições de água nem promessas de lucro. Quando faltar dado, diga exatamente o que deve ser medido ou conciliado antes da decisão.`;
 
     const aiResponse = await geminiOracle.getConsultativeResponse({
       question: auditPrompt,
@@ -492,15 +495,15 @@ if (process.env.ENABLE_DAILY_DIGEST === 'true') {
         {
           farmData: {
             farmName: 'Fazenda Camarão Paraíba',
-            stability: 98,
+            stability: undefined,
             criticalAlerts: 0,
-            tempDeviation: 0.1,
+            tempDeviation: undefined,
             species: 'Litopenaeus vannamei',
           },
           marketPrices: {
-            shrimp_premium: 45.00,
-            shrimp_standard: 32.00,
-            camarãoLivePerKg: 10.25,
+            shrimp_premium: undefined,
+            shrimp_standard: undefined,
+            camarãoLivePerKg: undefined,
           },
         },
         MessageLevel.INFO
@@ -541,7 +544,7 @@ async function start() {
     ==========================================================
     🚀 AQUA-CORE AI: MODO CARCINICULTURA ATIVADO
     ==========================================================
-    📱 Client: ${PRODUTOR_PHONE} (Paraíba/PB)
+    📱 Messaging: destinatário configurado (${PRODUTOR_PHONE ? 'ativo' : 'inativo'})
     🦀 Focus: Litopenaeus vannamei (Pós-Larvas & Engorda)
     🛰️ Sensor Threshold: O2 < 4.0mg/L (Critical)
     🧠 Engine: Gemini 2.5 Flash (Shrimp & camarão Expert)

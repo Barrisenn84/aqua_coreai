@@ -802,7 +802,7 @@ export const aquacultureMath = {
 
   calculateProjectedProfit: (farmData: any, marketPrices: any): string => {
     const biomassKg = farmData?.totalBiomassKg || (farmData?.totalBiomassTons ? farmData.totalBiomassTons * 1000 : 23450);
-    const pricePerKg = marketPrices?.shrimpLivePerKg || farmData?.salePricePerKg || 24.50;
+    const pricePerKg = marketPrices?.shrimpLivePerKg || farmData?.salePricePerKg || 0;
     const grossRevenue = biomassKg * pricePerKg;
     const estCost = biomassKg * (farmData?.costPerKg || 6.10);
     const profit = Math.max(0, grossRevenue - estCost);

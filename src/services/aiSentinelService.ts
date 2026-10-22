@@ -427,7 +427,7 @@ class AISentinelService {
         0
       );
       const netCashRs = totalEntriesRs - totalExpensesRs;
-      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || 24.50;
+      const shrimpSalePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || 0;
       const projectedRevenueCycle = Math.round(totalBiomassKg * shrimpSalePrice);
 
       items.push({
@@ -498,7 +498,7 @@ class AISentinelService {
           `• *Score de Saúde Geral:* ${systemHealthScore}/100`;
 
         messagingHub
-          .processAndSend('+5584988585211', { question: alertMsg, autoAlert: true }, MessageLevel.EMERGENCY)
+          .processAndSend(environment.producerPhone, { question: alertMsg, autoAlert: true }, MessageLevel.EMERGENCY)
           .catch((err) => console.warn('[AISentinel] Erro ao enviar WhatsApp do Sentinela:', err.message));
       }
 

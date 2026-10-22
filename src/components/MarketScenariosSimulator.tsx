@@ -21,30 +21,30 @@ import {
 import { useAquaCore } from '../context/AquaCoreContext';
 
 export const MarketScenariosSimulator: React.FC = () => {
-  const { farm, batches, tanks } = useAquaCore();
+  const { farm, batches, tanks, dre } = useAquaCore();
 
   // Dados reais agregados dos lotes povoados da fazenda (Meu Pescado)
   const totalStockedCount = useMemo(() => {
-    return batches.reduce((acc, b) => acc + (b.currentCount || 0), 0) || 380000;
+    return batches.reduce((acc, b) => acc + (b.currentCount || 0), 0);
   }, [batches]);
 
   // Biomassa técnica atual no sistema (fase inicial de berçário = 3,53 kg)
   const currentBiomassTechnicalKg = useMemo(() => {
-    return 3.53;
+    return batches.reduce((acc, b) => acc + ((b.currentCount * b.currentWeightG) / 1000), 0);
   }, []);
 
   // Estado dos controles de simulação
-  const [selectedPricePerKg, setSelectedPricePerKg] = useState<number>(24.50); // Preço médio Polo Paraíba
+  const [selectedPricePerKg, setSelectedPricePerKg] = useState<number>(farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0);
   const [simulatedFcr, setSimulatedFcr] = useState<number>(1.30); // Meta de FCA padrão Vannamei
   const [targetWeightG, setTargetWeightG] = useState<number>(15.0); // Gramatura alvo comercial
   const [simulationMode, setSimulationMode] = useState<'harvest' | 'technical_current'>('harvest');
   const [survivalRatePct, setSurvivalRatePct] = useState<number>(95.0); // Sobrevivência projetada até despesca
-  const [feedCostPerKg, setFeedCostPerKg] = useState<number>(farm.feedAverageCostPerKg || 4.20); // Custo médio de ração
+  const [feedCostPerKg, setFeedCostPerKg] = useState<number>(farm.feedAverageCostPerKg || 0); // Custo médio de ração
 
   // Custos acumulados reais no ciclo (conforme sistema Meu Pescado)
-  const initialStockingCostRs = 3800.00; // 4 aquisições de pós-larvas (1000 + 1000 + 1000 + 800)
-  const initialFertilizationCostRs = 60.50; // Fertilizante DECOSOLO aplicado (16,50 + 16,50 + 16,50 + 11,00)
-  const currentSpentInCultivationRs = initialStockingCostRs + initialFertilizationCostRs; // R$ 3.860,50
+  const initialStockingCostRs = dre.totalCost;
+  const initialFertilizationCostRs = 0;
+  const currentSpentInCultivationRs = initialStockingCostRs + initialFertilizationCostRs;
 
   // Cálculo da biomassa simulada
   const activeBiomassKg = useMemo(() => {
@@ -110,7 +110,8 @@ export const MarketScenariosSimulator: React.FC = () => {
 
   // Matriz de Sensibilidade: 5 faixas de preço x 3 faixas de FCR
   const sensitivityMatrix = useMemo(() => {
-    const priceLevels = [18.00, 21.50, 24.50, 28.00, 32.00];
+    const basePrice = selectedPricePerKg > 0 ? selectedPricePerKg : 0;
+    const priceLevels = basePrice > 0 ? [basePrice * 0.8, basePrice * 0.9, basePrice, basePrice * 1.1, basePrice * 1.2].map((value) => Number(value.toFixed(2))) : [0];
     const fcrLevels = [
       { label: 'Otimista (1.15)', value: 1.15 },
       { label: 'Meta Técnica (1.30)', value: 1.30 },
@@ -137,16 +138,10 @@ export const MarketScenariosSimulator: React.FC = () => {
       };
       return row;
     });
-  }, [activeBiomassKg, currentBiomassTechnicalKg, feedCostPerKg, simulationMode, currentSpentInCultivationRs]);
+  }, [activeBiomassKg, currentBiomassTechnicalKg, feedCostPerKg, simulationMode, currentSpentInCultivationRs, selectedPricePerKg]);
 
   // Preset rápido de preços
-  const pricePresets = [
-    { label: 'Porta da Fazenda', price: 18.00, badge: 'Conservador' },
-    { label: 'Atacado PE/PB', price: 21.50, badge: 'Regional' },
-    { label: 'Média Polo PB', price: 24.50, badge: 'Cepea / SIF' },
-    { label: 'Calibre 15-18g', price: 28.00, badge: 'Qualidade +' },
-    { label: 'Premium Especial', price: 32.00, badge: 'Gourmet' },
-  ];
+  const pricePresets: Array<{ label: string; price: number; badge: string }> = [];
 
   // Parecer de IA Comercial Dinâmico
   const aiCommercialOpinion = useMemo(() => {
@@ -156,7 +151,7 @@ export const MarketScenariosSimulator: React.FC = () => {
     if (simulationMode === 'technical_current') {
       return {
         title: 'Diagnóstico Contábil de Fase Inicial (Pós-Larvas)',
-        summary: `A biomassa técnica atual é de 3,53 kg com investimento realizado de R$ 3.860,50 (R$ 3.800 de larvas + R$ 60,50 de DECOSOLO). O sistema está em fase de berçário inicial. Alterne para o modo 'Despesca Comercial Projetada' para simular a liquidação comercial da safra.`,
+        summary: `A biomassa técnica atual é de ${currentBiomassTechnicalKg.toLocaleString('pt-BR')} kg com investimento importado de R$ ${currentSpentInCultivationRs.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}. O sistema está em fase de berçário. Informe preço e premissas antes de usar a simulação comercial.`,
         recommendation: 'Manter foco em sobrevivência e monitoramento de qualidade de água antes de fechar contratos antecipados.',
         alertLevel: 'info',
       };
@@ -647,9 +642,9 @@ export const MarketScenariosSimulator: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setSelectedPricePerKg(24.50)}
+          onClick={() => setSelectedPricePerKg(farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0)}
           className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
-          title="Resetar parâmetros para média de mercado regional"
+          title="Voltar ao preço cadastrado da fazenda"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Restaurar Padrão</span>

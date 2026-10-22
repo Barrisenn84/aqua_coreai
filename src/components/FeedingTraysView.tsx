@@ -24,7 +24,7 @@ interface FeedingTray {
 }
 
 export const FeedingTraysView: React.FC = () => {
-  const { recordFeeding } = useAquaCore();
+  const { recordFeeding, farm } = useAquaCore();
   const [trays, setTrays] = useState<FeedingTray[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -82,7 +82,7 @@ export const FeedingTraysView: React.FC = () => {
           tankId,
           amountKg: Number(feedAmountKg),
           feedType: 'Ração Starter & Engorda 38% PB',
-          costPerKg: 4.20,
+          costPerKg: farm.feedAverageCostPerKg || 0,
           notes: `Checagem de comedouro: ${trayStatus} (${leftoverPercentage}% de sobra). ${rec}`,
         });
       }

@@ -35,33 +35,33 @@ export const MarketWatch: React.FC = () => {
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
   // Preço de venda atual cadastrado no sistema
-  const systemPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50;
+  const systemPrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0;
 
   // Cotações regionais para camarão no Nordeste / Paraíba
   const camarãoQuotes: RegionalQuote[] = [
     {
       category: 'Grade Especial Filé (>900g)',
-      regionalPricePerKg: 10.4,
-      trendPct7d: +4.2,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Frigoríficos Polo Paraíba & PE',
-      source: 'Cepea Regional / Polo PB',
-      description: 'camarão limpo padrão exportação e filé de 1ª linha. Alto rendimento de carcaça.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
     {
       category: 'Grade Padrão Inteiro (750g - 850g)',
-      regionalPricePerKg: 9.1,
-      trendPct7d: +1.8,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Frigoríficos Regionais',
-      source: 'Bolsa Aquícola Nordeste',
-      description: 'Abate padrão para comercialização de camarão inteiro eviscerado.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
     {
       category: 'Mercado Atacadista (Campina Grande / JP)',
-      regionalPricePerKg: 18.5,
-      trendPct7d: +2.5,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Ceasa PB & Distribuidores',
-      source: 'Pesquisa Mercadológica Local PB',
-      description: 'Venda direta sem frigorífico para peixarias e restaurantes.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
   ];
 
@@ -69,27 +69,27 @@ export const MarketWatch: React.FC = () => {
   const camaraoQuotes: RegionalQuote[] = [
     {
       category: 'Camarão Fresco 18g+ (Exportação / Grade A)',
-      regionalPricePerKg: 23.5,
-      trendPct7d: +5.8,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Exportadores & Rede Hoteleira JP',
-      source: 'Assoc. Criadores Camarão PB (ABCC)',
-      description: 'Calibre grande com carcaça firme. Alta demanda na orla de João Pessoa.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
     {
       category: 'Camarão Médio 14g (Atacado de Viveiro)',
-      regionalPricePerKg: 17.8,
-      trendPct7d: +2.1,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Processadoras & Distribuidores NE',
-      source: 'Polo Carcinicultura Vale do PB',
-      description: 'Biomassa padrão para despesca regular em viveiros escavados.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
     {
       category: 'Camarão Pequeno 10g (Industrial)',
-      regionalPricePerKg: 13.9,
-      trendPct7d: -0.8,
+      regionalPricePerKg: 0,
+      trendPct7d: 0,
       marketChannel: 'Indústria de Congelados',
-      source: 'Mercado Atacadista Regional',
-      description: 'Destinado ao beneficiamento para filé de camarão descascado.',
+      source: 'Sem cotação importada',
+      description: 'Informe uma cotação negociada e registre sua fonte antes de usar este cenário.',
     },
   ];
 

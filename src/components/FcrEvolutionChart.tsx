@@ -136,8 +136,23 @@ const tankSpecificOffsets: Record<string, number> = {
 };
 
 export const FcrEvolutionChart: React.FC = () => {
-  const { tanks, batches, farm } = useAquaCore();
+  const { tanks, batches, farm, globalFcr } = useAquaCore();
   const [selectedTankFilter, setSelectedTankFilter] = useState<string>('all');
+
+  const importedSnapshotHasNoWeeklyHistory = batches.some((batch) => batch.batchCode?.startsWith('L'));
+  if (importedSnapshotHasNoWeeklyHistory) {
+    return (
+      <div className="bg-slate-900/90 border border-amber-800/70 rounded-2xl p-6 text-sm text-slate-300">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-300 mt-0.5 shrink-0" />
+          <div>
+            <h2 className="text-base font-bold text-white">Histórico semanal de FCA ainda não disponível</h2>
+            <p className="mt-2">A fonte importada registra alimentação acumulada e alguns FCA por lote, mas não traz a série semanal necessária para desenhar esta curva. O valor global atual é <strong className="text-amber-200">{globalFcr > 0 ? globalFcr.toFixed(2) : '—'}</strong>; cadastre novas medições para habilitar a evolução.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Compute dataset based on tank selection
   const offset = selectedTankFilter === 'all' ? 0 : (tankSpecificOffsets[selectedTankFilter] || 0);
@@ -448,8 +463,7 @@ export const FcrEvolutionChart: React.FC = () => {
               Regra de Ouro Nutricional (Polo Mogeiro – PB):
             </span>{' '}
             <span>
-              Cada desvio de <strong className="text-amber-300">+0.10 no FCR</strong> consome{' '}
-              <strong className="text-red-400">~R$ 3.520,00 adicionais</strong> em ração Samaria Starter para uma biomassa de 8.500 kg. O monitoramento semanal previne acúmulo de matéria orgânica anóxica no fundo do viveiro.
+              Cada desvio de <strong className="text-amber-300">+0.10 no FCR</strong> aumenta o consumo de ração proporcionalmente à biomassa e ao preço cadastrados. O monitoramento semanal previne acúmulo de matéria orgânica anóxica no fundo do viveiro.
             </span>
           </div>
         </div>

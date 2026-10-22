@@ -10,6 +10,8 @@ interface ProfitDialProps {
 
 export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size = 'md', tankId }) => {
   const { dre, globalFcr, farm, tanks, batches } = useAquaCore();
+  const effectiveSalePrice = farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 0;
+  const financialInputsReady = effectiveSalePrice > 0 && dre.grossRevenue > 0 && dre.costPerKgProduced > 0 && globalFcr > 0;
 
   // Selected tank or farm general
   const targetTank = tankId ? tanks.find((t) => t.id === tankId) : null;
@@ -19,7 +21,7 @@ export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size
   // Factors: EBITDA margin (weight 40%), FCR efficiency (weight 40%), and aerator state (20%)
   const fcrScore = Math.max(0, Math.min(100, (1.6 - globalFcr) / (1.6 - 1.2) * 100));
   const marginScore = Math.max(0, Math.min(100, (dre.netMarginPct / 35) * 100));
-  const score = customScore !== undefined ? customScore : Math.round(fcrScore * 0.5 + marginScore * 0.5);
+  const score = customScore !== undefined ? customScore : (financialInputsReady ? Math.round(fcrScore * 0.5 + marginScore * 0.5) : 0);
 
   const radius = size === 'sm' ? 52 : size === 'lg' ? 95 : 68;
   const stroke = size === 'sm' ? 7 : size === 'lg' ? 14 : 10;
@@ -49,8 +51,8 @@ export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           <span>The Profit Dial</span>
         </span>
-        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded font-mono ${theme.text} bg-slate-950 border border-slate-800`}>
-          {theme.label}
+          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded font-mono ${theme.text} bg-slate-950 border border-slate-800`}>
+          {financialInputsReady ? theme.label : 'DADOS INSUFICIENTES'}
         </span>
       </div>
 
@@ -117,9 +119,8 @@ export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size
               /100
             </span>
           </div>
-          <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-0.5 mt-1 leading-none">
-            <TrendingUp className="w-2.5 h-2.5" />
-            +{dre.netMarginPct}%
+          <span className={`text-[9px] font-bold flex items-center gap-0.5 mt-1 leading-none ${financialInputsReady ? 'text-emerald-400' : 'text-amber-300'}`}>
+            {financialInputsReady ? <><TrendingUp className="w-2.5 h-2.5" />+{dre.netMarginPct}%</> : 'Cadastre preço e receita'}
           </span>
         </div>
       </div>
@@ -128,12 +129,12 @@ export const ProfitDial: React.FC<ProfitDialProps> = ({ score: customScore, size
       <div className="w-full grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800/80 text-[11px] font-mono">
         <div className="bg-slate-950/60 p-1.5 rounded-lg text-center border border-slate-800/60">
           <span className="text-[9px] text-slate-500 uppercase block">Custo Produção</span>
-          <span className="font-bold text-slate-200">R$ {dre.costPerKgProduced.toFixed(2)}/kg</span>
+          <span className="font-bold text-slate-200">{financialInputsReady ? `R$ ${dre.costPerKgProduced.toFixed(2)}/kg` : '—'}</span>
         </div>
         <div className="bg-slate-950/60 p-1.5 rounded-lg text-center border border-slate-800/60">
           <span className="text-[9px] text-slate-500 uppercase block">Margem Líquida</span>
           <span className="font-bold text-emerald-400">
-            R$ {((farm.shrimpSalePricePerKg || farm.camarãoSalePricePerKg || farm.fishSalePricePerKg || 24.50) - (dre?.costPerKgProduced || 0)).toFixed(2)}/kg
+            {financialInputsReady ? `R$ ${(effectiveSalePrice - dre.costPerKgProduced).toFixed(2)}/kg` : '—'}
           </span>
         </div>
       </div>

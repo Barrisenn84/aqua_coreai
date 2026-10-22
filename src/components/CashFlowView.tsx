@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
+import { useAquaCore } from '../context/AquaCoreContext';
+import { meuPescadoSnapshot } from '../data/meuPescadoImport';
 
 interface BankAccount {
   id: string;
@@ -49,6 +51,7 @@ interface AgroCreditData {
 }
 
 export const CashFlowView: React.FC = () => {
+  const { currentUser, setIsAuthModalOpen } = useAquaCore();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [movements, setMovements] = useState<CashFlowMovement[]>([]);
   const [agroCredit, setAgroCredit] = useState<AgroCreditData | null>(null);
@@ -64,6 +67,8 @@ export const CashFlowView: React.FC = () => {
   const [documentRef, setDocumentRef] = useState<string>('NF-e 8819');
 
   const fetchData = async () => {
+    const fallbackAccounts: BankAccount[] = [{ id: 'mp-account-default', tenantId: 'tenant-river-life', bankName: 'Padrão', accountType: 'Protegido', agency: '—', accountNumber: 'Protegido', holderName: 'River Life', currentBalanceRs: meuPescadoSnapshot.finance.currentBalanceRs, pixKey: 'Protegido', isActive: true }];
+    const fallbackMovements: CashFlowMovement[] = meuPescadoSnapshot.finance.pending.map((item, index) => ({ id: `mp-pending-${index + 1}`, tenantId: 'tenant-river-life', movementType: item.direction === 'Entrada' ? 'ENTRADA' : 'SAIDA', category: item.category, description: `${item.partner}${'description' in item && item.description ? ` · ${item.description}` : ''} · vencimento ${item.dueDate}`, amountRs: item.amountRs, status: 'PREVISTO', createdAt: item.entryDate }));
     try {
       setLoading(true);
       const [accRes, movRes, creditRes] = await Promise.all([
@@ -75,10 +80,14 @@ export const CashFlowView: React.FC = () => {
       if (accRes.ok) {
         const d = await accRes.json();
         setAccounts(d.accounts || []);
+      } else {
+        setAccounts(fallbackAccounts);
       }
       if (movRes.ok) {
         const d = await movRes.json();
         setMovements(d.movements || []);
+      } else {
+        setMovements(fallbackMovements);
       }
       if (creditRes.ok) {
         const d = await creditRes.json();
@@ -86,6 +95,8 @@ export const CashFlowView: React.FC = () => {
       }
     } catch (e) {
       console.warn('Erro ao carregar dados financeiros:', e);
+      setAccounts(fallbackAccounts);
+      setMovements(fallbackMovements);
     } finally {
       setLoading(false);
     }
@@ -157,11 +168,11 @@ export const CashFlowView: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => currentUser.role === 'guest' ? setIsAuthModalOpen(true) : setIsModalOpen(true)}
           className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-medium shadow-lg shadow-teal-950/40 transition-all text-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Novo Lançamento DFC
+          {currentUser.role === 'guest' ? 'Entrar para lançar' : 'Novo Lançamento DFC'}
         </button>
       </div>
 

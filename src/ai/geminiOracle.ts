@@ -144,9 +144,7 @@ CONTEXTOS OBRIGATÓRIOS:
 
 1. LOCALIZAÇÃO: Polo de Mogeiro – PB (Centro de leitura) e Fazenda River Life. Condições climáticas típicas: sensação térmica de 34°C, chuva 0,8mm, vento 16km/h. Previsão com margem de erro crescente nos dias distantes.
 
-2. MERCADO LOCAL: Cotações do Polo Paraíba/Nordeste, atualizadas diariamente via web search. 
-   - Camarão Padrão (700g a 800g): R$ 8,90 / kg (Grau Intermediário)
-   - Camarão Especial/Filé (>900g): R$ 10,25 / kg (Grau Premium)
+2. MERCADO LOCAL: use preços somente quando fornecidos no contexto com fonte e data. Nunca trate valores de demonstração como cotação atual.
 
 3. MÉTRICAS CRÍTICAS (sempre presentes nas respostas):
    - Sobrevivência (%)
@@ -156,27 +154,25 @@ CONTEXTOS OBRIGATÓRIOS:
    - Lucro Líquido (R$)
    - Margem EBITDA (%)
 
-4. INTEGRAÇÃO GHOST UX (WhatsApp): 
-   - Todas as alterações críticas disparam mensagens para o número +55 84 98858-5211 (usuário Collermhann).
-   - Mensagens curtas, imperativas, diretas ao ponto, sem enrolação.
+4. INTEGRAÇÃO GHOST UX (WhatsApp):
+   - Apenas prepare mensagens; o envio depende de confirmação e configuração do destinatário.
+   - Mensagens curtas, diretas e com a origem do dado.
    - Formato de alerta crítico: "🚨 NOME DO TANQUE: [dado]. Ação: [ato imediato]. Perda estimada: R$ X,XX."
 
-5. CADEIA DE PENSAMENTO (SEMPRE NESTA ORDEM):
-   1. Entrada de Dados (Offline ou WhatsApp) → 
-   2. Validação contra limiares dinâmicos (O2, Temp, pH) → 
-   3. Cruzamento com Cotação de Mercado Regional → 
-   4. Projeção de Biomassa e Peso → 
-   5. Classificação de Grade Comercial (Padrão vs Especial) → 
-   6. Geração de Mensagem WhatsApp → 
-   7. Atualização de KPIs no Dashboard.
+5. EXPLICAÇÃO AUDITÁVEL (SEMPRE NESTA ORDEM):
+   1. Evidências observadas e horário da medição →
+   2. Cálculos derivados e fórmulas resumidas →
+   3. Incertezas, conflitos e dados ausentes →
+   4. Risco operacional →
+   5. Ação recomendada e condição de parada →
+   6. Impacto financeiro somente quando calculável.
 
 NÍVEIS DE RESPOSTA:
 
 - CRITICAL (Ouvido/Imediato): 
   Exemplo: "🚨 ALERTA CRÍTICO TANQUE 01: Oxigênio 3.6mg/L (limite dinâmico 4.0mg/L por temp 29°C). Risco de mortalidade em < 2h. Aeração máxima NOW. Perda estimada: R$ 8.900,00."
 
-- CONSULTATIVE (Orientação Técnica): 
-  Exemplo: "Grade Padrão (750g): R$ 8,90/kg. Grade Especial (950g): R$ 10,25/kg. Projeção 10 dias: +R$ 15.000 lucro líquido. Recomendação: Segurar despesca para atingir calibre especial no Polo Paraíba."
+- CONSULTATIVE (Orientação Técnica): apresente cenários condicionais e deixe explícito quando preço, biometria ou custo não estiver validado.
 
 - INFORMATIVE (Resumo Diário): 
   Exemplo: "Bom dia, Collermhann! Sobrevivência 92%. Chuva prevista 0,8mm às 10h (sensação 34°C, vento 16km/h). Custo ração dia: R$ 4,15/kg. Projeção biomassa: 12.000kg para colheita ótima em 20/Out."
@@ -195,13 +191,14 @@ DIRETRIZES ADICIONAIS:
   async generateCriticalAlert(payload: any): Promise<string> {
     const tankId = payload?.tankId || 'Tanque 01';
     const sensor = payload?.sensor || 'Oxigênio';
-    const value = payload?.value != null ? payload.value : 3.6;
+    const value = payload?.value;
+    if (value == null) return 'Alerta não gerado: informe a leitura, o tanque, a unidade, o horário e a temperatura.';
     const limit = payload?.limit || 4.0;
-    const temp = payload?.temp || payload?.tempAgua || 29.8;
+    const temp = payload?.temp || payload?.tempAgua;
     const tankName = payload?.tankName || (tankId.includes('tank-') ? tankId.replace('tank-0', 'Tanque ').toUpperCase() : tankId.toUpperCase());
-    const potentialLoss = payload?.potentialLoss || 'R$ 8.900,00';
+    const potentialLoss = payload?.potentialLoss || 'não calculada por falta de biomassa e preço validados';
 
-    const prompt = `ALERTA CRÍTICO: ${tankName}, ${sensor} em ${value} mg/L (limite dinâmico ${limit} mg/L por temp ${temp}°C). Localização: Fazenda River Life (Polo de Mogeiro – PB). Usuário: Collermhann (+55 84 98858-5211).
+    const prompt = `ALERTA CRÍTICO: ${tankName}, ${sensor} em ${value} mg/L (limite dinâmico ${limit} mg/L por temp ${temp}°C). Localização: Fazenda River Life (Polo de Mogeiro – PB).
 Formato obrigatório estrito: "🚨 NOME DO TANQUE: [dado]. Ação: [ato imediato]. Perda estimada: R$ X,XX."`;
 
     const client = this.getClient();
@@ -221,7 +218,7 @@ Formato obrigatório estrito: "🚨 NOME DO TANQUE: [dado]. Ação: [ato imediat
       }
     }
 
-    return `🚨 ALERTA CRÍTICO ${tankName}: Oxigênio ${value}mg/L (limite dinâmico ${limit}mg/L por temp ${temp}°C). Risco de mortalidade em < 2h. Aeração máxima NOW. Perda estimada: ${potentialLoss}.`;
+    return `🚨 ALERTA CRÍTICO ${tankName}: ${sensor} ${value}mg/L (limite ${limit}mg/L${temp != null ? ` a ${temp}°C` : ''}). Confirme a sonda e siga o protocolo de emergência da fazenda. Perda estimada: ${potentialLoss}.`;
   }
 
   /**
@@ -232,10 +229,9 @@ Formato obrigatório estrito: "🚨 NOME DO TANQUE: [dado]. Ação: [ato imediat
     const context = payload?.context || payload || {};
 
     const prompt = `CONSULTA TÉCNICA - FAZENDA RIVER LIFE (POLO DE MOGEIRO – PB):
-Produtor: Collermhann (+55 84 98858-5211)
 Pergunta: "${question}"
 Contexto: ${JSON.stringify(context)}
-Responda seguindo o padrão CONSULTATIVE: mencione Grade Padrão (R$ 8,90/kg), Grade Especial (R$ 10,25/kg) e impacto no lucro líquido em Reais.`;
+Responda seguindo o padrão CONSULTATIVE. Use somente preços, biometria, custos e datas presentes no contexto. Quando faltarem, diga quais dados precisam ser coletados antes da decisão.`;
 
     const client = this.getClient();
     if (client) {
@@ -254,7 +250,7 @@ Responda seguindo o padrão CONSULTATIVE: mencione Grade Padrão (R$ 8,90/kg), G
       }
     }
 
-    return `Grade Padrão (750g): R$ 8,90/kg. Grade Especial (950g): R$ 10,25/kg. Projeção 10 dias: +R$ 15.000 lucro líquido. Recomendação: Segurar despesca para atingir calibre especial no Polo Paraíba.`;
+    return `Consulta indisponível no momento. Não há base validada para estimar preço, lucro ou data de despesca. Confirme biometria recente, preço com fonte e data, custos realizados e qualidade da água antes da decisão.`;
   }
 
   /**
@@ -263,10 +259,9 @@ Responda seguindo o padrão CONSULTATIVE: mencione Grade Padrão (R$ 8,90/kg), G
   async generateDailyDigest(payload: any): Promise<string> {
     const farmData = payload?.farmData || payload || {};
 
-    const prompt = `Gere o Daily Digest matinal para a Fazenda River Life (Polo de Mogeiro – PB) para Collermhann (+55 84 98858-5211).
-Clima: 34°C sensação térmica, chuva 0,8mm às 10h, vento 16km/h.
-Sobrevivência: 92%. Custo ração dia: R$ 4,15/kg. Projeção biomassa: 12.000kg para colheita em 20/Out.
-Siga o formato INFORMATIVE estipulado.`;
+    const prompt = `Gere um resumo operacional curto para a Fazenda River Life (Mogeiro – PB).
+Dados disponíveis: ${JSON.stringify(farmData)}
+Separe fatos, alertas e pendências. Não invente clima, sobrevivência, custos ou projeções ausentes.`;
 
     const client = this.getClient();
     if (client) {
@@ -285,7 +280,7 @@ Siga o formato INFORMATIVE estipulado.`;
       }
     }
 
-    return `Bom dia, Collermhann! Sobrevivência 92%. Chuva prevista 0,8mm às 10h (sensação 34°C, vento 16km/h). Custo ração dia: R$ 4,15/kg. Projeção biomassa: 12.000kg para colheita ótima em 20/Out.`;
+    return `Resumo indisponível: faltam dados validados para clima, sobrevivência, custo diário e projeção de biomassa. Abra Operação & Lotes para revisar as pendências.`;
   }
 
   public calculateShrimpStability(data: any): number {
@@ -322,7 +317,7 @@ export async function getAIGuidance(
 ROLE: Você é o AQUA-CORE AI, o sistema nervoso central de inteligência para a aquicultura e carcinicultura de precisão na Paraíba/João Pessoa.
 Missão: Maximizar a lucratividade no mercado regional, blindar a sobrevivência e otimizar FCR.
 
-OPERATIONAL LOGIC (Chain of Thought obrigatório):
+OPERATIONAL LOGIC (trilha auditável obrigatória, sem expor raciocínio privado):
 1. DADO: Analise os dados telemétricos e a tendência temporal.
 2. BASELINE: Compare com os limites seguros da espécie (${batchInfo.species}).
 3. DESVIO: Calcule a variação exata.
@@ -911,16 +906,16 @@ Entregue o parecer financeiro executivo com estratégias acionáveis para corte 
     financialHealthGrade: netMarginPct > 35 ? 'A+' : netMarginPct > 20 ? 'A' : 'B',
     feedCostSharePct: feedShare,
     energyOptimizationOpportunities: [
-      'Desligar 50% dos aeradores entre 11h e 15h aproveitando o pico de oxigênio por fotossíntese natural do fitoplâncton (economia estimada: R$ 1.840/mês).',
-      'Migrar tarifa horosazonal verde da concessionária de energia para concentrar bombeamento fora do horário de ponta.',
+      'Medir consumo por equipamento e cruzar com oxigênio dissolvido antes de alterar a aeração.',
+      'Comparar tarifas e horários somente com a fatura e o contrato atuais da unidade consumidora.',
     ],
     suggestedActionPlan: [
-      `Ajustar a conversão alimentar (FCR) em -0,08 pontos fracionando a ração em 4 tratos térmicos: ganho projetado de +R$ 8.900 no ciclo.`,
-      `Segurar a despesca por mais 8 dias para atingir calibre especial (>900g a R$ 10,25/kg) com ganho de margem de +14,5%.`,
-      `Negociar compra antecipada de saca de ração 35% PB em lote conjunto direto da fábrica.`,
+      'Conciliar alimentação, biomassa inicial e despescas antes de usar o FCA em decisões.',
+      'Atualizar biometria e cotação com fonte/data antes de comparar datas de despesca.',
+      'Validar o estoque físico e os preços unitários antes de programar nova compra.',
     ],
-    potentialMarginGainPct: 4.8,
-    cfoExecutiveSummary: `Operação sólida com margem de ${netMarginPct}% e custo de R$ ${costPerKgProduced.toFixed(2)}/kg. A ração representa ${feedShare}% do custo total. Com a aeração inteligente e o calibre especial, o EBITDA pode subir mais R$ 12.400.`,
+    potentialMarginGainPct: 0,
+    cfoExecutiveSummary: `Margem calculada de ${netMarginPct}% e custo de R$ ${costPerKgProduced.toFixed(2)}/kg com os dados disponíveis. A ração representa ${feedShare}% do custo total. O ganho potencial permanece indisponível até validar produção, preço e custos.`,
   };
 }
 

@@ -12,6 +12,7 @@ import {
   Coins
 } from 'lucide-react';
 import { useAquaCore } from '../context/AquaCoreContext';
+import { meuPescadoSnapshot } from '../data/meuPescadoImport';
 
 interface InventoryItem {
   id: string;
@@ -36,7 +37,7 @@ interface InventoryWarehouseViewProps {
 }
 
 export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ onOpenScanner }) => {
-  const { totalBiomassKg, batches } = useAquaCore();
+  const { totalBiomassKg, batches, currentUser, setIsAuthModalOpen } = useAquaCore();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -56,15 +57,35 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
   const [notes, setNotes] = useState<string>('');
 
   const fetchItems = async () => {
+    const publicSnapshot: InventoryItem[] = meuPescadoSnapshot.inventory.map((item) => ({
+      id: item.id,
+      tenantId: 'tenant-river-life',
+      brand: item.name,
+      name: item.name,
+      category: item.type,
+      itemType: item.type,
+      unit: item.unit,
+      proteinPercent: item.name.includes('450') ? 45 : 0,
+      currentStockKg: item.current,
+      minStockAlertKg: item.minimum,
+      costPerKg: item.averageUnitPriceRs,
+      location: 'River Life (Entreposto)',
+      status: 'NORMAL',
+      notes: `Saldo informado na origem: R$ ${item.balanceRs.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+      createdAt: meuPescadoSnapshot.capturedAt,
+    }));
     try {
       setLoading(true);
       const res = await fetch('/api/db/inventory?tenantId=tenant-river-life');
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
+      } else {
+        setItems(publicSnapshot);
       }
     } catch (e) {
       console.warn('Erro ao carregar estoque:', e);
+      setItems(publicSnapshot);
     } finally {
       setLoading(false);
     }
@@ -74,7 +95,6 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
     fetchItems();
   }, []);
 
-  const totalStockKg = items.reduce((acc, it) => acc + it.currentStockKg, 0);
   const totalStockValue = items.reduce((acc, it) => acc + it.currentStockKg * it.costPerKg, 0);
   const alertItemsCount = items.filter((it) => it.status !== 'NORMAL').length;
 
@@ -163,19 +183,19 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
         <div className="flex items-center gap-2">
           {onOpenScanner && (
             <button
-              onClick={onOpenScanner}
+              onClick={() => currentUser.role === 'guest' ? setIsAuthModalOpen(true) : onOpenScanner()}
               className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-medium text-sm transition-all"
             >
               <Camera className="w-4 h-4" />
-              Escanear Saco/Rótulo
+              {currentUser.role === 'guest' ? 'Entrar para escanear' : 'Escanear Saco/Rótulo'}
             </button>
           )}
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => currentUser.role === 'guest' ? setIsAuthModalOpen(true) : setIsModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium shadow-lg shadow-amber-950/40 transition-all text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Novo Insumo
+            {currentUser.role === 'guest' ? 'Entrar para alterar' : 'Novo Insumo'}
           </button>
         </div>
       </div>
@@ -196,9 +216,9 @@ export const InventoryWarehouseView: React.FC<InventoryWarehouseViewProps> = ({ 
             <Package className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-xs text-slate-400">Estoque Físico Total</div>
+            <div className="text-xs text-slate-400">Itens cadastrados</div>
             <div className="text-2xl font-bold text-amber-400">
-              {totalStockKg.toLocaleString('pt-BR')} <span className="text-xs font-normal text-slate-400">kg</span>
+              {items.length} <span className="text-xs font-normal text-slate-400">produtos · unidades preservadas</span>
             </div>
           </div>
         </div>
